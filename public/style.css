@@ -183,12 +183,22 @@ body {
 video { max-width: 100%; max-height: 100%; width: auto; height: auto; outline: none; }
 .bg-black-60 { background-color: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
 
-.sidebar {
-  width: 380px; background-color: #18181b; border-left: 1px solid var(--border-color);
-  display: flex; flex-direction: column; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  transform: translateX(0);
+.chat-popup {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  transform: scale(1);
+  opacity: 1;
 }
-.sidebar.closed { transform: translateX(100%); position: absolute; right: 0; bottom: 0; top: 0; }
+.chat-popup.closed { transform: scale(0.95); opacity: 0; pointer-events: none; visibility: hidden; }
+
+.hover-scale { transition: transform 0.2s; }
+.hover-scale:hover { transform: scale(1.05); }
+.opacity-100 { opacity: 1 !important; pointer-events: auto !important; }
+
+/* Custom scrollbar for chat */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #52525b; }
 
 .or-divider {
   text-align: center; color: var(--text-muted); font-size: 0.75rem;
@@ -212,6 +222,9 @@ video { max-width: 100%; max-height: 100%; width: auto; height: auto; outline: n
 }
 .msg-self .msg-text { background-color: var(--orange); color: white; border-top-right-radius: 0; }
 .msg-other .msg-text { background-color: #27272a; color: #e4e4e7; border-top-left-radius: 0; }
+.msg-system {
+  text-align: center; font-size: 0.8rem; color: var(--text-muted); font-style: italic; margin: 0.5rem 0; width: 100%;
+}
 
 /* Animations */
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -262,3 +275,18 @@ input[type=range]:focus { outline: none; }
 .border-none { border: none !important; }
 .bg-transparent { background-color: transparent !important; }
 .block { display: block; }
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .header-center h1 { font-size: 3rem; }
+  .room-info h1 { font-size: 1rem; }
+  .chat-popup {
+    bottom: 0; right: 0; top: 0;
+    width: 100%; height: 100%;
+    max-width: 100vw; max-height: 100vh;
+    border-radius: 0;
+    z-index: 100;
+  }
+  .chat-popup.closed { transform: translateY(100%); opacity: 0; pointer-events: none; }
+  #chat-fab-container { bottom: 1.5rem; right: 1.5rem; }
+}

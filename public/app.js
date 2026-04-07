@@ -27,9 +27,17 @@ const roomNameDisplay = document.getElementById('room-name-display');
 const roomIdDisplay = document.getElementById('room-id-display');
 const btnLeave = document.getElementById('btn-leave');
 const btnCopy = document.getElementById('btn-copy');
-const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
 const btnCloseSidebar = document.getElementById('btn-close-sidebar');
-const sidebar = document.getElementById('sidebar');
+
+const chatPopup = document.getElementById('chat-popup');
+const btnChatFab = document.getElementById('btn-chat-fab');
+const chatBadge = document.getElementById('chat-badge');
+const chatNotification = document.getElementById('chat-notification');
+const notifName = document.getElementById('notif-name');
+const notifText = document.getElementById('notif-text');
+
+let unreadCount = 0;
+let notifTimeout = null;
 
 const sourceUi = document.getElementById('source-ui');
 const playerWrapper = document.getElementById('custom-player-wrapper');
@@ -141,14 +149,16 @@ btnCopy.addEventListener('click', () => {
   setTimeout(() => { btnCopy.textContent = "Copy"; btnCopy.classList.remove('text-orange'); }, 2000);
 });
 
-btnToggleSidebar.addEventListener('click', () => {
-  sidebar.classList.toggle('closed');
-  btnToggleSidebar.classList.toggle('active-orange');
+btnChatFab.addEventListener('click', () => {
+  chatPopup.classList.remove('closed');
+  unreadCount = 0;
+  chatBadge.classList.add('hidden');
+  chatBadge.textContent = '0';
+  chatNotification.classList.add('opacity-0');
 });
 
 btnCloseSidebar.addEventListener('click', () => {
-  sidebar.classList.add('closed');
-  btnToggleSidebar.classList.remove('active-orange');
+  chatPopup.classList.add('closed');
 });
 
 // Video Sourced
@@ -199,6 +209,29 @@ function appendMessage(msg) {
 
    msgDiv.appendChild(nameSpan);
    msgDiv.appendChild(textSpan);
+   chatMessages.appendChild(msgDiv);
+   chatMessages.scrollTop = chatMessages.scrollHeight;
+
+   if (!isSelf && chatPopup.classList.contains('closed')) {
+     unreadCount++;
+     chatBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+     chatBadge.classList.remove('hidden');
+
+     notifName.textContent = msg.senderName + ':';
+     notifText.textContent = msg.text;
+     chatNotification.classList.remove('opacity-0');
+     
+     if (notifTimeout) clearTimeout(notifTimeout);
+     notifTimeout = setTimeout(() => {
+       chatNotification.classList.add('opacity-0');
+     }, 3000);
+   }
+}
+
+function appendSystemMessage(text) {
+   const msgDiv = document.createElement('div');
+   msgDiv.className = 'msg-system';
+   msgDiv.textContent = text;
    chatMessages.appendChild(msgDiv);
    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
@@ -306,6 +339,10 @@ function initWebSocket() {
 
     if (data.type === "chat") {
        appendMessage(data.message);
+    }
+
+    if (data.type === "user-joined") {
+       appendSystemMessage(`${data.userName} joined the room`);
     }
 
     if (data.type === "room-updated") {
