@@ -190,6 +190,54 @@ video { max-width: 100%; max-height: 100%; width: auto; height: auto; outline: n
 }
 .chat-popup.closed { transform: scale(0.95); opacity: 0; pointer-events: none; visibility: hidden; }
 
+#chat-fab-container {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 80;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+.chat-fab {
+  width: 3.5rem;
+  height: 3.5rem;
+  background-color: var(--orange);
+  color: white;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s;
+  outline: none;
+}
+.chat-fab:hover {
+  transform: scale(1.05);
+}
+#chat-badge {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  background-color: #dc2626;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: bold;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 4px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #09090b;
+}
+
 .hover-scale { transition: transform 0.2s; }
 .hover-scale:hover { transform: scale(1.05); }
 .opacity-100 { opacity: 1 !important; pointer-events: auto !important; }

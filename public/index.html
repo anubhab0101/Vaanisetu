@@ -119,18 +119,18 @@
     </div>
 
     <!-- Chat FAB & Notification -->
-    <div id="chat-fab-container" class="absolute bottom-6 right-6 z-[80] ptr-auto flex flex-col items-end gap-3 fade-up">
+    <div id="chat-fab-container" class="fade-up">
        <!-- Popup message preview -->
        <div id="chat-notification" class="chat-notification opacity-0 pointer-events-none transition-opacity duration-300 px-4 py-2 bg-zinc-800 text-white rounded-xl shadow-lg text-sm max-w-[250px] truncate max-w-xs border border-zinc-700">
          <span id="notif-name" class="font-bold text-orange"></span> <span id="notif-text"></span>
        </div>
        
        <!-- Button -->
-       <button id="btn-chat-fab" class="chat-fab relative w-14 h-14 bg-orange text-white rounded-full flex items-center justify-center shadow-2xl hover-scale transition-transform border-none outline-none ptr-auto pointer">
+       <button id="btn-chat-fab" class="chat-fab">
          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
          
          <!-- Red Unread Badge -->
-         <span id="chat-badge" class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold min-w-[24px] h-6 px-1 rounded-full flex items-center justify-center hidden border-2 border-zinc-950">0</span>
+         <span id="chat-badge" class="hidden">0</span>
        </button>
     </div>
 
