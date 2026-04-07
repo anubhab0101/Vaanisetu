@@ -154,7 +154,7 @@ btnChatFab.addEventListener('click', () => {
   unreadCount = 0;
   chatBadge.classList.add('hidden');
   chatBadge.textContent = '0';
-  chatNotification.classList.add('opacity-0');
+  chatNotification.classList.remove('show');
 });
 
 btnCloseSidebar.addEventListener('click', () => {
@@ -219,11 +219,11 @@ function appendMessage(msg) {
 
      notifName.textContent = msg.senderName + ':';
      notifText.textContent = msg.text;
-     chatNotification.classList.remove('opacity-0');
+     chatNotification.classList.add('show');
      
      if (notifTimeout) clearTimeout(notifTimeout);
      notifTimeout = setTimeout(() => {
-       chatNotification.classList.add('opacity-0');
+       chatNotification.classList.remove('show');
      }, 3000);
    }
 }
