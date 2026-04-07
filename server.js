@@ -14,7 +14,19 @@ async function startServer() {
   const rooms = new Map();
   const connections = new Map();
 
+  // Keep-alive ping interval to prevent Render WS drops
+  setInterval(() => {
+    wss.clients.forEach((client) => {
+      if (client.isAlive === false) return client.terminate();
+      client.isAlive = false;
+      client.ping();
+    });
+  }, 30000);
+
   wss.on("connection", (ws, req) => {
+    ws.isAlive = true;
+    ws.on('pong', () => { ws.isAlive = true; });
+
     let currentRoomId = null;
     let currentUserId = null;
 

@@ -43,19 +43,6 @@ const chatMessages = document.getElementById('chat-messages');
 const chatForm = document.getElementById('chat-form');
 const chatInput = document.getElementById('chat-input');
 
-// Custom Player Elements
-const btnPlayPause = document.getElementById('btn-play-pause');
-const iconPlay = document.getElementById('icon-play');
-const iconPause = document.getElementById('icon-pause');
-const progressBar = document.getElementById('progress-bar');
-const timeCurrent = document.getElementById('time-current');
-const timeTotal = document.getElementById('time-total');
-const btnVolume = document.getElementById('btn-volume');
-const iconVolHigh = document.getElementById('icon-vol-high');
-const iconVolMuted = document.getElementById('icon-vol-muted');
-const volumeSlider = document.getElementById('volume-slider');
-const btnFullscreen = document.getElementById('btn-fullscreen');
-
 // Settings Elements
 const settingsModal = document.getElementById('settings-modal');
 const btnPlayerSettings = document.getElementById('btn-player-settings');
@@ -120,6 +107,10 @@ function leaveRoom() {
 }
 
 // Actions
+inputCreateUrl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') btnCreate.click();
+});
+
 btnCreate.addEventListener('click', () => {
   const url = inputCreateUrl.value.trim();
   showRoom(generateKey(), url ? formatVideoUrl(url) : null);
@@ -130,6 +121,10 @@ fileUpload.addEventListener('change', (e) => {
   if(e.target.files && e.target.files[0]) {
     showRoom(generateKey(), null, e.target.files[0]);
   }
+});
+
+inputJoinKey.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') btnJoin.click();
 });
 
 btnJoin.addEventListener('click', () => {
@@ -232,79 +227,10 @@ const sendVideoState = (action) => {
   }));
 };
 
-mainVideo.addEventListener('play', () => {
-  iconPlay.classList.add('hidden');
-  iconPause.classList.remove('hidden');
-  sendVideoState('play');
-});
-
-mainVideo.addEventListener('pause', () => {
-  iconPause.classList.add('hidden');
-  iconPlay.classList.remove('hidden');
-  sendVideoState('pause');
-});
-
+// Native Video Sync Events
+mainVideo.addEventListener('play', () => sendVideoState('play'));
+mainVideo.addEventListener('pause', () => sendVideoState('pause'));
 mainVideo.addEventListener('seeked', () => sendVideoState('seek'));
-
-mainVideo.addEventListener('timeupdate', () => {
-  if(isUpdating) return;
-  const curr = mainVideo.currentTime;
-  const dur = mainVideo.duration || 0;
-  timeCurrent.textContent = formatTime(curr);
-  timeTotal.textContent = formatTime(dur);
-  if(dur > 0) {
-    progressBar.value = (curr / dur) * 100;
-  }
-});
-
-mainVideo.addEventListener('loadedmetadata', () => {
-  timeTotal.textContent = formatTime(mainVideo.duration);
-});
-
-btnPlayPause.addEventListener('click', () => {
-  if(mainVideo.paused) mainVideo.play();
-  else mainVideo.pause();
-});
-
-progressBar.addEventListener('input', (e) => {
-  const dur = mainVideo.duration;
-  if(dur) {
-     isUpdating = true;
-     mainVideo.currentTime = (e.target.value / 100) * dur;
-     sendVideoState('seek');
-     setTimeout(() => { isUpdating = false; }, 200);
-  }
-});
-
-btnVolume.addEventListener('click', () => {
-  mainVideo.muted = !mainVideo.muted;
-  updateVolumeIcons();
-});
-
-volumeSlider.addEventListener('input', (e) => {
-  mainVideo.volume = e.target.value;
-  mainVideo.muted = false;
-  updateVolumeIcons();
-});
-
-function updateVolumeIcons() {
-  if(mainVideo.muted || mainVideo.volume === 0) {
-    iconVolHigh.classList.add('hidden');
-    iconVolMuted.classList.remove('hidden');
-  } else {
-    iconVolMuted.classList.add('hidden');
-    iconVolHigh.classList.remove('hidden');
-  }
-  volumeSlider.value = mainVideo.muted ? 0 : mainVideo.volume;
-}
-
-btnFullscreen.addEventListener('click', () => {
-  if(!document.fullscreenElement) {
-    playerWrapper.requestFullscreen().catch(err => console.error("Fullscreen error", err));
-  } else {
-    document.exitFullscreen();
-  }
-});
 
 // Settings Modal
 btnPlayerSettings.addEventListener('click', () => {
@@ -331,16 +257,34 @@ btnSyncPlayback.addEventListener('click', () => {
 });
 
 // WebSockets
+let reconnectTimeout = null;
+
 function initWebSocket() {
+  if (ws) {
+    ws.close();
+    ws = null;
+  }
+  
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   ws = new WebSocket(`${protocol}//${window.location.host}`);
 
   ws.onopen = () => {
+    if (reconnectTimeout) {
+       clearTimeout(reconnectTimeout);
+       reconnectTimeout = null;
+    }
     ws.send(JSON.stringify({
       type: "join", roomId: currentRoomId,
       userId: sessionUserId, userName: sessionUserName,
       videoUrl: currentVideoFile ? null : currentVideoUrl
     }));
+  };
+  
+  ws.onclose = () => {
+    // Reconnect logic in case of network drop on Render
+    if (currentRoomId) {
+       reconnectTimeout = setTimeout(initWebSocket, 3000);
+    }
   };
 
   ws.onmessage = async (event) => {
