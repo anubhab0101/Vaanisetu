@@ -338,3 +338,8 @@ function initWebSocket() {
     }
   };
 }
+
+// Keep Render server awake by pinging it every 2 minutes with an HTTP request
+setInterval(() => {
+  fetch('/ping').catch(() => {});
+}, 2 * 60 * 1000);

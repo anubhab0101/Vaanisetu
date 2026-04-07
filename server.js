@@ -173,6 +173,8 @@ async function startServer() {
     });
   });
 
+  app.get('/ping', (req, res) => res.status(200).send('pong'));
+
   const publicPath = path.join(process.cwd(), 'public');
   app.use(express.static(publicPath));
   
