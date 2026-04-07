@@ -1,0 +1,56 @@
+{
+  "entities": {
+    "Room": {
+      "title": "Room",
+      "description": "A synchronized movie watching room",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "videoState": {
+          "type": "object",
+          "properties": {
+            "currentTime": { "type": "number" },
+            "isPlaying": { "type": "boolean" },
+            "lastUpdated": { "type": "string", "format": "date-time" },
+            "videoUrl": { "type": "string" }
+          }
+        },
+        "users": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "displayName": { "type": "string" },
+              "photoURL": { "type": "string" },
+              "isOnline": { "type": "boolean" }
+            }
+          }
+        }
+      },
+      "required": ["name", "ownerId", "videoState"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A chat message in a room",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["text", "senderId", "senderName", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/rooms/{roomId}": {
+      "schema": "Room",
+      "description": "Collection of synchronized movie rooms"
+    },
+    "/rooms/{roomId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Subcollection of chat messages for a room"
+    }
+  }
+}

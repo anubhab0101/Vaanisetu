@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CineSync</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <!-- Dashboard View -->
+  <div id="dashboard-view" class="view min-h-screen items-center justify-center fade-in">
+    <div class="header-center fade-down">
+      <h1 class="gradient-text">CineSync</h1>
+      <p class="subtitle text-zinc-400">Watch movies together, instantly.</p>
+      
+      <!-- Custom Username Input -->
+      <div class="mt-4 flex items-center justify-center flex-col">
+        <label for="username-input" class="text-zinc-500 text-sm mb-2">Display Name</label>
+        <input type="text" id="username-input" class="input max-w-xs text-center" placeholder="Guest" value="Guest">
+      </div>
+    </div>
+
+    <div class="card-grid max-w-4xl mt-4">
+      <!-- Create Room Card -->
+      <div class="card fade-up">
+        <div class="icon-box orange-box">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        </div>
+        <h2>Create a Room</h2>
+        <p class="text-zinc-400">Paste a link or upload a film.</p>
+        
+        <div class="w-full form-group mt-4">
+          <input type="text" id="create-url-input" class="input" placeholder="Paste Dropbox or Direct URL">
+          <p class="hint">💡 <strong>Auto-Convert:</strong> Paste any normal Dropbox share link. We'll automatically convert it!</p>
+          <div class="btn-group">
+            <button id="btn-create" class="btn btn-primary">Create Empty</button>
+            <input type="file" id="file-upload" accept="video/*" hidden>
+            <button id="btn-upload" class="btn btn-secondary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              Upload
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Join Room Card -->
+      <div class="card fade-up" style="animation-delay: 0.1s">
+        <div class="icon-box blue-box">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+        </div>
+        <h2>Join a Room</h2>
+        <p class="text-zinc-400">Enter a room key to join your friends.</p>
+        <div class="w-full form-group mt-4">
+          <input type="text" id="join-key-input" class="input text-center text-xl tracking-widest mono uppercase" placeholder="XXXXXX">
+          <button id="btn-join" class="btn btn-outline" style="margin-top: 1rem;">Join Room</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Room View -->
+  <div id="room-view" class="view hidden h-screen bg-black overflow-hidden relative fade-in">
+    
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <div class="flex items-center gap-4 ptr-auto">
+        <button id="btn-leave" class="icon-btn hover-bg">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </button>
+        <div class="room-info">
+          <h1 id="room-name-display" class="font-bold text-lg text-white">Loading...</h1>
+          <div class="flex items-center gap-2 text-sm text-zinc-400">
+            <span id="room-id-display" class="mono">xxxxxx</span>
+            <button id="btn-copy" class="hover-text pointer">Copy</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-3 ptr-auto">
+        <button id="btn-toggle-sidebar" class="icon-btn active-orange">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Video Area -->
+    <div id="video-container" class="video-area bg-zinc-950 flex items-center justify-center relative w-full h-full">
+      <div id="sync-overlay" class="absolute inset-0 bg-black-60 hidden flex items-center justify-center z-50">
+        <button id="btn-sync-playback" class="btn btn-primary lg-btn transform-hover flex items-center gap-3 ptr-auto">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg>
+          Tap to Sync Playback
+        </button>
+      </div>
+
+      <!-- Custom Player Wrapper -->
+      <div id="custom-player-wrapper" class="player-wrapper hidden relative w-full h-full flex items-center justify-center">
+        <!-- Main Video Tag (Controls Removed) -->
+        <video id="main-video" playsinline class="max-w-full max-h-full"></video>
+
+        <!-- Custom Controls UI -->
+        <div id="custom-controls" class="custom-controls absolute bottom-0 left-0 right-0 p-4 ptr-auto">
+           <!-- Gradient backdrop for controls to remain visible -->
+           <div class="controls-backdrop"></div>
+           
+           <!-- Scrubber (Progress bar) -->
+           <div class="progress-bar-container relative mb-2">
+             <input type="range" id="progress-bar" min="0" max="100" value="0" step="0.1" class="w-full">
+           </div>
+           
+           <div class="flex items-center justify-between relative z-10 text-white">
+             <!-- Left Side Controls -->
+             <div class="flex items-center gap-4">
+               <button id="btn-play-pause" class="text-white hover-orange pointer">
+                 <svg id="icon-play" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="m5 3 14 9-14 9V3z"/></svg>
+                 <svg id="icon-pause" class="hidden" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+               </button>
+               <div class="time-display text-sm mono text-zinc-300">
+                 <span id="time-current">0:00</span> / <span id="time-total">0:00</span>
+               </div>
+             </div>
+
+             <!-- Right Side Controls -->
+             <div class="flex items-center gap-4">
+               <div class="flex items-center gap-2 group">
+                 <button id="btn-volume" class="text-white hover-orange pointer">
+                   <svg id="icon-vol-high" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                   <svg id="icon-vol-muted" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                 </button>
+                 <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1" class="vol-slider hidden group-hover:block">
+               </div>
+               
+               <button id="btn-player-settings" class="text-white hover-orange pointer" title="Settings / Source">
+                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+               </button>
+
+               <button id="btn-fullscreen" class="text-white hover-orange pointer">
+                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+               </button>
+             </div>
+           </div>
+        </div>
+      </div>
+
+      <!-- Source Select UI -->
+      <div id="source-ui" class="source-ui text-center text-white p-8 max-w-md w-full fade-up">
+        <div class="icon-box dark-box mx-auto mb-6">
+           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg>
+        </div>
+        <h3 class="text-xl font-bold mb-2">Select Movie Source</h3>
+        <p class="text-zinc-500 text-sm mb-6">Paste a link or upload a file to start watching.</p>
+        
+        <div class="w-full form-group">
+          <input type="text" id="room-url-input" class="input" placeholder="Paste Dropbox or Direct URL">
+          
+          <div class="or-divider">OR</div>
+
+          <label for="room-file-upload" class="file-label">Browse File</label>
+          <input type="file" id="room-file-upload" accept="video/*" hidden>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar flex flex-col slide-in-right">
+      <div class="sidebar-header border-b border-zinc-800 p-4 flex items-center justify-between">
+        <h2 class="font-bold text-white flex items-center gap-2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Live Chat
+        </h2>
+        <button id="btn-close-sidebar" class="icon-btn hover-text text-zinc-500">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4">
+        <!-- Messages will be injected here -->
+      </div>
+
+      <form id="chat-form" class="p-4 bg-zinc-950">
+        <div class="relative w-full flex items-center">
+          <input type="text" id="chat-input" class="input w-full pr-12" autocomplete="off" placeholder="Type a message...">
+          <button type="submit" class="absolute right-2 text-orange icon-btn pointer hover-light">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Player Settings Modal -->
+    <div id="settings-modal" class="absolute inset-0 bg-black-60 hidden items-center justify-center z-[60] fade-in">
+       <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl w-full max-w-sm">
+          <div class="flex items-center justify-between mb-4">
+             <h3 class="text-lg font-bold text-white">Player Settings</h3>
+             <button id="btn-close-settings" class="text-zinc-500 hover:text-white pointer bg-transparent border-none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+          <p class="text-sm text-zinc-400 mb-4">Update the video source (resolution matching). Changing this updates it for everyone.</p>
+          <label class="text-sm text-zinc-500 font-bold mb-2 block">Video URL Link</label>
+          <input type="text" id="settings-url-input" class="input mb-4" placeholder="Direct URL...">
+          <button id="btn-apply-settings" class="btn btn-primary">Apply & Sync</button>
+       </div>
+    </div>
+
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

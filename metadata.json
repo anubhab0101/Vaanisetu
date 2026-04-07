@@ -1,0 +1,5 @@
+{
+  "name": "CineSync",
+  "description": "A real-time movie watching platform with synchronized playback, chat, and voice/video calling.",
+  "requestFramePermissions": ["camera", "microphone"]
+}
