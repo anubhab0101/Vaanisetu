@@ -1,6 +1,26 @@
-// Global session initialized from input, not random
-let sessionUserId = Math.random().toString(36).substring(2, 10);
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { 
+  getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, 
+  GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, 
+  onAuthStateChanged, updateProfile, signOut 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBocu4_8iXU3ZsaPsdQDKM694awK-6IIBI",
+  authDomain: "gen-lang-client-0245146108.firebaseapp.com",
+  projectId: "gen-lang-client-0245146108",
+  storageBucket: "gen-lang-client-0245146108.firebasestorage.app",
+  messagingSenderId: "802373276495",
+  appId: "1:802373276495:web:35965034e2cd30c8d36b3a"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// Global session initialized from Auth
+let sessionUserId = Math.random().toString(36).substring(2, 10); // Fallback
 let sessionUserName = "Guest";
+let currentUser = null;
 
 // State
 let currentRoomId = null;
@@ -9,9 +29,29 @@ let currentVideoFile = null;
 let isUpdating = false;
 let ws = null;
 
-// UI Elements
+// Views
+const authView = document.getElementById('auth-view');
+const setupProfileView = document.getElementById('setup-profile-view');
 const dashView = document.getElementById('dashboard-view');
 const roomView = document.getElementById('room-view');
+
+// Auth Elements
+const authForm = document.getElementById('auth-form');
+const authEmail = document.getElementById('auth-email');
+const authPassword = document.getElementById('auth-password');
+const btnAuthSubmit = document.getElementById('btn-auth-submit');
+const btnForgotPwd = document.getElementById('btn-forgot-pwd');
+const btnToggleAuth = document.getElementById('btn-toggle-auth');
+const btnGoogleLogin = document.getElementById('btn-google-login');
+const authTitle = document.getElementById('auth-title');
+const authError = document.getElementById('auth-error');
+const passwordGroup = document.getElementById('password-group');
+const btnLogout = document.getElementById('btn-logout');
+const dashboardUserName = document.getElementById('dashboard-user-name');
+
+const setupNameInput = document.getElementById('setup-name-input');
+const btnSaveProfile = document.getElementById('btn-save-profile');
+
 const usernameInput = document.getElementById('username-input');
 
 // Dashboard Elements
@@ -58,6 +98,126 @@ const btnCloseSettings = document.getElementById('btn-close-settings');
 const settingsUrlInput = document.getElementById('settings-url-input');
 const btnApplySettings = document.getElementById('btn-apply-settings');
 
+// ==== AUTH LOGIC ====
+let authMode = 'login'; // login, register, reset
+
+btnToggleAuth.addEventListener('click', () => {
+    if (authMode === 'login') {
+        authMode = 'register';
+        authTitle.textContent = 'Create Account';
+        btnAuthSubmit.textContent = 'Sign Up';
+        btnToggleAuth.textContent = 'Back to Login';
+        passwordGroup.classList.remove('hidden');
+        authPassword.required = true;
+    } else {
+        authMode = 'login';
+        authTitle.textContent = 'Sign In';
+        btnAuthSubmit.textContent = 'Sign In';
+        btnToggleAuth.textContent = 'Create Account';
+        passwordGroup.classList.remove('hidden');
+        authPassword.required = true;
+    }
+    authError.classList.add('hidden');
+});
+
+btnForgotPwd.addEventListener('click', () => {
+    authMode = 'reset';
+    authTitle.textContent = 'Reset Password';
+    btnAuthSubmit.textContent = 'Send Reset Link';
+    btnToggleAuth.textContent = 'Back to Login';
+    passwordGroup.classList.add('hidden');
+    authPassword.required = false;
+    authError.classList.add('hidden');
+});
+
+authForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    authError.classList.add('hidden');
+    btnAuthSubmit.disabled = true;
+    const email = authEmail.value;
+    const password = authPassword.value;
+    
+    try {
+        if (authMode === 'login') {
+            await signInWithEmailAndPassword(auth, email, password);
+        } else if (authMode === 'register') {
+            await createUserWithEmailAndPassword(auth, email, password);
+        } else if (authMode === 'reset') {
+            await sendPasswordResetEmail(auth, email);
+            authError.classList.remove('hidden', 'bg-red-900', 'text-red-500');
+            authError.classList.add('bg-green-900', 'text-green-500');
+            authError.textContent = "Reset link sent to email!";
+            btnAuthSubmit.disabled = false;
+            return;
+        }
+    } catch (error) {
+        authError.classList.remove('hidden', 'bg-green-900', 'text-green-500');
+        authError.classList.add('bg-red-900', 'text-red-500');
+        authError.textContent = error.message.replace('Firebase:', '').trim();
+    }
+    btnAuthSubmit.disabled = false;
+});
+
+btnGoogleLogin.addEventListener('click', async () => {
+    try {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+    } catch (error) {
+        authError.classList.remove('hidden');
+        authError.textContent = error.message.replace('Firebase:', '').trim();
+    }
+});
+
+if(btnLogout) btnLogout.addEventListener('click', () => signOut(auth));
+
+btnSaveProfile.addEventListener('click', async () => {
+    const name = setupNameInput.value.trim();
+    if (!name) return;
+    btnSaveProfile.textContent = "Saving...";
+    try {
+        await updateProfile(auth.currentUser, { displayName: name });
+        sessionUserName = name;
+        if(dashboardUserName) dashboardUserName.textContent = `Hi, ${name}`;
+        setupProfileView.classList.add('hidden');
+        dashView.classList.remove('hidden');
+    } catch (e) {
+        console.error(e);
+        btnSaveProfile.textContent = "Error";
+    }
+});
+
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        currentUser = user;
+        sessionUserId = user.uid;
+        authView.classList.add('hidden');
+        
+        if (!user.displayName) {
+            setupProfileView.classList.remove('hidden');
+            dashView.classList.add('hidden');
+        } else {
+            sessionUserName = user.displayName;
+            if(dashboardUserName) dashboardUserName.textContent = `Hi, ${user.displayName}`;
+            setupProfileView.classList.add('hidden');
+            if (!currentRoomId) {
+                 dashView.classList.remove('hidden');
+            }
+        }
+    } else {
+        currentUser = null;
+        if (ws) { ws.close(); ws = null; currentRoomId = null; }
+        roomView.classList.add('hidden');
+        dashView.classList.add('hidden');
+        setupProfileView.classList.add('hidden');
+        authView.classList.remove('hidden');
+        authError.classList.add('hidden');
+        // Reset password UI
+        authError.classList.remove('bg-green-900', 'text-green-500');
+        authError.classList.add('bg-red-900', 'text-red-500');
+    }
+});
+// ==== END AUTH LOGIC ====
+
 // Format Time helper
 const formatTime = (time) => {
   if (isNaN(time)) return "0:00";
@@ -66,9 +226,11 @@ const formatTime = (time) => {
   return `${m}:${s < 10 ? '0' : ''}${s}`;
 };
 
-usernameInput.addEventListener('input', (e) => {
-  sessionUserName = e.target.value.trim() || 'Guest';
-});
+if(usernameInput) {
+  usernameInput.addEventListener('input', (e) => {
+    sessionUserName = e.target.value.trim() || 'Guest';
+  });
+}
 
 const generateKey = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
@@ -87,7 +249,7 @@ const formatVideoUrl = (url) => {
 
 // Switch Views
 function showRoom(roomId, url = null, file = null) {
-  sessionUserName = usernameInput.value.trim() || 'Guest';
+  sessionUserName = currentUser?.displayName || 'Guest';
   currentRoomId = roomId;
   dashView.classList.add('hidden');
   roomView.classList.remove('hidden');
