@@ -56,6 +56,11 @@ service cloud.firestore {
              data.timestamp is timestamp;
     }
 
+    // User rules
+    match /users/{userId} {
+      allow read, write: if isAuthenticated();
+    }
+
     // Room rules
     match /rooms/{roomId} {
       allow read: if isAuthenticated();

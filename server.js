@@ -13,6 +13,7 @@ async function startServer() {
   // In-memory state
   const rooms = new Map();
   const connections = new Map();
+  const activeUsers = new Map(); // userId -> Set<ws>
 
   // Keep-alive ping interval to prevent Render WS drops
   setInterval(() => {
@@ -23,8 +24,17 @@ async function startServer() {
     });
   }, 30000);
 
+  const broadcastPresence = (userId, isOnline) => {
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN && client.subscribedPresence && client.subscribedPresence.has(userId)) {
+        client.send(JSON.stringify({ type: "presence-update", userId, isOnline }));
+      }
+    });
+  };
+
   wss.on("connection", (ws, req) => {
     ws.isAlive = true;
+    ws.subscribedPresence = new Set();
     ws.on('pong', () => { ws.isAlive = true; });
 
     let currentRoomId = null;
@@ -35,9 +45,34 @@ async function startServer() {
         const message = JSON.parse(data.toString());
         
         switch (message.type) {
+          case "auth": {
+            currentUserId = message.userId;
+            if (!activeUsers.has(currentUserId)) activeUsers.set(currentUserId, new Set());
+            activeUsers.get(currentUserId).add(ws);
+            broadcastPresence(currentUserId, true);
+            break;
+          }
+          
+          case "subscribe-presence": {
+            if (message.friendIds && Array.isArray(message.friendIds)) {
+              message.friendIds.forEach(id => ws.subscribedPresence.add(id));
+              
+              message.friendIds.forEach(id => {
+                 const isOnline = activeUsers.has(id) && activeUsers.get(id).size > 0;
+                 ws.send(JSON.stringify({ type: "presence-update", userId: id, isOnline }));
+              });
+            }
+            break;
+          }
+
           case "join": {
             currentRoomId = message.roomId;
             currentUserId = message.userId;
+            
+            if (!activeUsers.has(currentUserId)) activeUsers.set(currentUserId, new Set());
+            activeUsers.get(currentUserId).add(ws);
+            broadcastPresence(currentUserId, true);
+
             
             if (!rooms.has(currentRoomId)) {
               rooms.set(currentRoomId, {
@@ -157,6 +192,14 @@ async function startServer() {
     });
 
     ws.on("close", () => {
+      if (currentUserId && activeUsers.has(currentUserId)) {
+         activeUsers.get(currentUserId).delete(ws);
+         if (activeUsers.get(currentUserId).size === 0) {
+            activeUsers.delete(currentUserId);
+            broadcastPresence(currentUserId, false);
+         }
+      }
+
       if (currentRoomId && connections.has(currentRoomId)) {
          connections.get(currentRoomId).delete(ws);
         
