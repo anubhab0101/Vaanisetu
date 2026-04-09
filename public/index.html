@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vaanisethu.online</title>
+  <link rel="icon" type="image/png" href="/logo.png">
   <link rel="stylesheet" href="/style.css?v=2">
 </head>
 <body>
@@ -11,6 +12,7 @@
   <!-- Auth View -->
   <div id="auth-view" class="view min-h-screen items-center justify-center fade-in">
     <div class="header-center mx-auto fade-down">
+      <img src="/logo.png" alt="Logo" class="mx-auto mb-4" style="width: 80px; height: 80px; object-fit: cover; border-radius: 20px;">
       <h1 class="gradient-text">Vaanisethu.online</h1>
       <p class="subtitle text-zinc-400 mb-8">Login to continue</p>
       
@@ -60,13 +62,17 @@
   <!-- Dashboard View -->
   <div id="dashboard-view" class="view hidden min-h-screen items-center justify-center fade-in relative">
     
-    <!-- Top Right Profile info -->
-    <div style="position: absolute; top: 1.5rem; right: 2rem; display: flex; align-items: center; gap: 1rem;">
-       <span id="dashboard-user-name" class="text-zinc-400 text-sm font-bold"></span>
-       <button id="btn-logout" class="hover-text text-orange text-sm pointer bg-transparent border-none font-bold">Sign Out</button>
+    <!-- Top Dashboard Header with Profile info -->
+    <div class="dash-top-bar">
+       <div class="dash-user-pill">
+           <span id="dashboard-user-name" class="dash-user-name"></span>
+           <div class="dash-divider"></div>
+           <button id="btn-logout" class="hover-text text-orange text-sm pointer bg-transparent border-none font-bold">Sign Out</button>
+       </div>
     </div>
 
     <div class="header-center fade-down">
+      <img src="/logo.png" alt="Logo" class="mx-auto mb-4" style="width: 80px; height: 80px; object-fit: cover; border-radius: 20px;">
       <h1 class="gradient-text">Vaanisethu.online</h1>
       <p class="subtitle text-zinc-400">Watch movies together, instantly.</p>
       
