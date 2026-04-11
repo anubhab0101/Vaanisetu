@@ -38,6 +38,8 @@ let currentVideoUrl = null;
 let currentVideoFile = null;
 let isUpdating = false;
 let ws = null;
+let currentRoomUsers = new Set();
+let currentRoomOwnerUid = null;
 
 // Views
 const authView = document.getElementById('auth-view');
@@ -89,6 +91,7 @@ const roomUrlInput = document.getElementById('room-url-input');
 const roomFileUpload = document.getElementById('room-file-upload');
 const syncOverlay = document.getElementById('sync-overlay');
 const btnSyncPlayback = document.getElementById('btn-sync-playback');
+const waitingUi = document.getElementById('waiting-ui');
 
 const chatMessages = document.getElementById('chat-messages');
 const chatForm = document.getElementById('chat-form');
@@ -98,6 +101,24 @@ const btnPlayerSettings = document.getElementById('btn-player-settings');
 const btnCloseSettings = document.getElementById('btn-close-settings');
 const settingsUrlInput = document.getElementById('settings-url-input');
 const btnApplySettings = document.getElementById('btn-apply-settings');
+
+// Generic Alert Modal
+const alertModal = document.getElementById('alert-modal');
+const alertModalTitle = document.getElementById('alert-modal-title');
+const alertModalText = document.getElementById('alert-modal-text');
+const btnCloseAlert = document.getElementById('btn-close-alert');
+
+function showCustomAlert(title, message) {
+    alertModalTitle.textContent = title;
+    alertModalText.textContent = message;
+    alertModal.classList.remove('hidden');
+    alertModal.style.display = 'flex';
+}
+
+btnCloseAlert.addEventListener('click', () => {
+    alertModal.classList.add('hidden');
+    alertModal.style.display = 'none';
+});
 
 // ==== AUTH & PROFILE LOGIC ====
 let authMode = 'login'; 
@@ -302,8 +323,16 @@ function listenToUserDoc() {
 }
 
 // ==== FRIEND SYSTEM LOGIC ====
-document.getElementById('btn-open-add-friend').addEventListener('click', () => document.getElementById('add-friend-modal').classList.remove('hidden'));
-document.getElementById('btn-close-add-friend').addEventListener('click', () => document.getElementById('add-friend-modal').classList.add('hidden'));
+document.getElementById('btn-open-add-friend').addEventListener('click', () => {
+    const m = document.getElementById('add-friend-modal');
+    m.classList.remove('hidden');
+    m.style.display = 'flex';
+});
+document.getElementById('btn-close-add-friend').addEventListener('click', () => {
+    const m = document.getElementById('add-friend-modal');
+    m.classList.add('hidden');
+    m.style.display = 'none';
+});
 
 document.getElementById('btn-send-request').addEventListener('click', async () => {
     const code = document.getElementById('add-friend-input').value.trim().toUpperCase();
@@ -336,7 +365,12 @@ document.getElementById('btn-send-request').addEventListener('click', async () =
 
         succEl.textContent = "Request sent!"; succEl.classList.remove('hidden');
         document.getElementById('add-friend-input').value = '';
-        setTimeout(() => { document.getElementById('add-friend-modal').classList.add('hidden'); succEl.classList.add('hidden'); }, 1500);
+        setTimeout(() => { 
+            const m = document.getElementById('add-friend-modal');
+            m.classList.add('hidden'); 
+            m.style.display = 'none';
+            succEl.classList.add('hidden'); 
+        }, 1500);
     } catch (e) {
         console.error(e);
         errEl.textContent = "Error sending request."; errEl.classList.remove('hidden');
@@ -393,11 +427,14 @@ async function renderFriends(friendIds) {
     const friendsListEl = document.getElementById('friends-list');
     const emptyMsg = document.getElementById('empty-friends-msg');
     
-    if (friendIds.length === 0) {
-        friendsListEl.innerHTML = ''; friendsListEl.appendChild(emptyMsg); emptyMsg.classList.remove('hidden'); return;
+    if (friendsListEl) friendsListEl.innerHTML = '';
+    
+    if (!friendIds || friendIds.length === 0) {
+        if(emptyMsg) emptyMsg.classList.remove('hidden'); 
+        return;
     }
     
-    emptyMsg.classList.add('hidden'); friendsListEl.innerHTML = '';
+    if(emptyMsg) emptyMsg.classList.add('hidden');
 
     // Synchronize presence on web socket
     if(ws && ws.readyState === WebSocket.OPEN) {
@@ -432,22 +469,46 @@ async function renderFriends(friendIds) {
         joinBtn.className = 'btn btn-primary';
         joinBtn.style = 'padding: 0.25rem 0.75rem; font-size: 0.75rem; max-width: 60px; pointer-events: auto;';
         joinBtn.textContent = 'Join';
-        joinBtn.onclick = () => showRoom(friend.roomCode);
+        joinBtn.onclick = async () => {
+             joinBtn.textContent = '...';
+             joinBtn.disabled = true;
+             
+             const fSnap = await getDoc(doc(db, 'users', fid));
+             if (fSnap.exists()) {
+                 const freshCode = fSnap.data().roomCode;
+                 if (freshCode !== friend.roomCode) {
+                     div.querySelector('.friend-code').innerHTML = `<span class="text-red-500 font-bold">Invalid</span> (Tap Reload ⟳)`;
+                     joinBtn.textContent = 'Join';
+                     joinBtn.disabled = false;
+                     return;
+                 }
+             }
+
+             showRoom(friend.roomCode);
+             joinBtn.textContent = 'Join';
+             joinBtn.disabled = false;
+        };
         div.appendChild(joinBtn);
 
         friendsListEl.appendChild(div);
     }
 }
 
-// ==== UI BUTTONS ====
-document.getElementById('btn-regen-code').addEventListener('click', async () => {
-    if(!confirm("Generate a new Code? Your old shared links will no longer work.")) return;
-    try {
-        const newCode = await generateUniqueRoomCode();
-        await updateDoc(doc(db, 'users', currentUser.uid), { roomCode: newCode });
-    } catch(e) { console.error("Failed to regen", e); }
+document.getElementById('btn-reload-friends').addEventListener('click', async (e) => {
+   const icon = e.currentTarget.querySelector('svg');
+   if(icon) icon.classList.add('animate-spin');
+   
+   try {
+       friendCache.clear();
+       if (currentUserDoc && currentUserDoc.friends) {
+           await renderFriends(currentUserDoc.friends);
+       }
+   } finally {
+       setTimeout(() => { if(icon) icon.classList.remove('animate-spin'); }, 500);
+   }
 });
 
+// ==== UI BUTTONS ====
 document.getElementById('btn-start-my-room').addEventListener('click', () => {
    if (currentUserDoc) showRoom(currentUserDoc.roomCode);
 });
@@ -509,6 +570,7 @@ function leaveRoom() {
   mainVideo.src = "";
   playerWrapper.classList.add('hidden');
   sourceUi.classList.remove('hidden');
+  if(waitingUi) waitingUi.classList.add('hidden');
   chatMessages.innerHTML = '';
   
   roomView.classList.add('hidden');
@@ -534,12 +596,23 @@ btnCloseSidebar.addEventListener('click', () => chatPopup.classList.add('closed'
 function handleNewUrl(formattedUrl, broadcast = false) {
   currentVideoUrl = formattedUrl;
   sourceUi.classList.add('hidden');
+  if(waitingUi) waitingUi.classList.add('hidden');
   playerWrapper.classList.remove('hidden');
   mainVideo.src = formattedUrl;
   settingsModal.classList.add('hidden');
 
   if (broadcast && ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({ type: "sync", action: "update-url", videoUrl: formattedUrl, time: 0, timestamp: Date.now() }));
+  }
+}
+
+// Ensure settings button is hidden for guests (Enforce Host-Only Privileges)
+function updateGuestPermissions() {
+  const iAmOwner = currentUserDoc && currentUserDoc.roomCode === currentRoomId;
+  if (!iAmOwner && btnPlayerSettings) {
+      btnPlayerSettings.classList.add('hidden');
+  } else if (btnPlayerSettings) {
+      btnPlayerSettings.classList.remove('hidden');
   }
 }
 
@@ -592,23 +665,72 @@ chatForm.addEventListener('submit', (e) => {
 
 const sendVideoState = (action) => {
   if(isUpdating || !ws) return;
-  ws.send(JSON.stringify({ type: "sync", action: action, time: mainVideo.currentTime, timestamp: Date.now() }));
+  ws.send(JSON.stringify({ type: "sync", action, time: mainVideo.currentTime, timestamp: Date.now() }));
 };
+
+async function updateGuestWaitingUI() {
+    if (!waitingUi || waitingUi.classList.contains('hidden')) return;
+    
+    if (!currentRoomOwnerUid) {
+        try {
+           const q = query(collection(db, "users"), where("roomCode", "==", currentRoomId));
+           const snaps = await getDocs(q);
+           if (!snaps.empty) currentRoomOwnerUid = snaps.docs[0].id;
+        } catch(e) { console.error(e); }
+    }
+
+    const isOwnerPresent = currentRoomOwnerUid && currentRoomUsers.has(currentRoomOwnerUid);
+    const isOwnerOnline = currentRoomOwnerUid && onlinePresence.has(currentRoomOwnerUid);
+    
+    const h3 = waitingUi.querySelector('h3');
+    const p = waitingUi.querySelector('p');
+    const iconBox = waitingUi.querySelector('.icon-box');
+
+    if (isOwnerPresent || isOwnerOnline) {
+        h3.textContent = "Waiting for Host";
+        p.textContent = "The room owner is currently selecting a movie. Please wait.";
+        iconBox.style.background = "rgba(255,255,255,0.05)";
+        iconBox.classList.remove('text-red-500');
+        iconBox.classList.add('text-zinc-500');
+        iconBox.innerHTML = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+    } else {
+        h3.textContent = "Host Offline";
+        p.textContent = "The owner of this room is currently not here. They need to join to start the movie.";
+        iconBox.style.background = "rgba(239,68,68,0.1)";
+        iconBox.classList.remove('text-zinc-500');
+        iconBox.classList.add('text-red-500');
+        iconBox.innerHTML = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+    }
+}
 
 mainVideo.addEventListener('play', () => sendVideoState('play'));
 mainVideo.addEventListener('pause', () => sendVideoState('pause'));
 mainVideo.addEventListener('seeked', () => sendVideoState('seek'));
 
 btnPlayerSettings.addEventListener('click', () => {
-  settingsUrlInput.value = currentVideoFile ? '(Local File active)' : (currentVideoUrl || '');
   settingsModal.classList.remove('hidden');
 });
 btnCloseSettings.addEventListener('click', () => settingsModal.classList.add('hidden'));
 
-btnApplySettings.addEventListener('click', () => {
-  const url = settingsUrlInput.value.trim();
-  if (url && url !== '(Local File active)') handleNewUrl(formatVideoUrl(url), true);
-  else settingsModal.classList.add('hidden');
+document.getElementById('btn-force-sync').addEventListener('click', () => {
+    btnSyncPlayback.click();
+    settingsModal.classList.add('hidden');
+});
+
+document.getElementById('btn-remove-video').addEventListener('click', () => {
+    currentVideoUrl = null;
+    currentVideoFile = null;
+    mainVideo.src = "";
+    playerWrapper.classList.add('hidden');
+    sourceUi.classList.remove('hidden');
+    settingsModal.classList.add('hidden');
+    
+    // Clear chats
+    chatMessages.innerHTML = '';
+    
+    if (ws && ws.readyState === WebSocket.OPEN) {
+       ws.send(JSON.stringify({ type: "sync", action: "remove-video", time: 0, timestamp: Date.now() }));
+    }
 });
 
 btnSyncPlayback.addEventListener('click', () => {
@@ -617,6 +739,17 @@ btnSyncPlayback.addEventListener('click', () => {
    syncOverlay.classList.add('hidden');
    setTimeout(() => isUpdating = false, 500);
 });
+
+const btnClearChatGlobal = document.getElementById('btn-clear-chat-global');
+if(btnClearChatGlobal) {
+  btnClearChatGlobal.addEventListener('click', () => {
+      chatMessages.innerHTML = '';
+      settingsModal.classList.add('hidden');
+      if (ws && ws.readyState === WebSocket.OPEN) {
+         ws.send(JSON.stringify({ type: "sync", action: "clear-chat", timestamp: Date.now() }));
+      }
+  });
+}
 
 // ==== WEBSOCKETS (ROOMS & PRESENCE) ====
 let reconnectTimeout = null;
@@ -670,22 +803,86 @@ function initWebSocket(isPresenceOnly = false) {
         
         const dot = document.getElementById(`status-${data.userId}`);
         if(dot) dot.className = `friend-status ${data.isOnline ? 'status-online' : 'status-offline'}`;
+        updateGuestWaitingUI();
     }
 
     if (data.type === "room-state") {
+       currentRoomUsers = new Set(Object.keys(data.room.users));
+       
        roomNameDisplay.textContent = data.room.name;
-       data.room.messages.forEach(appendMessage);
+       if (data.room.messages) data.room.messages.forEach(appendMessage);
 
-       if (data.room.videoState.videoUrl && !currentVideoFile) handleNewUrl(data.room.videoState.videoUrl, false);
+       updateGuestPermissions(); // Apply guest restrictions on UI
+       const iAmOwner = currentUserDoc && currentUserDoc.roomCode === currentRoomId;
+
+       if (data.room.videoState.videoUrl && !currentVideoFile) {
+           handleNewUrl(data.room.videoState.videoUrl, false);
+       } else if (!data.room.videoState.videoUrl) {
+           currentVideoUrl = null;
+           currentVideoFile = null;
+           mainVideo.src = "";
+           playerWrapper.classList.add('hidden');
+           
+           if(iAmOwner) {
+               sourceUi.classList.remove('hidden');
+               if(waitingUi) waitingUi.classList.add('hidden');
+           } else {
+               sourceUi.classList.add('hidden');
+               if(waitingUi) {
+                  waitingUi.classList.remove('hidden');
+                  updateGuestWaitingUI();
+               }
+           }
+       }
        mainVideo.currentTime = data.room.videoState.currentTime;
        if(data.room.videoState.isPlaying) mainVideo.play().catch(() => syncOverlay.classList.remove('hidden'));
     }
 
     if (data.type === "chat") appendMessage(data.message);
-    if (data.type === "user-joined") appendSystemMessage(`${data.userName} joined the room`);
+    if (data.type === "user-joined") {
+       currentRoomUsers.add(data.userId);
+       updateGuestWaitingUI();
+       appendMessage({ senderName: "System", text: `${data.userName} joined the room`, isSystem: true });
+    }
+
+    if (data.type === "user-left") {
+       currentRoomUsers.delete(data.userId);
+       updateGuestWaitingUI();
+       appendMessage({ senderName: "System", text: `A user left the room`, isSystem: true });
+    }
+
     if (data.type === "room-updated") roomNameDisplay.textContent = data.name;
 
     if (data.type === "sync") {
+       if (data.action === "clear-chat") {
+           chatMessages.innerHTML = '';
+           return;
+       }
+
+       if (data.action === "remove-video") {
+           currentVideoUrl = null;
+           currentVideoFile = null;
+           mainVideo.src = "";
+           mainVideo.pause();
+           playerWrapper.classList.add('hidden');
+           
+           // Clear chats on sync sync
+           chatMessages.innerHTML = '';
+           
+           const iAmOwner = currentUserDoc && currentUserDoc.roomCode === currentRoomId;
+           if(iAmOwner) {
+               sourceUi.classList.remove('hidden');
+               if(waitingUi) waitingUi.classList.add('hidden');
+           } else {
+               sourceUi.classList.add('hidden');
+               if(waitingUi) {
+                   waitingUi.classList.remove('hidden');
+                   updateGuestWaitingUI();
+               }
+           }
+           return;
+       }
+
        if (data.videoUrl && data.videoUrl !== currentVideoUrl && !currentVideoFile) handleNewUrl(data.videoUrl, false);
 
        isUpdating = true;

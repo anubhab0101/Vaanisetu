@@ -95,7 +95,7 @@ async function startServer() {
             // Send current room state back to the joiner
             ws.send(JSON.stringify({
               type: "room-state",
-              room: roomData
+              room: roomData // messages is not used anymore for history
             }));
             
             // Notify others
@@ -114,6 +114,11 @@ async function startServer() {
                 r.videoState.videoUrl = message.videoUrl;
                 r.videoState.currentTime = 0;
                 r.videoState.isPlaying = false;
+              } else if (message.action === "remove-video") {
+                r.videoState.videoUrl = null;
+                r.videoState.currentTime = 0;
+                r.videoState.isPlaying = false;
+                // No messages to clear anymore
               } else if (message.action === "play" || message.action === "pause" || message.action === "seek") {
                 r.videoState.currentTime = message.time;
                 r.videoState.isPlaying = message.action === "play";
@@ -158,7 +163,8 @@ async function startServer() {
                 senderName: message.userName || 'Guest',
                 timestamp: Date.now()
               };
-              rooms.get(currentRoomId).messages.push(newMsg);
+              // Note: We no longer store messages in `rooms.get(currentRoomId).messages.push(newMsg)`
+              // This ensures new guests do not receive past chat history (Approach B).
 
               connections.get(currentRoomId).forEach(client => {
                 if (client.readyState === WebSocket.OPEN) {
