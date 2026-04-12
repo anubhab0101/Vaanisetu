@@ -441,6 +441,29 @@ async function startServer() {
     }
   });
 
+  app.get('/api/check-room-access', async (req, res) => {
+    try {
+      const { roomCode } = req.query;
+      if (!adminDb || !roomCode) return res.status(400).json({ error: "Missing parameters" });
+
+      const cleanCode = roomCode.trim().toUpperCase();
+      const usersRef = adminDb.collection('users');
+      const snap = await usersRef.where('roomCode', '==', cleanCode).get();
+      
+      if (snap.empty) {
+        return res.json({ success: false, hostSubscribed: false, error: "Room not found" });
+      }
+
+      const hostData = snap.docs[0].data();
+      const isValid = hostData.activeSubscription && hostData.subscriptionExpiry > Date.now();
+
+      return res.json({ success: true, hostSubscribed: !!isValid });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Failed to check room access" });
+    }
+  });
+
   const publicPath = path.join(process.cwd(), 'public');
   app.use(express.static(publicPath));
   

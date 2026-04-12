@@ -40,6 +40,7 @@ let isUpdating = false;
 let ws = null;
 let currentRoomUsers = new Set();
 let currentRoomOwnerUid = null;
+let currentGuestAccessRoom = null; // Stores room code if guest pass granted
 
 // Views
 const authView = document.getElementById('auth-view');
@@ -56,6 +57,9 @@ const btnPayMonthly = document.getElementById('btn-pay-monthly');
 const accessCodeInput = document.getElementById('access-code-input');
 const btnRedeemCode = document.getElementById('btn-redeem-code');
 const redeemMsg = document.getElementById('redeem-msg');
+const guestRoomInput = document.getElementById('guest-room-input');
+const btnJoinGuestRoom = document.getElementById('btn-join-guest-room');
+const guestJoinMsg = document.getElementById('guest-join-msg');
 
 // Admin Elements
 const btnAdminDash = document.getElementById('btn-admin-dash');
@@ -348,18 +352,44 @@ function hasValidAccess() {
 function checkAccessAndRoute() {
     if (adminView && !adminView.classList.contains('hidden')) return; // let them stay in admin view
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const joinCode = urlParams.get('join') ? urlParams.get('join').toUpperCase() : null;
+
+    if (!hasValidAccess() && joinCode) {
+        // Evaluate if joinCode's owner is subbed
+        fetch(`/api/check-room-access?roomCode=${joinCode}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.hostSubscribed) {
+                    currentGuestAccessRoom = joinCode;
+                    paymentView.classList.add('hidden');
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    showRoom(joinCode);
+                } else {
+                    dashView.classList.add('hidden');
+                    roomView.classList.add('hidden');
+                    paymentView.classList.remove('hidden');
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            })
+            .catch(e => {
+                dashView.classList.add('hidden');
+                roomView.classList.add('hidden');
+                paymentView.classList.remove('hidden');
+            });
+        return; // wait for fetch
+    }
+
     if (!hasValidAccess()) {
         dashView.classList.add('hidden');
         roomView.classList.add('hidden');
         paymentView.classList.remove('hidden');
+        currentGuestAccessRoom = null;
     } else {
         paymentView.classList.add('hidden');
-        const urlParams = new URLSearchParams(window.location.search);
-        const joinCode = urlParams.get('join');
-        
         if (joinCode && !currentRoomId) {
             window.history.replaceState({}, document.title, window.location.pathname);
-            showRoom(joinCode.toUpperCase());
+            showRoom(joinCode);
         } else if (!currentRoomId) {
             dashView.classList.remove('hidden');
         }
@@ -459,6 +489,46 @@ if (btnRedeemCode) {
         
         btnRedeemCode.textContent = 'Redeem';
         btnRedeemCode.disabled = false;
+    });
+}
+
+// Guest Room Check
+if (btnJoinGuestRoom) {
+    btnJoinGuestRoom.addEventListener('click', async () => {
+        const code = guestRoomInput.value.trim().toUpperCase();
+        guestJoinMsg.classList.remove('hidden');
+        if (code.length < 5) {
+            guestJoinMsg.textContent = "Invalid room code.";
+            guestJoinMsg.className = "text-xs mt-3 text-red-500";
+            return;
+        }
+
+        btnJoinGuestRoom.textContent = '...';
+        btnJoinGuestRoom.disabled = true;
+
+        try {
+            const res = await fetch(`/api/check-room-access?roomCode=${code}`);
+            const data = await res.json();
+            
+            if (data.success && data.hostSubscribed) {
+                guestJoinMsg.textContent = "Guest Pass Granted! Joining...";
+                guestJoinMsg.className = "text-xs mt-3 text-green-500";
+                currentGuestAccessRoom = code;
+                setTimeout(() => {
+                    paymentView.classList.add('hidden');
+                    showRoom(code);
+                }, 500);
+            } else {
+                guestJoinMsg.textContent = data.error || "Room owner does not have an active pass.";
+                guestJoinMsg.className = "text-xs mt-3 text-red-500";
+            }
+        } catch (e) {
+            guestJoinMsg.textContent = "Error checking room access.";
+            guestJoinMsg.className = "text-xs mt-3 text-red-500";
+        }
+        
+        btnJoinGuestRoom.textContent = 'Join Free';
+        btnJoinGuestRoom.disabled = false;
     });
 }
 
@@ -859,7 +929,7 @@ const formatVideoUrl = (url) => {
 window.joinFriendRoom = function(code) { showRoom(code); }
 
 function showRoom(roomId, url = null, file = null) {
-  if (!hasValidAccess()) return checkAccessAndRoute(); // strictly prevent force opening 
+  if (!hasValidAccess() && currentGuestAccessRoom !== roomId) return checkAccessAndRoute(); // strictly prevent force opening 
 
   sessionUserName = currentUser?.displayName || 'Guest';
   currentRoomId = roomId;
@@ -882,7 +952,10 @@ function leaveRoom() {
   chatMessages.innerHTML = '';
   
   roomView.classList.add('hidden');
-  dashView.classList.remove('hidden');
+  
+  // Clear guest state when leaving to force re-evaluation of gatekeeper
+  currentGuestAccessRoom = null; 
+  checkAccessAndRoute(); // This will show Dashboard if valid, or Payment wall if unauthorized
   
   initWebSocket(true); // fall back to presence mode
 }
