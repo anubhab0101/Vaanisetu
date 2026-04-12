@@ -540,6 +540,7 @@ if (btnAdminDash) {
         paymentView.classList.add('hidden');
         adminView.classList.remove('hidden');
         loadAdminLedger();
+        loadCodeUsers();
     });
 }
 if (btnAdminClose) {
@@ -686,7 +687,8 @@ async function manageUserSubscription(userId, action, btn, extendDays) {
                 btn.textContent = originalText; 
                 btn.classList.remove('text-green-500'); 
                 btn.disabled = false; 
-                loadAdminLedger(); // refresh to show cancelled status
+                loadAdminLedger();
+                loadCodeUsers(); // refresh both tables
             }, 1000);
         } else {
             throw new Error(data.error);
@@ -695,6 +697,60 @@ async function manageUserSubscription(userId, action, btn, extendDays) {
         alert("Failed to update user: " + e.message);
         btn.textContent = originalText;
         btn.disabled = false;
+    }
+}
+
+async function loadCodeUsers() {
+    const container = document.getElementById('code-users-body');
+    if (!container) return;
+    container.innerHTML = '<tr><td colspan="5" class="py-8 text-center italic text-zinc-600">Loading...</td></tr>';
+    try {
+        const res = await fetch(`/api/code-users?adminEmail=${encodeURIComponent(currentUser.email)}`);
+        const data = await res.json();
+
+        if (!data.success || !data.users || data.users.length === 0) {
+            container.innerHTML = '<tr><td colspan="5" class="py-8 text-center italic text-zinc-600">No access-code users found.</td></tr>';
+            return;
+        }
+
+        container.innerHTML = '';
+        for (const u of data.users) {
+            const expDate = new Date(u.subscriptionExpiry);
+            const isExpired = u.subscriptionExpiry < Date.now();
+            const expStr = `<div class="font-bold ${isExpired ? 'text-red-400' : 'text-green-400'}">${expDate.toLocaleDateString()}</div><div class="text-[0.65rem] text-zinc-500">${expDate.toLocaleTimeString()}</div>`;
+            const statusBadge = isExpired
+                ? '<span class="bg-red-500/10 text-red-400 border border-red-900 px-2 py-0.5 rounded-full text-xs font-bold">Expired</span>'
+                : '<span class="bg-green-500/10 text-green-400 border border-green-900 px-2 py-0.5 rounded-full text-xs font-bold">Active</span>';
+
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-[#121214] transition-colors group';
+            tr.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-white font-bold">${u.displayName}</td>
+                <td class="px-6 py-4 mono text-xs text-zinc-500 whitespace-nowrap group-hover:text-zinc-400">${u.userId}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${expStr}</td>
+                <td class="px-6 py-4 text-right flex items-center justify-end gap-2 whitespace-nowrap">
+                    <button class="cu-cancel hover-bg text-red-500 border border-red-900 bg-red-500/10 rounded px-2 py-1 text-xs transition-all hover:bg-red-500/30">Terminate</button>
+                    <select class="cu-days bg-zinc-900 border border-zinc-700 text-white rounded px-1 py-1 text-xs">
+                        <option value="1">1 Day</option><option value="3">3 Days</option>
+                        <option value="7">7 Days</option><option value="30">30 Days</option>
+                    </select>
+                    <button class="cu-extend border border-zinc-700 text-zinc-300 hover-bg rounded px-2 py-1 text-xs transition-all">Extend</button>
+                </td>
+            `;
+
+            const btnCancel = tr.querySelector('.cu-cancel');
+            const btnExtend = tr.querySelector('.cu-extend');
+            const selectDays = tr.querySelector('.cu-days');
+
+            btnCancel.onclick = () => manageUserSubscription(u.userId, 'cancel', btnCancel, null);
+            btnExtend.onclick = () => manageUserSubscription(u.userId, 'extend', btnExtend, selectDays.value);
+
+            container.appendChild(tr);
+        }
+    } catch(e) {
+        console.error(e);
+        container.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-red-500">Error loading code users.</td></tr>';
     }
 }
 
@@ -942,6 +998,9 @@ function showRoom(roomId, url = null, file = null) {
 }
 
 function leaveRoom() {
+  if (ws && ws.readyState === WebSocket.OPEN && currentRoomId) {
+      ws.send(JSON.stringify({ type: "leave", roomId: currentRoomId }));
+  }
   currentRoomId = null;
   currentVideoUrl = null;
   currentVideoFile = null;
@@ -982,6 +1041,11 @@ function handleNewUrl(formattedUrl, broadcast = false) {
   mainVideo.src = formattedUrl;
   settingsModal.classList.add('hidden');
 
+  // Video loaded - ALWAYS show chat FAB for everyone
+  if (btnChatFab) btnChatFab.style.display = 'flex';
+  const fabContainer = document.getElementById('chat-fab-container');
+  if (fabContainer) fabContainer.style.display = 'flex';
+
   if (broadcast && ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({ type: "sync", action: "update-url", videoUrl: formattedUrl, time: 0, timestamp: Date.now() }));
   }
@@ -995,6 +1059,10 @@ function updateGuestPermissions() {
   } else if (btnPlayerSettings) {
       btnPlayerSettings.classList.remove('hidden');
   }
+  // Chat FAB should always be visible for EVERYONE in the room
+  if (btnChatFab) btnChatFab.style.display = 'flex';
+  const fabContainer = document.getElementById('chat-fab-container');
+  if (fabContainer) fabContainer.style.display = 'flex';
 }
 
 roomUrlInput.addEventListener('keydown', (e) => {
@@ -1198,6 +1266,10 @@ function initWebSocket(isPresenceOnly = false) {
 
        if (data.room.videoState.videoUrl && !currentVideoFile) {
            handleNewUrl(data.room.videoState.videoUrl, false);
+           // Video chal raha hai — chat FAB sabko dikhao
+           if (btnChatFab) btnChatFab.style.display = 'flex';
+           const fabContainer = document.getElementById('chat-fab-container');
+           if (fabContainer) fabContainer.style.display = 'flex';
        } else if (!data.room.videoState.videoUrl) {
            currentVideoUrl = null;
            currentVideoFile = null;
@@ -1207,12 +1279,20 @@ function initWebSocket(isPresenceOnly = false) {
            if(iAmOwner) {
                sourceUi.classList.remove('hidden');
                if(waitingUi) waitingUi.classList.add('hidden');
+               // Host ko chat dikho
+               if (btnChatFab) btnChatFab.style.display = 'flex';
+               const fabContainer = document.getElementById('chat-fab-container');
+               if (fabContainer) fabContainer.style.display = 'flex';
            } else {
                sourceUi.classList.add('hidden');
                if(waitingUi) {
                   waitingUi.classList.remove('hidden');
                   updateGuestWaitingUI();
                }
+               // Guest ko chat hide karo jab video na ho
+               if (btnChatFab) btnChatFab.style.display = 'none';
+               const fabContainer = document.getElementById('chat-fab-container');
+               if (fabContainer) fabContainer.style.display = 'none';
            }
        }
        mainVideo.currentTime = data.room.videoState.currentTime;
@@ -1223,13 +1303,13 @@ function initWebSocket(isPresenceOnly = false) {
     if (data.type === "user-joined") {
        currentRoomUsers.add(data.userId);
        updateGuestWaitingUI();
-       appendMessage({ senderName: "System", text: `${data.userName} joined the room`, isSystem: true });
+       appendSystemMessage(`${data.userName} joined the room`);
     }
 
     if (data.type === "user-left") {
        currentRoomUsers.delete(data.userId);
        updateGuestWaitingUI();
-       appendMessage({ senderName: "System", text: `A user left the room`, isSystem: true });
+       appendSystemMessage(`${data.userName || 'A user'} left the room`);
     }
 
     if (data.type === "room-updated") roomNameDisplay.textContent = data.name;
@@ -1254,12 +1334,20 @@ function initWebSocket(isPresenceOnly = false) {
            if(iAmOwner) {
                sourceUi.classList.remove('hidden');
                if(waitingUi) waitingUi.classList.add('hidden');
+               // Host always sees chat
+               if (btnChatFab) btnChatFab.style.display = 'flex';
+               const fabContainer = document.getElementById('chat-fab-container');
+               if (fabContainer) fabContainer.style.display = 'flex';
            } else {
                sourceUi.classList.add('hidden');
                if(waitingUi) {
                    waitingUi.classList.remove('hidden');
                    updateGuestWaitingUI();
                }
+               // Guest has no chat when there is no video
+               if (btnChatFab) btnChatFab.style.display = 'none';
+               const fabContainer = document.getElementById('chat-fab-container');
+               if (fabContainer) fabContainer.style.display = 'none';
            }
            return;
        }

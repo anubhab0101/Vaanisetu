@@ -218,6 +218,30 @@ async function startServer() {
             }
             break;
           }
+          case "leave": {
+            if (currentRoomId && connections.has(currentRoomId)) {
+               connections.get(currentRoomId).delete(ws);
+               
+               if (connections.get(currentRoomId).size === 0) {
+                 connections.delete(currentRoomId);
+                 rooms.delete(currentRoomId);
+               } else {
+                 let leftUserName = 'A user';
+                 if (rooms.has(currentRoomId) && rooms.get(currentRoomId).users[currentUserId]) {
+                    leftUserName = rooms.get(currentRoomId).users[currentUserId].displayName;
+                    delete rooms.get(currentRoomId).users[currentUserId];
+                 }
+
+                 connections.get(currentRoomId).forEach(client => {
+                   if (client.readyState === WebSocket.OPEN) {
+                     client.send(JSON.stringify({ type: "user-left", userId: currentUserId, userName: leftUserName }));
+                   }
+                 });
+               }
+               currentRoomId = null;
+            }
+            break;
+          }
         }
       } catch (e) {
         console.error("WS error:", e);
@@ -238,10 +262,17 @@ async function startServer() {
         
         if (connections.get(currentRoomId).size === 0) {
           connections.delete(currentRoomId);
+          rooms.delete(currentRoomId);
         } else {
+          let leftUserName = 'A user';
+          if (rooms.has(currentRoomId) && rooms.get(currentRoomId).users[currentUserId]) {
+             leftUserName = rooms.get(currentRoomId).users[currentUserId].displayName;
+             delete rooms.get(currentRoomId).users[currentUserId];
+          }
+
           connections.get(currentRoomId).forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify({ type: "user-left", userId: currentUserId }));
+              client.send(JSON.stringify({ type: "user-left", userId: currentUserId, userName: leftUserName }));
             }
           });
         }
@@ -435,6 +466,35 @@ async function startServer() {
       }
 
       res.json({ success: true });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/code-users', async (req, res) => {
+    try {
+      const { adminEmail } = req.query;
+      if (adminEmail !== 'anubhabmohapatra.01@gmail.com') return res.status(403).json({ error: "Unauthorized" });
+
+      const snap = await adminDb.collection('users')
+        .where('activeSubscription', '==', 'access-code')
+        .get();
+
+      const users = [];
+      snap.forEach(doc => {
+        const d = doc.data();
+        users.push({
+          userId: doc.id,
+          displayName: d.displayName || 'Unknown',
+          email: d.email || '',
+          roomCode: d.roomCode || '',
+          subscriptionExpiry: d.subscriptionExpiry || 0,
+          activeSubscription: d.activeSubscription
+        });
+      });
+
+      res.json({ success: true, users });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: err.message });
