@@ -10,6 +10,7 @@
   <title>Vaanisethu.online</title>
   <link rel="icon" type="image/png" href="/logo.png">
   <link rel="stylesheet" href="/style.css?v=2">
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
 
@@ -63,6 +64,134 @@
     </div>
   </div>
 
+  <!-- Subscription/Payment View -->
+  <div id="payment-view" class="view hidden min-h-screen items-center justify-center fade-in">
+    <div class="header-center mx-auto fade-down text-center w-full px-4">
+      <h1 class="gradient-text mb-2">Select Your Access Pass</h1>
+      <p class="subtitle text-zinc-400 mb-8 max-w-lg mx-auto">Vaanisetu requires an active subscription. Choose a plan that works for you or redeem an access code.</p>
+      
+      <div class="card-grid max-w-4xl mx-auto gap-6 mb-8 text-left" style="align-items: stretch; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+        
+        <!-- One Time -->
+        <div class="card premium-card" style="display:flex;flex-direction:column;justify-content:space-between;">
+           <div>
+               <h3 class="text-white text-xl font-bold mb-2">24-Hour Pass</h3>
+               <p class="text-zinc-400 text-sm mb-4">Full access for 1 day.</p>
+               <div class="text-3xl text-orange font-bold mb-6">₹50</div>
+               <ul class="text-zinc-300 text-sm mb-6 space-y-2">
+                 <li>✓ Unlimited Watch Time</li>
+                 <li>✓ HD Sync</li>
+               </ul>
+           </div>
+           <button class="btn btn-outline hover-bg w-full" id="btn-pay-one-time">Select Pass</button>
+        </div>
+
+        <!-- Weekly -->
+        <div class="card premium-card border-orange" style="display:flex;flex-direction:column;justify-content:space-between; box-shadow: 0 0 20px rgba(249, 115, 22, 0.15);">
+           <div>
+               <div class="text-xs uppercase bg-orange text-white inline-block px-2 py-1 rounded font-bold mb-2">Popular</div>
+               <h3 class="text-white text-xl font-bold mb-2">Weekly Pass</h3>
+               <p class="text-zinc-400 text-sm mb-4">Best for weekend binges.</p>
+               <div class="text-3xl text-orange font-bold mb-6">₹150 <span class="text-sm font-normal text-zinc-500">/week</span></div>
+               <ul class="text-zinc-300 text-sm mb-6 space-y-2">
+                 <li>✓ Full Access for 7 Days</li>
+                 <li>✓ Invite Unlimited Friends</li>
+               </ul>
+           </div>
+           <button class="btn btn-primary w-full" id="btn-pay-weekly">Select Weekly</button>
+        </div>
+
+        <!-- Monthly -->
+        <div class="card premium-card" style="display:flex;flex-direction:column;justify-content:space-between;">
+           <div>
+               <h3 class="text-white text-xl font-bold mb-2">Monthly Pass</h3>
+               <p class="text-zinc-400 text-sm mb-4">For the true cinephiles.</p>
+               <div class="text-3xl text-orange font-bold mb-6">₹400 <span class="text-sm font-normal text-zinc-500">/month</span></div>
+               <ul class="text-zinc-300 text-sm mb-6 space-y-2">
+                 <li>✓ 30 Days of Access</li>
+                 <li>✓ Support the Developer</li>
+               </ul>
+           </div>
+           <button class="btn btn-outline hover-bg w-full" id="btn-pay-monthly">Select Monthly</button>
+        </div>
+      </div>
+
+      <div class="card max-w-md mx-auto">
+         <h4 class="text-white font-bold mb-2">Have a Free Access Code?</h4>
+         <div class="flex gap-2 w-full mt-4">
+             <input type="text" id="access-code-input" class="input w-full text-center mono uppercase" placeholder="Enter 16-digit code">
+             <button id="btn-redeem-code" class="btn btn-secondary">Redeem</button>
+         </div>
+         <p id="redeem-msg" class="text-xs mt-3 hidden"></p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Admin View -->
+  <div id="admin-view" class="view hidden min-h-screen fade-in">
+      <div class="max-w-6xl mx-auto w-full">
+         <div class="flex items-center justify-between mb-8">
+             <h1 class="gradient-text text-2xl m-0 flex items-center gap-3">
+                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                 Developer Dashboard
+             </h1>
+             <button id="btn-admin-close" class="btn btn-outline px-4 py-2 text-sm">Return Home</button>
+         </div>
+         
+         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+             <!-- Code Generator -->
+             <div class="card flex flex-col gap-4 col-span-1 border border-zinc-800 bg-zinc-900/50">
+                 <h2 class="text-lg text-white m-0">Generate Access Code</h2>
+                 <p class="text-sm text-zinc-400 m-0 mb-2">Create a 16-digit pass to bypass payment.</p>
+                 
+                 <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold">Validity / Duration</label>
+                 <select id="admin-code-duration" class="input w-full bg-black mb-2">
+                     <option value="1">1 Day</option>
+                     <option value="7">7 Days</option>
+                     <option value="30">30 Days</option>
+                     <option value="3650">Lifetime (10 Yrs)</option>
+                 </select>
+                 
+                 <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold">Max Uses</label>
+                 <input type="number" id="admin-code-uses" class="input w-full bg-black mb-4" value="1" min="1">
+                 
+                 <button id="btn-admin-generate-code" class="btn btn-primary w-full shadow-[0_0_15px_rgba(249,115,22,0.3)]">Generate Code</button>
+                 
+                 <div id="admin-code-result" class="mt-4 p-4 rounded-lg bg-zinc-950 border border-zinc-800 text-center hidden">
+                     <span class="text-xs text-green-500 uppercase font-bold block mb-2">Code Generated Successfully</span>
+                     <span class="mono text-lg text-white tracking-widest block" id="admin-new-code">xxxx-xxxx-xxxx-xxxx</span>
+                 </div>
+             </div>
+
+             <!-- Purchase Ledger -->
+             <div class="card col-span-1 lg:col-span-2 border border-zinc-800 bg-zinc-900/30 flex flex-col h-full overflow-hidden" style="padding: 0; align-items: stretch; text-align: left;">
+                 <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
+                     <h2 class="text-lg text-white m-0 font-bold tracking-tight">Purchase Ledger</h2>
+                     <button id="btn-admin-refresh-ledger" class="icon-btn hover-bg bg-black shadow-inner border border-zinc-800" style="width: 32px; height: 32px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 2v6h6"/></svg></button>
+                 </div>
+                 <div class="overflow-x-auto overflow-y-auto flex-1 custom-scrollbar bg-[#0a0a0a]" style="max-height: 400px; -webkit-overflow-scrolling: touch;">
+                     <table class="w-full text-left text-sm text-zinc-400" style="min-width: 800px;">
+                         <thead class="bg-zinc-900/80 sticky top-0 z-10 backdrop-blur border-b border-zinc-800 text-zinc-500 text-[0.7rem] uppercase tracking-wider">
+                             <tr>
+                                 <th class="px-6 py-3 font-semibold">Date & Time</th>
+                                 <th class="px-6 py-3 font-semibold">User ID</th>
+                                 <th class="px-6 py-3 font-semibold">Tier</th>
+                                 <th class="px-6 py-3 font-semibold">Amount</th>
+                                 <th class="px-6 py-3 font-semibold">Order ID</th>
+                                 <th class="px-6 py-3 font-semibold text-right">Actions</th>
+                             </tr>
+                         </thead>
+                         <tbody id="admin-ledger-body" class="divide-y divide-zinc-800/50">
+                             <tr><td colspan="6" class="py-10 text-center italic text-zinc-600">Loading data...</td></tr>
+                         </tbody>
+                     </table>
+                 </div>
+             </div>
+         </div>
+      </div>
+  </div>
+
   <!-- Dashboard View -->
   <div id="dashboard-view" class="view hidden min-h-screen items-center justify-center fade-in relative">
     
@@ -71,6 +200,7 @@
        <div class="dash-user-pill">
            <span id="dashboard-user-name" class="dash-user-name"></span>
            <div class="dash-divider"></div>
+           <button id="btn-admin-dash" class="hover-text text-green-500 text-sm pointer bg-transparent border-none font-bold hidden mr-3" style="margin-right: 0.5rem">Admin</button>
            <button id="btn-logout" class="hover-text text-orange text-sm pointer bg-transparent border-none font-bold">Sign Out</button>
        </div>
     </div>

@@ -46,6 +46,27 @@ const authView = document.getElementById('auth-view');
 const setupProfileView = document.getElementById('setup-profile-view');
 const dashView = document.getElementById('dashboard-view');
 const roomView = document.getElementById('room-view');
+const paymentView = document.getElementById('payment-view');
+const adminView = document.getElementById('admin-view');
+
+// Payment Elements
+const btnPayOneTime = document.getElementById('btn-pay-one-time');
+const btnPayWeekly = document.getElementById('btn-pay-weekly');
+const btnPayMonthly = document.getElementById('btn-pay-monthly');
+const accessCodeInput = document.getElementById('access-code-input');
+const btnRedeemCode = document.getElementById('btn-redeem-code');
+const redeemMsg = document.getElementById('redeem-msg');
+
+// Admin Elements
+const btnAdminDash = document.getElementById('btn-admin-dash');
+const btnAdminClose = document.getElementById('btn-admin-close');
+const adminCodeDuration = document.getElementById('admin-code-duration');
+const adminCodeUses = document.getElementById('admin-code-uses');
+const btnAdminGenerateCode = document.getElementById('btn-admin-generate-code');
+const adminCodeResult = document.getElementById('admin-code-result');
+const adminNewCode = document.getElementById('admin-new-code');
+const btnAdminRefreshLedger = document.getElementById('btn-admin-refresh-ledger');
+const adminLedgerBody = document.getElementById('admin-ledger-body');
 
 // Auth Elements
 const authForm = document.getElementById('auth-form');
@@ -223,20 +244,12 @@ btnSaveProfile.addEventListener('click', async () => {
 
         sessionUserName = name;
         if(dashboardUserName) dashboardUserName.textContent = `Hi, ${name}`;
-        setupProfileView.classList.add('hidden');
         
         listenToUserDoc();
         initWebSocket(true);
 
-        // Process Deep Link
-        const urlParams = new URLSearchParams(window.location.search);
-        const joinCode = urlParams.get('join');
-        if (joinCode) {
-            window.history.replaceState({}, document.title, window.location.pathname);
-            showRoom(joinCode.toUpperCase());
-        } else {
-            dashView.classList.remove('hidden');
-        }
+        // Security fix: previously blindly routed to dashView/room, now routes via gatekeeper
+        checkAccessAndRoute();
     } catch (e) {
         console.error(e);
         btnSaveProfile.textContent = "Error";
@@ -273,17 +286,13 @@ onAuthStateChanged(auth, async (user) => {
                 if(dashboardUserName) dashboardUserName.textContent = `Hi, ${currentUserDoc.displayName}`;
                 setupProfileView.classList.add('hidden');
                 
-                // Handle Deep Link Routing
-                const urlParams = new URLSearchParams(window.location.search);
-                const joinCode = urlParams.get('join');
-                
-                if (joinCode && !currentRoomId) {
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    showRoom(joinCode.toUpperCase());
-                } else if (!currentRoomId) {
-                    dashView.classList.remove('hidden');
+                if (user.email === 'anubhabmohapatra.01@gmail.com') {
+                    btnAdminDash.classList.remove('hidden');
+                } else {
+                    btnAdminDash.classList.add('hidden');
                 }
 
+                checkAccessAndRoute();
                 listenToUserDoc();
             }
         } catch (err) {
@@ -297,6 +306,7 @@ onAuthStateChanged(auth, async (user) => {
         currentUser = null;
         if (ws) { ws.close(); ws = null; currentRoomId = null; }
         roomView.classList.add('hidden'); dashView.classList.add('hidden'); setupProfileView.classList.add('hidden');
+        paymentView.classList.add('hidden'); adminView.classList.add('hidden');
         authView.classList.remove('hidden'); authError.classList.add('hidden');
         authError.classList.remove('bg-green-900', 'text-green-500'); authError.classList.add('bg-red-900', 'text-red-500');
         if(unsubscribeDoc) unsubscribeDoc();
@@ -313,12 +323,308 @@ function listenToUserDoc() {
             
             renderFriendRequests(currentUserDoc.friendRequests || []);
             renderFriends(currentUserDoc.friends || []);
+            
+            // Unconditionally re-check access. If subscription expires while they are in app, they get kicked out.
+            // If they are on the payment view and just got subbed, they are routed to dashboard.
+            checkAccessAndRoute();
         }
     });
 
     // Refresh presence logic for friends periodically or if friends change
     if(ws && ws.readyState === WebSocket.OPEN && currentUserDoc && currentUserDoc.friends) {
         ws.send(JSON.stringify({ type: "subscribe-presence", friendIds: currentUserDoc.friends }));
+    }
+}
+
+// ==== ACCESS GATEKEEPER & PAYMENTS ====
+function hasValidAccess() {
+    if (currentUser.email === 'anubhabmohapatra.01@gmail.com') return true;
+    if (currentUserDoc && currentUserDoc.activeSubscription && currentUserDoc.subscriptionExpiry) {
+        if (Date.now() < currentUserDoc.subscriptionExpiry) return true;
+    }
+    return false;
+}
+
+function checkAccessAndRoute() {
+    if (adminView && !adminView.classList.contains('hidden')) return; // let them stay in admin view
+
+    if (!hasValidAccess()) {
+        dashView.classList.add('hidden');
+        roomView.classList.add('hidden');
+        paymentView.classList.remove('hidden');
+    } else {
+        paymentView.classList.add('hidden');
+        const urlParams = new URLSearchParams(window.location.search);
+        const joinCode = urlParams.get('join');
+        
+        if (joinCode && !currentRoomId) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            showRoom(joinCode.toUpperCase());
+        } else if (!currentRoomId) {
+            dashView.classList.remove('hidden');
+        }
+    }
+}
+
+async function initiateCheckout(plan, amount) {
+    try {
+        const orderRes = await fetch('/api/create-order', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ plan, amount })
+        });
+        const order = await orderRes.json();
+        
+        if (!order || !order.id) throw new Error("Failed to create order");
+
+        const options = {
+            key: order.keyId,
+            amount: order.amount,
+            currency: "INR",
+            name: "Vaanisetu",
+            description: `${plan} Access`,
+            order_id: order.id,
+            handler: async function (response) {
+                // Verify payment
+                const verifyRes = await fetch('/api/verify-payment', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature,
+                        userId: currentUser.uid,
+                        plan: plan,
+                        amount: amount
+                    })
+                });
+                const verifyData = await verifyRes.json();
+                if (verifyData.success) {
+                    showCustomAlert("Success", "Payment successful! Your pass is active.");
+                    // listenToUserDoc will trigger checkAccessAndRoute() automatically
+                } else {
+                    showCustomAlert("Error", "Payment verification failed.");
+                }
+            },
+            prefill: { email: currentUser.email },
+            theme: { color: "#F97316" }
+        };
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+    } catch (e) {
+        console.error(e);
+        showCustomAlert("Error", "Could not initiate payment: " + e.message);
+    }
+}
+
+if (btnPayOneTime) btnPayOneTime.addEventListener('click', () => initiateCheckout('one-time', 50));
+if (btnPayWeekly) btnPayWeekly.addEventListener('click', () => initiateCheckout('weekly', 150));
+if (btnPayMonthly) btnPayMonthly.addEventListener('click', () => initiateCheckout('monthly', 400));
+
+// Access Code Redemption
+if (btnRedeemCode) {
+    btnRedeemCode.addEventListener('click', async () => {
+        const code = accessCodeInput.value.trim().toUpperCase();
+        redeemMsg.classList.remove('hidden');
+        if (code.length !== 19 && code.length !== 16) { // Account for XXXX-XXXX-XXXX-XXXX
+            redeemMsg.textContent = "Invalid code format.";
+            redeemMsg.className = "text-xs mt-3 text-red-500";
+            return;
+        }
+        
+        btnRedeemCode.textContent = '...';
+        btnRedeemCode.disabled = true;
+
+        try {
+            const res = await fetch('/api/redeem-code', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ code: code, userId: currentUser.uid })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                redeemMsg.textContent = "Code redeemed successfully!";
+                redeemMsg.className = "text-xs mt-3 text-green-500";
+                // The `listenToUserDoc` snapshot will automatically pick up the new expiry date and route to dashboard!
+            } else {
+                redeemMsg.textContent = data.error || "Error redeeming code.";
+                redeemMsg.className = "text-xs mt-3 text-red-500";
+            }
+        } catch (e) {
+            console.error(e);
+            redeemMsg.textContent = "Error redeeming code.";
+            redeemMsg.className = "text-xs mt-3 text-red-500";
+        }
+        
+        btnRedeemCode.textContent = 'Redeem';
+        btnRedeemCode.disabled = false;
+    });
+}
+
+// ==== ADMIN DASHBOARD ROUTING ====
+if (btnAdminDash) {
+    btnAdminDash.addEventListener('click', () => {
+        dashView.classList.add('hidden');
+        roomView.classList.add('hidden');
+        paymentView.classList.add('hidden');
+        adminView.classList.remove('hidden');
+        loadAdminLedger();
+    });
+}
+if (btnAdminClose) {
+    btnAdminClose.addEventListener('click', () => {
+        adminView.classList.add('hidden');
+        checkAccessAndRoute();
+    });
+}
+
+if (btnAdminGenerateCode) {
+    btnAdminGenerateCode.addEventListener('click', async () => {
+        const dur = parseInt(adminCodeDuration.value) || 1;
+        const uses = parseInt(adminCodeUses.value) || 1;
+        
+        // Generate random 16 chars
+        const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let newCode = '';
+        for(let i=0; i<16; i++) {
+           newCode += charset.charAt(Math.floor(Math.random() * charset.length));
+        }
+
+        try {
+            const res = await fetch('/api/generate-code', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                   durationDays: dur,
+                   maxUses: uses,
+                   adminEmail: currentUser.email
+                })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                adminNewCode.textContent = data.code.match(/.{1,4}/g).join('-');
+                adminCodeResult.classList.remove('hidden');
+            } else {
+                throw new Error(data.error);
+            }
+        } catch(e) {
+            console.error(e);
+            showCustomAlert("Error", "Could not generate code: " + e.message);
+        }
+    });
+}
+
+if (btnAdminRefreshLedger) {
+    btnAdminRefreshLedger.addEventListener('click', loadAdminLedger);
+}
+
+async function loadAdminLedger() {
+    if (!adminLedgerBody) return;
+    adminLedgerBody.innerHTML = '<tr><td colspan="6" class="py-10 text-center italic text-zinc-600">Loading data...</td></tr>';
+    try {
+        const res = await fetch(`/api/ledger?adminEmail=${encodeURIComponent(currentUser.email)}`);
+        const data = await res.json();
+        
+        const thRow = adminLedgerBody.parentElement.querySelector('thead tr');
+        if (thRow && thRow.children.length === 5) {
+            const th = document.createElement('th');
+            th.className = "px-4 py-3 text-right";
+            th.textContent = "Actions";
+            thRow.appendChild(th);
+        }
+
+        if (!data.success || !data.payments || data.payments.length === 0) {
+            adminLedgerBody.innerHTML = '<tr><td colspan="6" class="py-10 text-center italic text-zinc-600">No purchases found.</td></tr>';
+            return;
+        }
+
+        adminLedgerBody.innerHTML = '';
+        const payments = data.payments;
+
+        for (const p of payments) {
+             const dt = p.timestamp ? new Date(p.timestamp._seconds * 1000) : null;
+             const timeStr = dt ? `<div class="font-bold">${dt.toLocaleDateString()}</div><div class="text-[0.65rem] text-zinc-500">${dt.toLocaleTimeString()}</div>` : 'N/A';
+             
+             const isCancelled = !p.currentSub || p.currentExp < Date.now();
+
+             let actionsHTML = '';
+             if (isCancelled) {
+                 actionsHTML = `
+                     <span class="text-red-500 font-bold text-xs mr-2">Cancelled</span>
+                     <select class="extend-days-select bg-zinc-900 border border-zinc-700 text-white rounded px-1 py-1 text-xs mr-1">
+                         <option value="1">1 Day</option><option value="3">3 Days</option>
+                         <option value="7">7 Days</option><option value="30">30 Days</option>
+                     </select>
+                     <button class="btn-admin-extend hover-bg text-blue bg-blue-bg border border-zinc-700 rounded px-2 py-1 text-xs transition-all hover:bg-blue/30">Extend</button>
+                 `;
+             } else {
+                 actionsHTML = `
+                     <button class="btn-admin-cancel hover-bg text-red-500 border border-red-900 bg-red-500/10 rounded px-2 py-1 text-xs mr-2 transition-all hover:bg-red-500/30">Cancel</button>
+                     <select class="extend-days-select bg-zinc-900 border border-zinc-700 text-white rounded px-1 py-1 text-xs mr-1">
+                         <option value="1">1 Day</option><option value="3">3 Days</option>
+                         <option value="7">7 Days</option><option value="30">30 Days</option>
+                     </select>
+                     <button class="btn-admin-extend hover-bg text-blue bg-blue-bg border border-zinc-700 rounded px-2 py-1 text-xs transition-all hover:bg-blue/30">Extend</button>
+                 `;
+             }
+
+             const tr = document.createElement('tr');
+             tr.className = "hover:bg-[#121214] transition-colors group";
+             tr.innerHTML = `
+                 <td class="px-6 py-4 whitespace-nowrap text-zinc-300 pointer-events-none">${timeStr}</td>
+                 <td class="px-6 py-4 mono text-xs text-zinc-500 whitespace-nowrap pointer-events-none group-hover:text-zinc-400 transition-colors">${p.userId}</td>
+                 <td class="px-6 py-4 capitalize whitespace-nowrap pointer-events-none"><span class="bg-orange/10 text-orange border border-orange/20 px-3 py-1 rounded-full text-xs font-bold tracking-wide">${p.plan}</span></td>
+                 <td class="px-6 py-4 text-green-400 font-bold whitespace-nowrap pointer-events-none">₹${p.amount}</td>
+                 <td class="px-6 py-4 mono text-[0.7rem] text-zinc-600 whitespace-nowrap pointer-events-none group-hover:text-zinc-400 transition-colors">${p.orderId}</td>
+                 <td class="px-6 py-4 text-right flex items-center justify-end whitespace-nowrap">
+                     ${actionsHTML}
+                 </td>
+             `;
+             
+             const btnCancel = tr.querySelector('.btn-admin-cancel');
+             const btnExtend = tr.querySelector('.btn-admin-extend');
+             const selectDays = tr.querySelector('.extend-days-select');
+             
+             if(btnCancel) btnCancel.onclick = () => manageUserSubscription(p.userId, 'cancel', btnCancel, null);
+             if(btnExtend) btnExtend.onclick = () => manageUserSubscription(p.userId, 'extend', btnExtend, selectDays.value);
+
+             adminLedgerBody.appendChild(tr);
+        }
+    } catch(e) {
+        console.error(e);
+        adminLedgerBody.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-red-500">Error loading ledger. Check server logs.</td></tr>';
+    }
+}
+
+async function manageUserSubscription(userId, action, btn, extendDays) {
+    const originalText = btn.textContent;
+    btn.textContent = '...';
+    btn.disabled = true;
+    try {
+        const res = await fetch('/api/admin-update-sub', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ adminEmail: currentUser.email, targetUserId: userId, action, extendDays })
+        });
+        const data = await res.json();
+        if (data.success) {
+            btn.textContent = 'Done';
+            btn.classList.add('text-green-500');
+            setTimeout(() => { 
+                btn.textContent = originalText; 
+                btn.classList.remove('text-green-500'); 
+                btn.disabled = false; 
+                loadAdminLedger(); // refresh to show cancelled status
+            }, 1000);
+        } else {
+            throw new Error(data.error);
+        }
+    } catch (e) {
+        alert("Failed to update user: " + e.message);
+        btn.textContent = originalText;
+        btn.disabled = false;
     }
 }
 
@@ -553,6 +859,8 @@ const formatVideoUrl = (url) => {
 window.joinFriendRoom = function(code) { showRoom(code); }
 
 function showRoom(roomId, url = null, file = null) {
+  if (!hasValidAccess()) return checkAccessAndRoute(); // strictly prevent force opening 
+
   sessionUserName = currentUser?.displayName || 'Guest';
   currentRoomId = roomId;
   dashView.classList.add('hidden');

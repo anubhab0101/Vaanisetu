@@ -175,6 +175,13 @@ body {
   overflow-y: auto;
 }
 
+/* Admin View */
+#admin-view {
+  padding: 1rem;
+  padding-top: max(2rem, var(--safe-top));
+  padding-bottom: max(2rem, var(--safe-bottom));
+}
+
 /* Room View */
 #room-view {
   display: flex;
@@ -755,6 +762,34 @@ input[type=range]:focus { outline: none; }
 .friend-code {
   font-size: 0.7rem;
   color: var(--text-secondary);
+}
+
+/* =========================================
+   SUBSCRIPTION / ADMIN STYLES
+   ========================================= */
+.premium-card {
+  background: linear-gradient(145deg, #18181b 0%, #09090b 100%);
+  border: 1px solid #27272a;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.premium-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+}
+.premium-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+  border-color: #3f3f46;
+}
+.premium-card.border-orange {
+  border-color: rgba(249, 115, 22, 0.5);
+}
+.premium-card.border-orange::before {
+  background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.8), transparent);
 }
 
 /* =========================================
