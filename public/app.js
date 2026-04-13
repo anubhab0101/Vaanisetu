@@ -971,6 +971,19 @@ const formatTime = (time) => {
 
 const formatVideoUrl = (url) => {
   let formattedUrl = url.trim();
+  
+  // Auto-Fix internal Telegram Bot IP to Render Public URL
+  if (formattedUrl.startsWith('http://10.') && formattedUrl.includes('/stream/')) {
+    try {
+       const urlObj = new URL(formattedUrl);
+       urlObj.protocol = 'https:';
+       urlObj.hostname = 'vaanisethu-bot.onrender.com';
+       urlObj.port = ''; // Remove the port
+       return urlObj.toString();
+    } catch(e) { }
+  }
+
+  // Dropbox auto-formatting
   if (formattedUrl.includes('dropbox.com')) {
     try {
        const urlObj = new URL(formattedUrl);
@@ -978,6 +991,7 @@ const formatVideoUrl = (url) => {
        return urlObj.toString();
     } catch(e) { }
   }
+  
   return formattedUrl;
 };
 
@@ -1064,6 +1078,49 @@ function updateGuestPermissions() {
   const fabContainer = document.getElementById('chat-fab-container');
   if (fabContainer) fabContainer.style.display = 'flex';
 }
+
+// UI Flow for Source Selection
+const srcSelectionStep = document.getElementById('source-selection-step');
+const srcInputStep = document.getElementById('source-input-step');
+const srcStepTitle = document.getElementById('source-step-title');
+const tgGuide = document.getElementById('telegram-guide');
+const urlGroup = document.getElementById('url-input-group');
+const localGroup = document.getElementById('local-input-group');
+
+function openSourceStep(type) {
+  if(!srcSelectionStep) return;
+  srcSelectionStep.classList.add('hidden');
+  srcInputStep.classList.remove('hidden');
+  tgGuide.classList.add('hidden');
+  urlGroup.classList.add('hidden');
+  localGroup.classList.add('hidden');
+
+  if(type === 'dropbox') {
+    srcStepTitle.textContent = 'DROPBOX';
+    urlGroup.classList.remove('hidden');
+    roomUrlInput.placeholder = 'Paste Dropbox Link Here';
+    roomUrlInput.focus();
+  } else if(type === 'telegram') {
+    srcStepTitle.textContent = 'TELEGRAM';
+    tgGuide.classList.remove('hidden');
+    urlGroup.classList.remove('hidden');
+    roomUrlInput.placeholder = 'Paste Stream Link';
+    roomUrlInput.focus();
+  } else {
+    srcStepTitle.textContent = 'LOCAL FILE';
+    localGroup.classList.remove('hidden');
+  }
+}
+
+document.getElementById('btn-src-dropbox')?.addEventListener('click', () => openSourceStep('dropbox'));
+document.getElementById('btn-src-telegram')?.addEventListener('click', () => openSourceStep('telegram'));
+document.getElementById('btn-src-local')?.addEventListener('click', () => openSourceStep('local'));
+
+document.getElementById('btn-back-source')?.addEventListener('click', () => {
+  srcSelectionStep.classList.remove('hidden');
+  srcInputStep.classList.add('hidden');
+  roomUrlInput.value = '';
+});
 
 roomUrlInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.target.value.trim() !== '') handleNewUrl(formatVideoUrl(e.target.value), true);
