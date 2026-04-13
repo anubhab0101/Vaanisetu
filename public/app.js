@@ -1106,6 +1106,9 @@ function openSourceStep(type) {
     urlGroup.classList.remove('hidden');
     roomUrlInput.placeholder = 'Paste Stream Link';
     roomUrlInput.focus();
+
+    // Wake up the Render bot since free instances sleep after inactivity
+    fetch('https://vaanisethu-bot.onrender.com/', { mode: 'no-cors' }).catch(() => {});
   } else {
     srcStepTitle.textContent = 'LOCAL FILE';
     localGroup.classList.remove('hidden');
