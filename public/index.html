@@ -320,11 +320,23 @@
         <button id="btn-leave" class="icon-btn hover-bg">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
         </button>
-        <div class="room-info">
+        <div class="room-info flex-1">
           <h1 id="room-name-display" class="font-bold text-lg text-white">Loading...</h1>
           <div class="flex items-center gap-2 text-sm text-zinc-400">
             <span id="room-id-display" class="mono">xxxxxx</span>
-            <button id="btn-copy" class="hover-text pointer">Copy</button>
+            <button id="btn-copy" class="hover-text pointer" style="padding: 0; min-height: auto;">Copy</button>
+          </div>
+        </div>
+        
+        <!-- Chat Button (Moved next to room title) -->
+        <div id="chat-fab-container" class="relative ptr-auto">
+          <button id="btn-chat-fab" class="icon-btn hover-bg" style="background-color: rgba(249, 115, 22, 0.2); color: var(--orange);" title="Room Chat">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span id="chat-badge" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold h-5 min-w-[20px] max-w-fit px-1 rounded-full flex items-center justify-center border-2 border-[#18181b]" style="top: -0.2rem; right: -0.2rem;">0</span>
+          </button>
+          <!-- Popup message preview -->
+          <div id="chat-notification" class="chat-notification">
+            <span id="notif-name" class="font-bold text-orange mr-1"></span><span id="notif-text"></span>
           </div>
         </div>
       </div>
@@ -380,22 +392,6 @@
           <input type="file" id="room-file-upload" accept="video/*" hidden>
         </div>
       </div>
-    </div>
-
-    <!-- Chat FAB & Notification -->
-    <div id="chat-fab-container" class="fade-up">
-       <!-- Popup message preview -->
-       <div id="chat-notification" class="chat-notification">
-         <span id="notif-name" class="font-bold text-orange"></span> <span id="notif-text"></span>
-       </div>
-       
-       <!-- Button -->
-       <button id="btn-chat-fab" class="chat-fab">
-         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-         
-         <!-- Red Unread Badge -->
-         <span id="chat-badge" class="hidden">0</span>
-       </button>
     </div>
 
     <!-- Chat Popup Modal -->
