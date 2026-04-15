@@ -50,6 +50,77 @@ const roomView = document.getElementById('room-view');
 const paymentView = document.getElementById('payment-view');
 const adminView = document.getElementById('admin-view');
 
+// ================================================================
+// SPA NAVIGATION — History API
+// Browser Back/Forward navigates between app views, not URLs
+// ================================================================
+let _currentSpaView = 'auth';
+let _spaHandlingPop = false;
+
+function spaPushState(viewId) {
+    _currentSpaView = viewId;
+    history.pushState({ spaSite: true, view: viewId }, '', '/');
+}
+
+// On app load, set the initial state so Back doesn't leave the site
+history.replaceState({ spaSite: true, view: 'auth' }, '', '/');
+
+window.addEventListener('popstate', function(e) {
+    if (_spaHandlingPop) return;
+    _spaHandlingPop = true;
+    try {
+        const state = e.state;
+
+        // 1. Film Store Modal open — close it on Back
+        const filmModal = document.getElementById('film-store-modal');
+        if (filmModal && filmModal.style.display !== 'none') {
+            filmModal.style.display = 'none';
+            // Repush current view since we "consumed" this back event
+            history.pushState({ spaSite: true, view: _currentSpaView }, '', '/');
+            _spaHandlingPop = false;
+            return;
+        }
+
+        if (!state || !state.spaSite || state.view === 'auth' || state.view === 'init') {
+            // Trying to go before the SPA started — block and stay
+            history.pushState({ spaSite: true, view: _currentSpaView }, '', '/');
+            _spaHandlingPop = false;
+            return;
+        }
+
+        const targetView = state.view;
+
+        // 2. Back from admin → show dashboard
+        if (_currentSpaView === 'admin') {
+            _currentSpaView = targetView;
+            adminView.classList.add('hidden');
+            checkAccessAndRoute();
+            _spaHandlingPop = false;
+            return;
+        }
+
+        // 3. Back from room → leave room gracefully
+        if (_currentSpaView === 'room') {
+            _currentSpaView = targetView;
+            leaveRoom();
+            _spaHandlingPop = false;
+            return;
+        }
+
+        // 4. Back on dashboard/payment → stay (block leaving SPA)
+        if (_currentSpaView === 'dashboard' || _currentSpaView === 'payment') {
+            history.pushState({ spaSite: true, view: _currentSpaView }, '', '/');
+            _spaHandlingPop = false;
+            return;
+        }
+
+        // Fallback
+        history.pushState({ spaSite: true, view: _currentSpaView }, '', '/');
+    } catch(err) { console.error('[SPA Nav]', err); }
+    _spaHandlingPop = false;
+});
+
+
 // Payment Elements
 const btnPayOneTime = document.getElementById('btn-pay-one-time');
 const btnPayWeekly = document.getElementById('btn-pay-weekly');
@@ -385,6 +456,7 @@ function checkAccessAndRoute() {
         roomView.classList.add('hidden');
         paymentView.classList.remove('hidden');
         currentGuestAccessRoom = null;
+        if (!_spaHandlingPop) spaPushState('payment');
     } else {
         paymentView.classList.add('hidden');
         if (joinCode && !currentRoomId) {
@@ -392,6 +464,7 @@ function checkAccessAndRoute() {
             showRoom(joinCode);
         } else if (!currentRoomId) {
             dashView.classList.remove('hidden');
+            if (!_spaHandlingPop) spaPushState('dashboard');
         }
     }
 }
@@ -539,6 +612,7 @@ if (btnAdminDash) {
         roomView.classList.add('hidden');
         paymentView.classList.add('hidden');
         adminView.classList.remove('hidden');
+        spaPushState('admin');
         loadAdminLedger();
         loadCodeUsers();
         loadRentalLedger();
@@ -1068,13 +1142,14 @@ const formatVideoUrl = (url) => {
 window.joinFriendRoom = function(code) { showRoom(code); }
 
 function showRoom(roomId, url = null, file = null) {
-  if (!hasValidAccess() && currentGuestAccessRoom !== roomId) return checkAccessAndRoute(); // strictly prevent force opening 
+  if (!hasValidAccess() && currentGuestAccessRoom !== roomId) return checkAccessAndRoute();
 
   sessionUserName = currentUser?.displayName || 'Guest';
   currentRoomId = roomId;
   dashView.classList.add('hidden');
   roomView.classList.remove('hidden');
   roomIdDisplay.textContent = roomId;
+  if (!_spaHandlingPop) spaPushState('room');
   if(url) handleNewUrl(url, true);
   if(file) { currentVideoFile = file; handleNewUrl(URL.createObjectURL(file), false); }
   initWebSocket();
@@ -1569,7 +1644,7 @@ window.switchFilmTab = function(tab) {
 function openFilmStoreModal() {
   const modal = document.getElementById('film-store-modal');
   modal.style.display = 'block';
-  // Default to browse tab
+  spaPushState('film-modal'); // Back button will close modal, not leave SPA
   switchFilmTab('browse');
 }
 

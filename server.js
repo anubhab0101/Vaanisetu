@@ -677,7 +677,7 @@ async function startServer() {
   app.get('/api/admin/rental-ledger', async (req, res) => {
     try {
       const { adminEmail } = req.query;
-      if (!adminEmail || adminEmail !== process.env.ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+      if (!adminEmail || adminEmail !== 'anubhabmohapatra.01@gmail.com') return res.status(403).json({ error: 'Forbidden' });
       const snap = await adminDb.collection('rentals').get();
       const now = Date.now();
       const rentals = [];
