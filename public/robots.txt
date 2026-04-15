@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# Block admin and API routes from crawlers
+Disallow: /api/
+Disallow: /admin
+
+# Allow all public assets
+Allow: /logo.png
+Allow: /og-cover.png
+Allow: /style.css
+Allow: /app.js
+
+# Sitemaps
+Sitemap: https://vaanisethu.online/sitemap.xml
+
+# Crawl-delay (be nice to servers)
+Crawl-delay: 10
