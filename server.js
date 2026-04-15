@@ -30,6 +30,11 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET || "missing_secret",
 });
 
+// ✅ Admin always has full access — no payment required ever
+const ADMIN_EMAIL = 'anubhabmohapatra.01@gmail.com';
+const isAdmin = (email) => email === ADMIN_EMAIL;
+
+
 async function startServer() {
   const app = express();
   const server = createServer(app);
@@ -550,7 +555,20 @@ async function startServer() {
         return res.json({ success: false, hostSubscribed: false, error: "Room not found" });
       }
 
-      const hostData = snap.docs[0].data();
+      const hostDoc = snap.docs[0];
+      const hostData = hostDoc.data();
+      const hostUid = hostDoc.id;
+
+      // ✅ Admin is always subscribed — look up email via Firebase Auth
+      try {
+        const hostAuthRecord = await admin.auth().getUser(hostUid);
+        if (isAdmin(hostAuthRecord.email || '')) {
+          return res.json({ success: true, hostSubscribed: true });
+        }
+      } catch (authErr) {
+        console.warn('Could not fetch host auth record:', authErr.message);
+      }
+
       const isValid = hostData.activeSubscription && hostData.subscriptionExpiry > Date.now();
 
       return res.json({ success: true, hostSubscribed: !!isValid });
@@ -559,6 +577,7 @@ async function startServer() {
       res.status(500).json({ error: "Failed to check room access" });
     }
   });
+
 
   // ==== FILM STORE ROUTES ====
 
@@ -688,7 +707,7 @@ async function startServer() {
       // Get user display name
       let displayName = userId;
       try {
-        const userRecord = await adminAuth.getUser(userId);
+        const userRecord = await admin.auth().getUser(userId);
         displayName = userRecord.displayName || userRecord.email || userId;
       } catch(e) { /* fallback to userId */ }
 
