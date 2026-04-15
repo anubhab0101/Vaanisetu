@@ -7,8 +7,8 @@
   --panel-bg: rgba(24, 24, 27, 0.5);
   --border-color: #27272a;
   --text-primary: #ffffff;
-  --text-secondary: #a1a1aa;
-  --text-muted: #71717a;
+  --text-secondary: #a8a8b3;
+  --text-muted: #919198;
   --orange: #f97316;
   --orange-hover: #ea580c;
   --orange-bg: rgba(249, 115, 22, 0.1);
@@ -86,6 +86,20 @@ body {
 .font-bold { font-weight: bold; }
 .italic { font-style: italic; }
 .hidden { display: none !important; }
+
+/* Screen-reader only — visually hidden but accessible */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
 .relative { position: relative; }
 .absolute { position: absolute; }
 .inset-0 { top: 0; bottom: 0; left: 0; right: 0; }
