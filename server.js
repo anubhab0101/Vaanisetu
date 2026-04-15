@@ -281,7 +281,7 @@ async function startServer() {
   });
 
   app.use(cors());
-  app.use(express.json());
+  app.use(express.json({ limit: '10mb' })); // 10mb for base64 poster images
 
   app.get('/ping', (req, res) => res.status(200).send('pong'));
 
@@ -523,6 +523,214 @@ async function startServer() {
       res.status(500).json({ error: "Failed to check room access" });
     }
   });
+
+  // ==== FILM STORE ROUTES ====
+
+  // Admin: Add a new film
+  app.post('/api/admin/add-film', async (req, res) => {
+    try {
+      const { adminEmail, title, telegramLink, thumbnailBase64, price, rentalDays } = req.body;
+      if (adminEmail !== 'anubhabmohapatra.01@gmail.com') return res.status(403).json({ error: "Unauthorized" });
+      if (!title || !telegramLink) return res.status(400).json({ error: "Title and Telegram link required" });
+
+      const filmRef = await adminDb.collection('films').add({
+        title: title.trim(),
+        telegramLink: telegramLink.trim(),
+        thumbnailBase64: thumbnailBase64 || '',
+        price: parseFloat(price) || 20,
+        rentalDays: parseInt(rentalDays) || 3,
+        isActive: true,
+        createdAt: Date.now()
+      });
+      res.json({ success: true, filmId: filmRef.id });
+    } catch (err) { console.error(err); res.status(500).json({ error: err.message }); }
+  });
+
+  // Admin: Update a film
+  app.post('/api/admin/update-film', async (req, res) => {
+    try {
+      const { adminEmail, filmId, title, telegramLink, thumbnailBase64, price, rentalDays, isActive } = req.body;
+      if (adminEmail !== 'anubhabmohapatra.01@gmail.com') return res.status(403).json({ error: "Unauthorized" });
+      if (!filmId) return res.status(400).json({ error: "Film ID required" });
+
+      const updateData = {};
+      if (title !== undefined) updateData.title = title.trim();
+      if (telegramLink !== undefined) updateData.telegramLink = telegramLink.trim();
+      if (thumbnailBase64 && thumbnailBase64.length > 10) updateData.thumbnailBase64 = thumbnailBase64;
+      if (price !== undefined) updateData.price = parseFloat(price) || 20;
+      if (rentalDays !== undefined) updateData.rentalDays = parseInt(rentalDays) || 3;
+      if (isActive !== undefined) updateData.isActive = Boolean(isActive);
+
+      await adminDb.collection('films').doc(filmId).update(updateData);
+      res.json({ success: true });
+    } catch (err) { console.error(err); res.status(500).json({ error: err.message }); }
+  });
+
+  // Admin: Delete a film
+  app.post('/api/admin/delete-film', async (req, res) => {
+    try {
+      const { adminEmail, filmId } = req.body;
+      if (adminEmail !== 'anubhabmohapatra.01@gmail.com') return res.status(403).json({ error: "Unauthorized" });
+      if (!filmId) return res.status(400).json({ error: "Film ID required" });
+      await adminDb.collection('films').doc(filmId).delete();
+      res.json({ success: true });
+    } catch (err) { console.error(err); res.status(500).json({ error: err.message }); }
+  });
+
+  // Admin: Get all films (with telegram links)
+  app.get('/api/admin/films', async (req, res) => {
+    try {
+      const { adminEmail } = req.query;
+      if (adminEmail !== 'anubhabmohapatra.01@gmail.com') return res.status(403).json({ error: "Unauthorized" });
+      const snap = await adminDb.collection('films').orderBy('createdAt', 'desc').get();
+      const films = [];
+      snap.forEach(doc => {
+        const d = doc.data();
+        films.push({ filmId: doc.id, title: d.title, telegramLink: d.telegramLink, thumbnailBase64: d.thumbnailBase64 || '', price: d.price || 20, rentalDays: d.rentalDays || 3, isActive: d.isActive, createdAt: d.createdAt });
+      });
+      res.json({ success: true, films });
+    } catch (err) { console.error(err); res.status(500).json({ error: err.message }); }
+  });
+
+  // Public: List active films (no telegram link)
+  app.get('/api/films', async (req, res) => {
+    try {
+      // No compound query — fetch all and filter in JS to avoid index requirement
+      const snap = await adminDb.collection('films').get();
+      const films = [];
+      snap.forEach(doc => {
+        const d = doc.data();
+        if (d.isActive) {
+          films.push({ filmId: doc.id, title: d.title, thumbnailBase64: d.thumbnailBase64 || '', price: d.price || 20, rentalDays: d.rentalDays || 3 });
+        }
+      });
+      // Sort by createdAt desc in JS
+      films.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      res.json({ success: true, films });
+    } catch (err) { console.error(err); res.status(500).json({ error: err.message }); }
+  });
+
+  // Create Razorpay order for film rental
+  app.post('/api/rent-film', async (req, res) => {
+    try {
+      const { userId, filmId } = req.body;
+      if (!adminDb || !userId || !filmId) return res.status(400).json({ error: "Missing parameters" });
+      const filmSnap = await adminDb.collection('films').doc(filmId).get();
+      if (!filmSnap.exists) return res.status(404).json({ error: "Film not found" });
+      const film = filmSnap.data();
+      if (!film.isActive) return res.status(400).json({ error: "Film is not available" });
+
+      // Check for existing active rental — no compound index needed
+      const now = Date.now();
+      const existing = await adminDb.collection('rentals').where('userId', '==', userId).get();
+      const hasActive = existing.docs.some(d => d.data().filmId === filmId && d.data().expiresAt > now);
+      if (hasActive) return res.status(400).json({ error: "You already have an active rental for this film" });
+
+      const options = {
+        amount: Math.round((film.price || 20) * 100),
+        currency: "INR",
+        receipt: "rent_" + Math.random().toString(36).substring(7),
+        notes: { filmId, userId, type: 'film-rental' }
+      };
+      const order = await razorpay.orders.create(options);
+      res.json({ ...order, keyId: process.env.RAZORPAY_KEY_ID, filmTitle: film.title, rentalDays: film.rentalDays || 3 });
+    } catch (err) { console.error(err); res.status(500).json({ error: err.message }); }
+  });
+
+  // Verify rental payment & create rental record
+  app.post('/api/verify-rental', async (req, res) => {
+    try {
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId, filmId } = req.body;
+      const text = razorpay_order_id + "|" + razorpay_payment_id;
+      const expectedSig = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET).update(text).digest('hex');
+      if (expectedSig !== razorpay_signature) return res.status(400).json({ success: false, message: "Invalid Signature" });
+
+      const filmSnap = await adminDb.collection('films').doc(filmId).get();
+      if (!filmSnap.exists) return res.status(404).json({ error: "Film not found" });
+      const film = filmSnap.data();
+
+      // Get user display name
+      let displayName = userId;
+      try {
+        const userRecord = await adminAuth.getUser(userId);
+        displayName = userRecord.displayName || userRecord.email || userId;
+      } catch(e) { /* fallback to userId */ }
+
+      const rentedAt = Date.now();
+      const expiresAt = rentedAt + ((film.rentalDays || 3) * 24 * 60 * 60 * 1000);
+
+      await adminDb.collection('rentals').add({
+        userId, displayName, filmId, filmTitle: film.title, telegramLink: film.telegramLink,
+        thumbnailBase64: film.thumbnailBase64 || '', rentalDays: film.rentalDays || 3,
+        rentedAt, expiresAt, paymentId: razorpay_payment_id, orderId: razorpay_order_id, amount: film.price || 20
+      });
+      await adminDb.collection('payments').add({
+        userId, paymentId: razorpay_payment_id, orderId: razorpay_order_id,
+        amount: film.price || 20, plan: `film-rental:${film.title}`,
+        timestamp: admin.firestore.FieldValue.serverTimestamp()
+      });
+      res.json({ success: true, message: "Rental activated!" });
+    } catch (err) { console.error(err); res.status(500).json({ error: err.message }); }
+  });
+
+  // Admin: All Rental Records (Rental Ledger)
+  app.get('/api/admin/rental-ledger', async (req, res) => {
+    try {
+      const { adminEmail } = req.query;
+      if (!adminEmail || adminEmail !== process.env.ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+      const snap = await adminDb.collection('rentals').get();
+      const now = Date.now();
+      const rentals = [];
+      snap.forEach(doc => {
+        const d = doc.data();
+        rentals.push({
+          rentalId: doc.id,
+          userId: d.userId || '',
+          displayName: d.displayName || d.userId || 'Unknown',
+          filmTitle: d.filmTitle || 'Unknown Film',
+          filmId: d.filmId || '',
+          amount: d.amount || 0,
+          paymentId: d.paymentId || '',
+          orderId: d.orderId || '',
+          rentalDays: d.rentalDays || 3,
+          rentedAt: d.rentedAt || 0,
+          expiresAt: d.expiresAt || 0,
+          isExpired: (d.expiresAt || 0) <= now
+        });
+      });
+      rentals.sort((a, b) => (b.rentedAt || 0) - (a.rentedAt || 0));
+      res.json({ success: true, rentals, total: rentals.length,
+        totalRevenue: rentals.reduce((s, r) => s + (r.amount || 0), 0),
+        activeCount: rentals.filter(r => !r.isExpired).length
+      });
+    } catch(err) { console.error(err); res.status(500).json({ error: err.message }); }
+  });
+
+  // Get user's rentals
+  app.get('/api/my-rentals', async (req, res) => {
+    try {
+      const { userId } = req.query;
+      if (!adminDb || !userId) return res.status(400).json({ error: "Missing parameters" });
+      // Simple single-field query — no composite index needed
+      const snap = await adminDb.collection('rentals').where('userId', '==', userId).get();
+      const now = Date.now();
+      const rentals = [];
+      snap.forEach(doc => {
+        const d = doc.data();
+        rentals.push({
+          rentalId: doc.id, filmId: d.filmId, filmTitle: d.filmTitle, thumbnailBase64: d.thumbnailBase64 || '',
+          telegramLink: d.expiresAt > now ? d.telegramLink : null,
+          rentalDays: d.rentalDays || 3, rentedAt: d.rentedAt, expiresAt: d.expiresAt,
+          isExpired: d.expiresAt <= now, amount: d.amount
+        });
+      });
+      // Sort by rentedAt desc in JS
+      rentals.sort((a, b) => (b.rentedAt || 0) - (a.rentedAt || 0));
+      res.json({ success: true, rentals });
+    } catch (err) { console.error(err); res.status(500).json({ error: err.message }); }
+  });
+
+  // ==== END FILM STORE ROUTES ====
 
   const publicPath = path.join(process.cwd(), 'public');
   app.use(express.static(publicPath));

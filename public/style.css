@@ -79,6 +79,9 @@ body {
 .text-orange { color: var(--orange); }
 .text-green-500 { color: #22c55e; }
 .text-red-500 { color: #ef4444; }
+.text-green-400 { color: #4ade80; }
+.text-purple-400 { color: #c084fc; }
+.font-black { font-weight: 900; }
 .mono { font-family: monospace; }
 .font-bold { font-weight: bold; }
 .italic { font-style: italic; }
@@ -277,9 +280,13 @@ body {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  transition: transform 0.2s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
-.card:hover { transform: scale(1.01); }
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  border-color: #3f3f46;
+}
 
 .icon-box {
   width: 3.5rem;
@@ -807,7 +814,18 @@ input[type=range]:focus { outline: none; }
   }
 
   .card { padding: 2rem; border-radius: 1.5rem; }
-  .card:hover { transform: scale(1.02); }
+  /* Subtle lift — no scale distortion */
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+    border-color: #52525b;
+  }
+  /* Admin-view cards should NOT scale at all, just border glow */
+  #admin-view .card:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: var(--border-color);
+  }
 
   .dash-user-name { max-width: 150px; font-size: 0.875rem; }
 
@@ -865,4 +883,434 @@ input[type=range]:focus { outline: none; }
     max-width: 100vw;
     overflow: hidden;
   }
+}
+
+/* =========================================
+   FILM STORE — MODAL & LAYOUT
+   ========================================= */
+.film-store-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  min-height: 100vh;
+}
+.film-store-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.film-store-title {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: white;
+  background: linear-gradient(135deg, #c084fc, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.film-store-tabs-bar {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid #27272a;
+  margin-bottom: 1.5rem;
+}
+.film-tab-btn {
+  background: transparent;
+  border: none;
+  color: #71717a;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.6rem 1.25rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  outline: none;
+}
+.film-tab-btn:hover { color: white; }
+.film-tab-btn.active { color: #c084fc; border-bottom-color: #c084fc; }
+
+/* =========================================
+   FILM STORE — FILM CARD GRID
+   ========================================= */
+.films-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+}
+.film-card {
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 1rem;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+.film-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(168, 85, 247, 0.15);
+  border-color: rgba(168, 85, 247, 0.4);
+}
+.film-card-expired {
+  opacity: 0.6;
+  filter: grayscale(0.4);
+}
+.film-card-poster {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  background: #1c1c1e;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.film-card-body {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+.film-card-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: white;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.film-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.film-card-price {
+  font-size: 1rem;
+  font-weight: 900;
+  color: #c084fc;
+}
+.film-card-days {
+  font-size: 0.7rem;
+  color: #71717a;
+  background: #27272a;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.3rem;
+}
+.film-rent-btn {
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: white;
+  font-size: 0.78rem;
+  padding: 0.5rem 0.5rem;
+  border-radius: 0.6rem;
+  min-height: auto;
+  width: 100%;
+  font-weight: 700;
+  margin-top: auto;
+}
+.film-rent-btn:hover { opacity: 0.9; }
+.film-play-btn {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: white;
+  font-size: 0.78rem;
+  padding: 0.5rem 0.5rem;
+  border-radius: 0.6rem;
+  min-height: auto;
+  width: 100%;
+  font-weight: 700;
+  margin-top: auto;
+}
+.film-play-btn.disabled {
+  background: #27272a; color: #52525b; cursor: not-allowed;
+}
+.film-play-btn:hover:not(.disabled) { opacity: 0.9; }
+.film-rental-timer {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: #22c55e;
+  font-weight: 600;
+}
+.film-rental-timer.expired { color: #ef4444; }
+.film-expired-badge {
+  position: absolute;
+  top: 0.5rem; left: 0.5rem;
+  background: rgba(239,68,68,0.85);
+  color: white;
+  font-size: 0.6rem;
+  font-weight: 900;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  letter-spacing: 0.05em;
+}
+
+/* =========================================
+   ADMIN — FILM STORE MANAGER
+   ========================================= */
+.admin-film-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+@media (min-width: 768px) {
+  .admin-film-grid { grid-template-columns: 320px 1fr; }
+  .films-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .film-store-wrapper { padding: 2rem 2rem 4rem; }
+  .film-store-title { font-size: 2rem; }
+}
+
+.admin-thumb-upload-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #3f3f46;
+  border-radius: 0.75rem;
+  padding: 1.5rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  width: 100%;
+  min-height: 100px;
+  text-align: center;
+}
+.admin-thumb-upload-box:hover {
+  border-color: #a855f7;
+  background: rgba(168,85,247,0.05);
+}
+
+.admin-film-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #09090b;
+  border: 1px solid #27272a;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  transition: background 0.2s;
+}
+.admin-film-row:hover { background: #111; }
+.admin-film-row-thumb {
+  width: 48px;
+  height: 64px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #27272a;
+}
+.admin-film-row-info {
+  flex: 1;
+  min-width: 0;
+}
+.admin-film-row-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: white;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.admin-film-row-meta {
+  font-size: 0.72rem;
+  color: #71717a;
+  margin-top: 0.2rem;
+}
+.admin-film-row-link {
+  font-size: 0.65rem;
+  color: #52525b;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  margin-top: 0.2rem;
+  font-family: monospace;
+}
+.admin-film-row-actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* =========================================
+   STORE DIVIDER (in source-ui)
+   ========================================= */
+.store-divider {
+  text-align: center;
+  color: #52525b;
+  font-size: 0.7rem;
+  font-weight: bold;
+  position: relative;
+  margin: 0.25rem 0;
+}
+.store-divider::before, .store-divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 42%;
+  border-top: 1px solid #27272a;
+}
+.store-divider::before { left: 0; }
+.store-divider::after { right: 0; }
+
+/* =========================================
+   GRID UTILITIES (Admin layout)
+   ========================================= */
+.grid { display: grid; }
+.grid-cols-1 { grid-template-columns: 1fr; }
+.col-span-1 { grid-column: span 1; }
+.col-span-2 { grid-column: span 2; }
+.col-span-3 { grid-column: span 3; }
+.mt-8 { margin-top: 2rem; }
+.mt-6 { margin-top: 1.5rem; }
+.h-full { height: 100%; }
+.overflow-x-auto { overflow-x: auto; }
+.divide-y > * + * { border-top: 1px solid; }
+.divide-zinc-800\/50 > * + * { border-color: rgba(39,39,42,0.5); }
+.sticky { position: sticky; }
+.top-0 { top: 0; }
+.z-10 { z-index: 10; }
+.uppercase { text-transform: uppercase; }
+.font-semibold { font-weight: 600; }
+.px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+.py-5 { padding-top: 1.25rem; padding-bottom: 1.25rem; }
+.py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+.py-10 { padding-top: 2.5rem; padding-bottom: 2.5rem; }
+.py-12 { padding-top: 3rem; padding-bottom: 3rem; }
+.text-right { text-align: right; }
+.backdrop-blur { backdrop-filter: blur(8px); }
+.tracking-tight { letter-spacing: -0.025em; }
+
+@media (min-width: 1024px) {
+  .lg\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .lg\:col-span-2 { grid-column: span 2; }
+  .lg\:col-span-3 { grid-column: span 3; }
+}
+
+/* =========================================
+   ADMIN DASHBOARD — PREMIUM OVERRIDES
+   ========================================= */
+#admin-view {
+  padding: 2rem 1.5rem 4rem;
+  padding-top: max(2rem, var(--safe-top));
+}
+
+/* Admin view grid gap */
+#admin-view .grid { gap: 1.5rem; }
+@media (min-width: 1024px) { #admin-view .grid { gap: 2rem; } }
+
+/* --------- Generate Access Code card --------- */
+#admin-view .card.flex.flex-col {
+  background: linear-gradient(145deg, #111113 0%, #0e0e10 100%);
+  border: 1px solid #222224;
+  border-radius: 1.25rem;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+  align-items: stretch;
+  text-align: left;
+}
+#admin-view .card h2 {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: white;
+}
+#admin-view .card > p {
+  font-size: 0.8rem;
+  color: #71717a;
+  line-height: 1.5;
+}
+#admin-view label.text-xs {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  color: #52525b;
+  font-weight: 700;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 0.35rem;
+}
+#admin-view .input {
+  background: #08080a;
+  border: 1px solid #222224;
+  border-radius: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.9rem;
+  color: #e4e4e7;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+#admin-view .input:focus {
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249,115,22,0.1);
+  outline: none;
+}
+#admin-code-result {
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #0a1a0a, #0a120a) !important;
+  border-color: #166534 !important;
+}
+
+/* --------- Tables (Purchase Ledger + Access Code Users) --------- */
+#admin-view table { border-collapse: collapse; }
+#admin-view thead tr {
+  background: linear-gradient(to right, #0d0d0f, #111113);
+}
+#admin-view thead th {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #52525b;
+  padding: 0.9rem 1.5rem;
+  white-space: nowrap;
+}
+#admin-view tbody tr { transition: background 0.15s; }
+#admin-view tbody tr:hover { background: rgba(255,255,255,0.02); }
+#admin-view tbody td {
+  padding: 0.85rem 1.5rem;
+  font-size: 0.8rem;
+  color: #a1a1aa;
+  vertical-align: middle;
+}
+#admin-view tbody td:first-child {
+  color: #71717a;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+#admin-view tbody td:nth-child(2) {
+  font-family: monospace;
+  font-size: 0.7rem;
+  color: #52525b;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tier / Status badges */
+.tier-badge, .status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.tier-badge-onetime { background: rgba(249,115,22,0.12); color: #f97316; border: 1px solid rgba(249,115,22,0.25); }
+.tier-badge-weekly  { background: rgba(59,130,246,0.12);  color: #60a5fa; border: 1px solid rgba(59,130,246,0.25); }
+.tier-badge-monthly { background: rgba(168,85,247,0.12); color: #c084fc; border: 1px solid rgba(168,85,247,0.25); }
+.status-badge-active  { background: rgba(34,197,94,0.12);  color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+.status-badge-expired { background: rgba(239,68,68,0.1);   color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+
+/* Action selects in table rows */
+#admin-view select.input[style*="font-size"] {
+  background: #0d0d0f;
+  border: 1px solid #222224;
+  border-radius: 0.4rem;
+  color: #a1a1aa;
+  font-size: 0.7rem;
+  padding: 0.25rem 0.4rem;
+  min-height: auto;
 }

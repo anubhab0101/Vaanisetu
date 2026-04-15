@@ -541,6 +541,7 @@ if (btnAdminDash) {
         adminView.classList.remove('hidden');
         loadAdminLedger();
         loadCodeUsers();
+        loadRentalLedger();
     });
 }
 if (btnAdminClose) {
@@ -623,33 +624,38 @@ async function loadAdminLedger() {
              let actionsHTML = '';
              if (isCancelled) {
                  actionsHTML = `
-                     <span class="text-red-500 font-bold text-xs mr-2">Cancelled</span>
-                     <select class="extend-days-select bg-zinc-900 border border-zinc-700 text-white rounded px-1 py-1 text-xs mr-1">
+                     <span style="font-size:0.7rem;font-weight:800;color:#f87171;margin-right:0.35rem;">Cancelled</span>
+                     <select class="extend-days-select" style="background:#0d0d0f;border:1px solid #222224;border-radius:0.4rem;color:#a1a1aa;font-size:0.7rem;padding:0.3rem 0.4rem;">
                          <option value="1">1 Day</option><option value="3">3 Days</option>
                          <option value="7">7 Days</option><option value="30">30 Days</option>
                      </select>
-                     <button class="btn-admin-extend hover-bg text-blue bg-blue-bg border border-zinc-700 rounded px-2 py-1 text-xs transition-all hover:bg-blue/30">Extend</button>
+                     <button class="btn-admin-extend" style="background:rgba(59,130,246,0.1);color:#60a5fa;border:1px solid rgba(59,130,246,0.25);border-radius:0.4rem;padding:0.3rem 0.6rem;font-size:0.7rem;font-weight:700;cursor:pointer;">Extend</button>
                  `;
              } else {
                  actionsHTML = `
-                     <button class="btn-admin-cancel hover-bg text-red-500 border border-red-900 bg-red-500/10 rounded px-2 py-1 text-xs mr-2 transition-all hover:bg-red-500/30">Cancel</button>
-                     <select class="extend-days-select bg-zinc-900 border border-zinc-700 text-white rounded px-1 py-1 text-xs mr-1">
+                     <button class="btn-admin-cancel" style="background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.25);border-radius:0.4rem;padding:0.3rem 0.6rem;font-size:0.7rem;font-weight:700;cursor:pointer;margin-right:0.35rem;">Cancel</button>
+                     <select class="extend-days-select" style="background:#0d0d0f;border:1px solid #222224;border-radius:0.4rem;color:#a1a1aa;font-size:0.7rem;padding:0.3rem 0.4rem;">
                          <option value="1">1 Day</option><option value="3">3 Days</option>
                          <option value="7">7 Days</option><option value="30">30 Days</option>
                      </select>
-                     <button class="btn-admin-extend hover-bg text-blue bg-blue-bg border border-zinc-700 rounded px-2 py-1 text-xs transition-all hover:bg-blue/30">Extend</button>
+                     <button class="btn-admin-extend" style="background:rgba(59,130,246,0.1);color:#60a5fa;border:1px solid rgba(59,130,246,0.25);border-radius:0.4rem;padding:0.3rem 0.6rem;font-size:0.7rem;font-weight:700;cursor:pointer;">Extend</button>
                  `;
              }
 
+             const planLow = (p.plan || '').toLowerCase();
+             let tierClass = 'tier-badge-onetime';
+             if (planLow.includes('weekly') || planLow.includes('week')) tierClass = 'tier-badge-weekly';
+             else if (planLow.includes('monthly') || planLow.includes('month')) tierClass = 'tier-badge-monthly';
+             else if (planLow.includes('film') || planLow.includes('rental')) tierClass = 'tier-badge-monthly';
+
              const tr = document.createElement('tr');
-             tr.className = "hover:bg-[#121214] transition-colors group";
              tr.innerHTML = `
-                 <td class="px-6 py-4 whitespace-nowrap text-zinc-300 pointer-events-none">${timeStr}</td>
-                 <td class="px-6 py-4 mono text-xs text-zinc-500 whitespace-nowrap pointer-events-none group-hover:text-zinc-400 transition-colors">${p.userId}</td>
-                 <td class="px-6 py-4 capitalize whitespace-nowrap pointer-events-none"><span class="bg-orange/10 text-orange border border-orange/20 px-3 py-1 rounded-full text-xs font-bold tracking-wide">${p.plan}</span></td>
-                 <td class="px-6 py-4 text-green-400 font-bold whitespace-nowrap pointer-events-none">₹${p.amount}</td>
-                 <td class="px-6 py-4 mono text-[0.7rem] text-zinc-600 whitespace-nowrap pointer-events-none group-hover:text-zinc-400 transition-colors">${p.orderId}</td>
-                 <td class="px-6 py-4 text-right flex items-center justify-end whitespace-nowrap">
+                 <td style="padding: 0.85rem 1.5rem; white-space:nowrap;">${timeStr}</td>
+                 <td style="padding: 0.85rem 1.5rem; font-family:monospace; font-size:0.7rem; color:#52525b; white-space:nowrap; max-width:160px; overflow:hidden; text-overflow:ellipsis;">${p.userId}</td>
+                 <td style="padding: 0.85rem 1.5rem; white-space:nowrap;"><span class="tier-badge ${tierClass}">${p.plan}</span></td>
+                 <td style="padding: 0.85rem 1.5rem; color:#4ade80; font-weight:800; white-space:nowrap;">&#8377;${p.amount}</td>
+                 <td style="padding: 0.85rem 1.5rem; font-family:monospace; font-size:0.68rem; color:#52525b; white-space:nowrap;">${p.orderId}</td>
+                 <td style="padding: 0.85rem 1.5rem; text-align:right; white-space:nowrap;">
                      ${actionsHTML}
                  </td>
              `;
@@ -719,23 +725,23 @@ async function loadCodeUsers() {
             const isExpired = u.subscriptionExpiry < Date.now();
             const expStr = `<div class="font-bold ${isExpired ? 'text-red-400' : 'text-green-400'}">${expDate.toLocaleDateString()}</div><div class="text-[0.65rem] text-zinc-500">${expDate.toLocaleTimeString()}</div>`;
             const statusBadge = isExpired
-                ? '<span class="bg-red-500/10 text-red-400 border border-red-900 px-2 py-0.5 rounded-full text-xs font-bold">Expired</span>'
-                : '<span class="bg-green-500/10 text-green-400 border border-green-900 px-2 py-0.5 rounded-full text-xs font-bold">Active</span>';
+                ? '<span class="status-badge status-badge-expired">Expired</span>'
+                : '<span class="status-badge status-badge-active">Active</span>';
 
             const tr = document.createElement('tr');
-            tr.className = 'hover:bg-[#121214] transition-colors group';
             tr.innerHTML = `
-                <td class="px-6 py-4 whitespace-nowrap text-white font-bold">${u.displayName}</td>
-                <td class="px-6 py-4 mono text-xs text-zinc-500 whitespace-nowrap group-hover:text-zinc-400">${u.userId}</td>
-                <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
-                <td class="px-6 py-4 whitespace-nowrap">${expStr}</td>
-                <td class="px-6 py-4 text-right flex items-center justify-end gap-2 whitespace-nowrap">
-                    <button class="cu-cancel hover-bg text-red-500 border border-red-900 bg-red-500/10 rounded px-2 py-1 text-xs transition-all hover:bg-red-500/30">Terminate</button>
-                    <select class="cu-days bg-zinc-900 border border-zinc-700 text-white rounded px-1 py-1 text-xs">
-                        <option value="1">1 Day</option><option value="3">3 Days</option>
-                        <option value="7">7 Days</option><option value="30">30 Days</option>
+                <td style="padding:0.85rem 1.5rem; color:white; font-weight:700; white-space:nowrap;">${u.displayName}</td>
+                <td style="padding:0.85rem 1.5rem; font-family:monospace; font-size:0.7rem; color:#52525b; white-space:nowrap; max-width:160px; overflow:hidden; text-overflow:ellipsis;">${u.userId}</td>
+                <td style="padding:0.85rem 1.5rem; white-space:nowrap;">${statusBadge}</td>
+                <td style="padding:0.85rem 1.5rem; white-space:nowrap;">${expStr}</td>
+                <td style="padding:0.85rem 1.5rem; text-align:right; white-space:nowrap;">
+                    <div style="display:flex;gap:0.35rem;align-items:center;justify-content:flex-end;">
+                    <button class="cu-cancel" style="background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.25);border-radius:0.4rem;padding:0.3rem 0.6rem;font-size:0.7rem;font-weight:700;cursor:pointer;">Terminate</button>
+                    <select class="cu-days" style="background:#0d0d0f;border:1px solid #222224;border-radius:0.4rem;color:#a1a1aa;font-size:0.7rem;padding:0.3rem 0.4rem;">
+                        <option value="1">1 Day</option><option value="3">3 Days</option><option value="7">7 Days</option><option value="30">30 Days</option>
                     </select>
-                    <button class="cu-extend border border-zinc-700 text-zinc-300 hover-bg rounded px-2 py-1 text-xs transition-all">Extend</button>
+                    <button class="cu-extend" style="background:rgba(59,130,246,0.1);color:#60a5fa;border:1px solid rgba(59,130,246,0.25);border-radius:0.4rem;padding:0.3rem 0.6rem;font-size:0.7rem;font-weight:700;cursor:pointer;">Extend</button>
+                    </div>
                 </td>
             `;
 
@@ -751,6 +757,69 @@ async function loadCodeUsers() {
     } catch(e) {
         console.error(e);
         container.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-red-500">Error loading code users.</td></tr>';
+    }
+}
+
+async function loadRentalLedger() {
+    const tbody = document.getElementById('rental-ledger-body');
+    if (!tbody || !currentUser) return;
+    tbody.innerHTML = '<tr><td colspan="8" class="py-10 text-center italic text-zinc-600">Loading rental records...</td></tr>';
+    try {
+        const res = await fetch(`/api/admin/rental-ledger?adminEmail=${encodeURIComponent(currentUser.email)}`);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Failed');
+
+        // Update stats
+        const elTotal = document.getElementById('rl-total');
+        const elRevenue = document.getElementById('rl-revenue');
+        const elActive = document.getElementById('rl-active');
+        if (elTotal) elTotal.textContent = data.total || 0;
+        if (elRevenue) elRevenue.textContent = '\u20b9' + (data.totalRevenue || 0);
+        if (elActive) elActive.textContent = data.activeCount || 0;
+
+        if (!data.rentals || data.rentals.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="py-10 text-center italic text-zinc-600">No film rentals yet.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        for (const r of data.rentals) {
+            const rentedDate = r.rentedAt ? new Date(r.rentedAt) : null;
+            const expiryDate = r.expiresAt ? new Date(r.expiresAt) : null;
+            const timeStr = rentedDate
+                ? `<div style="font-weight:700;color:#e4e4e7;">${rentedDate.toLocaleDateString()}</div><div style="font-size:0.65rem;color:#71717a;">${rentedDate.toLocaleTimeString()}</div>`
+                : 'N/A';
+            const expiryStr = expiryDate
+                ? `<div style="font-weight:600;color:${r.isExpired ? '#f87171' : '#4ade80'};font-size:0.78rem;">${expiryDate.toLocaleDateString()}</div><div style="font-size:0.65rem;color:#71717a;">${expiryDate.toLocaleTimeString()}</div>`
+                : 'N/A';
+            const statusBadge = r.isExpired
+                ? '<span class="status-badge status-badge-expired">Expired</span>'
+                : '<span class="status-badge status-badge-active">Active</span>';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="padding:0.85rem 1.5rem;white-space:nowrap;">${timeStr}</td>
+                <td style="padding:0.85rem 1.5rem;">
+                    <div style="font-weight:700;color:white;font-size:0.82rem;">${r.displayName}</div>
+                    <div style="font-family:monospace;font-size:0.62rem;color:#52525b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px;">${r.userId}</div>
+                </td>
+                <td style="padding:0.85rem 1.5rem;">
+                    <div style="font-weight:700;color:#c084fc;font-size:0.82rem;">🎦 ${r.filmTitle}</div>
+                    <div style="font-size:0.65rem;color:#71717a;">${r.rentalDays} day rental</div>
+                </td>
+                <td style="padding:0.85rem 1.5rem;color:#4ade80;font-weight:800;white-space:nowrap;">&#8377;${r.amount}</td>
+                <td style="padding:0.85rem 1.5rem;font-family:monospace;font-size:0.65rem;color:#52525b;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis;" title="${r.paymentId}">${r.paymentId || '—'}</td>
+                <td style="padding:0.85rem 1.5rem;white-space:nowrap;">
+                    <span style="background:rgba(168,85,247,0.1);color:#c084fc;border:1px solid rgba(168,85,247,0.25);border-radius:9999px;font-size:0.6rem;font-weight:800;padding:0.15rem 0.5rem;">${r.rentalDays}d</span>
+                </td>
+                <td style="padding:0.85rem 1.5rem;white-space:nowrap;">${statusBadge}</td>
+                <td style="padding:0.85rem 1.5rem;white-space:nowrap;">${expiryStr}</td>
+            `;
+            tbody.appendChild(tr);
+        }
+    } catch(e) {
+        console.error(e);
+        tbody.innerHTML = `<tr><td colspan="8" class="py-10 text-center text-red-500">Error: ${e.message}</td></tr>`;
     }
 }
 
@@ -1429,3 +1498,428 @@ function initWebSocket(isPresenceOnly = false) {
 }
 
 setInterval(() => { fetch('/ping').catch(() => {}); }, 2 * 60 * 1000);
+
+// ================================================================
+// ==== FILM STORE — SHARED STATE ====
+// ================================================================
+let filmStoreData = [];
+
+// ================================================================
+// ==== FILM STORE — UTILITY FUNCTIONS ====
+// ================================================================
+
+// Compress image to max 600px wide, JPEG quality 0.75 → returns base64
+function compressImageToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const maxSize = 600;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+        if (width > maxSize) { height = Math.round(height * maxSize / width); width = maxSize; }
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function formatTimeRemaining(expiresAt) {
+  const diff = expiresAt - Date.now();
+  if (diff <= 0) return 'Expired';
+  const h = Math.floor(diff / 3600000);
+  const d = Math.floor(h / 24);
+  if (d > 0) return `${d}d ${h % 24}h remaining`;
+  const m = Math.floor((diff % 3600000) / 60000);
+  return `${h}h ${m}m remaining`;
+}
+
+// ================================================================
+// ==== FILM STORE — USER MODAL ====
+// ================================================================
+
+window.switchFilmTab = function(tab) {
+  const browsePanel = document.getElementById('film-tab-browse');
+  const rentalsPanel = document.getElementById('film-tab-rentals');
+  const browseBtnEl = document.getElementById('tab-btn-browse');
+  const rentalsBtnEl = document.getElementById('tab-btn-rentals');
+  if (tab === 'browse') {
+    browsePanel.classList.remove('hidden');
+    rentalsPanel.classList.add('hidden');
+    browseBtnEl.classList.add('active');
+    rentalsBtnEl.classList.remove('active');
+    loadFilmStore();
+  } else {
+    browsePanel.classList.add('hidden');
+    rentalsPanel.classList.remove('hidden');
+    browseBtnEl.classList.remove('active');
+    rentalsBtnEl.classList.add('active');
+    loadMyRentals();
+  }
+};
+
+function openFilmStoreModal() {
+  const modal = document.getElementById('film-store-modal');
+  modal.style.display = 'block';
+  // Default to browse tab
+  switchFilmTab('browse');
+}
+
+document.getElementById('btn-close-film-store')?.addEventListener('click', () => {
+  document.getElementById('film-store-modal').style.display = 'none';
+});
+
+document.getElementById('btn-src-rented')?.addEventListener('click', openFilmStoreModal);
+
+async function loadFilmStore() {
+  const grid = document.getElementById('films-grid');
+  if (!grid) return;
+  grid.innerHTML = '<div class="text-zinc-500 text-center py-12 col-span-full"><p>Loading films...</p></div>';
+  try {
+    const res = await fetch('/api/films');
+    const data = await res.json();
+    if (!data.success || !data.films || data.films.length === 0) {
+      grid.innerHTML = '<div class="text-zinc-500 text-center py-12 col-span-full"><svg class="mx-auto mb-3" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 2h10l4 4v16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg><p class="font-bold">No films available yet.</p><p class="text-sm mt-1">Check back soon!</p></div>';
+      return;
+    }
+    filmStoreData = data.films;
+    grid.innerHTML = '';
+    data.films.forEach(film => grid.appendChild(buildFilmCard(film)));
+  } catch (e) {
+    grid.innerHTML = `<div class="text-red-400 text-center py-12 col-span-full">Error loading films: ${e.message}</div>`;
+  }
+}
+
+function buildFilmCard(film) {
+  const card = document.createElement('div');
+  card.className = 'film-card';
+  card.innerHTML = `
+    <div class="film-card-poster">
+      ${film.thumbnailBase64
+        ? `<img src="${film.thumbnailBase64}" alt="${film.title}" style="width:100%;height:100%;object-fit:cover;">`
+        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1c1c1e;color:#52525b;font-size:2rem;">🎬</div>`}
+    </div>
+    <div class="film-card-body">
+      <h3 class="film-card-title">${film.title}</h3>
+      <div class="film-card-meta">
+        <span class="film-card-price">₹${film.price}</span>
+        <span class="film-card-days">${film.rentalDays} day${film.rentalDays > 1 ? 's' : ''}</span>
+      </div>
+      <button class="btn film-rent-btn" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}" data-price="${film.price}" data-days="${film.rentalDays}">
+        Rent for ${film.rentalDays} Day${film.rentalDays > 1 ? 's' : ''} — ₹${film.price}
+      </button>
+    </div>
+  `;
+  card.querySelector('.film-rent-btn').addEventListener('click', () => {
+    initiateFilmRental(film.filmId, film.title, film.price, film.rentalDays);
+  });
+  return card;
+}
+
+async function initiateFilmRental(filmId, filmTitle, price, rentalDays) {
+  if (!currentUser) { showCustomAlert('Login Required', 'Please login to rent films.'); return; }
+  try {
+    const res = await fetch('/api/rent-film', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser.uid, filmId })
+    });
+    const order = await res.json();
+    if (!order || !order.id) throw new Error(order.error || 'Failed to create order');
+
+    const options = {
+      key: order.keyId,
+      amount: order.amount,
+      currency: 'INR',
+      name: 'Vaanisetu Film Store',
+      description: `Rent: ${filmTitle} (${rentalDays} days)`,
+      order_id: order.id,
+      handler: async function(response) {
+        const verifyRes = await fetch('/api/verify-rental', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            userId: currentUser.uid,
+            filmId
+          })
+        });
+        const vData = await verifyRes.json();
+        if (vData.success) {
+          showCustomAlert('🎬 Rental Activated!', `"${filmTitle}" is now available for ${rentalDays} days. Go to My Rentals to watch!`);
+          switchFilmTab('rentals');
+        } else {
+          showCustomAlert('Error', 'Payment verification failed. Contact support.');
+        }
+      },
+      prefill: { email: currentUser.email },
+      theme: { color: '#a855f7' }
+    };
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  } catch (e) {
+    showCustomAlert('Error', e.message);
+  }
+}
+
+async function loadMyRentals() {
+  const grid = document.getElementById('rentals-grid');
+  if (!grid || !currentUser) return;
+  grid.innerHTML = '<div class="text-zinc-500 text-center py-12 col-span-full"><p>Loading your rentals...</p></div>';
+  try {
+    const res = await fetch(`/api/my-rentals?userId=${currentUser.uid}`);
+    const data = await res.json();
+    if (!data.success || !data.rentals || data.rentals.length === 0) {
+      grid.innerHTML = '<div class="text-zinc-500 text-center py-12 col-span-full"><svg class="mx-auto mb-3" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg><p class="font-bold">No rentals yet.</p><p class="text-sm mt-1">Browse films and rent one!</p></div>';
+      return;
+    }
+    grid.innerHTML = '';
+    data.rentals.forEach(rental => grid.appendChild(buildRentalCard(rental)));
+  } catch (e) {
+    grid.innerHTML = `<div class="text-red-400 text-center py-12 col-span-full">Error loading rentals: ${e.message}</div>`;
+  }
+}
+
+function buildRentalCard(rental) {
+  const card = document.createElement('div');
+  card.className = 'film-card' + (rental.isExpired ? ' film-card-expired' : '');
+  const timeLeft = rental.isExpired ? 'Expired' : formatTimeRemaining(rental.expiresAt);
+  card.innerHTML = `
+    <div class="film-card-poster">
+      ${rental.thumbnailBase64
+        ? `<img src="${rental.thumbnailBase64}" alt="${rental.filmTitle}" style="width:100%;height:100%;object-fit:cover;">`
+        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1c1c1e;color:#52525b;font-size:2rem;">🎬</div>`}
+      ${rental.isExpired ? '<div class="film-expired-badge">EXPIRED</div>' : ''}
+    </div>
+    <div class="film-card-body">
+      <h3 class="film-card-title">${rental.filmTitle}</h3>
+      <div class="film-rental-timer ${rental.isExpired ? 'expired' : ''}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        ${timeLeft}
+      </div>
+      ${!rental.isExpired
+        ? `<button class="btn film-play-btn" data-link="${rental.telegramLink || ''}" data-title="${rental.filmTitle.replace(/"/g, '&quot;')}">▶ Play Now</button>`
+        : `<button class="btn film-play-btn disabled" disabled>Access Expired</button>`}
+    </div>
+  `;
+  if (!rental.isExpired) {
+    card.querySelector('.film-play-btn').addEventListener('click', () => {
+      playRentedFilm(rental.telegramLink, rental.filmTitle);
+    });
+  }
+  return card;
+}
+
+function playRentedFilm(link, title) {
+  if (!link) { showCustomAlert('Error', 'Stream link not available.'); return; }
+  // Close the store modal
+  document.getElementById('film-store-modal').style.display = 'none';
+  // Play the film using existing room infrastructure
+  const formatted = formatVideoUrl(link);
+  handleNewUrl(formatted, true);
+}
+
+// ================================================================
+// ==== FILM STORE — ADMIN FUNCTIONS ====
+// ================================================================
+
+let adminFilmThumbBase64 = '';
+
+// Thumbnail file picker with compression
+document.getElementById('film-form-thumb')?.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const labelText = document.getElementById('film-thumb-label-text');
+  const preview = document.getElementById('film-thumb-preview');
+  try {
+    labelText.textContent = 'Compressing...';
+    adminFilmThumbBase64 = await compressImageToBase64(file);
+    preview.src = adminFilmThumbBase64;
+    preview.style.display = 'block';
+    labelText.textContent = '✓ Poster ready — click to change';
+  } catch (err) {
+    labelText.textContent = 'Error reading image. Try again.';
+    adminFilmThumbBase64 = '';
+  }
+});
+
+document.getElementById('btn-admin-add-film')?.addEventListener('click', async () => {
+  const editId = document.getElementById('film-edit-id').value;
+  if (editId) { await saveEditFilm(editId); return; }
+  await addFilmToStore();
+});
+
+document.getElementById('btn-admin-cancel-edit')?.addEventListener('click', resetFilmForm);
+
+async function addFilmToStore() {
+  const title = document.getElementById('film-form-title').value.trim();
+  const link = document.getElementById('film-form-link').value.trim();
+  const price = document.getElementById('film-form-price').value;
+  const days = document.getElementById('film-form-days').value;
+  const msgEl = document.getElementById('film-form-msg');
+  const btn = document.getElementById('btn-admin-add-film');
+
+  if (!title || !link) {
+    msgEl.textContent = 'Title and Stream Link are required.';
+    msgEl.style.color = '#ef4444'; msgEl.style.display = 'block'; return;
+  }
+
+  btn.textContent = 'Uploading...'; btn.disabled = true;
+  msgEl.style.display = 'none';
+  try {
+    const res = await fetch('/api/admin/add-film', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adminEmail: currentUser.email, title, telegramLink: link,
+        thumbnailBase64: adminFilmThumbBase64, price: parseFloat(price) || 20,
+        rentalDays: parseInt(days) || 3
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      msgEl.textContent = '✓ Film added successfully!';
+      msgEl.style.color = '#22c55e'; msgEl.style.display = 'block';
+      resetFilmForm();
+      loadAdminFilms();
+    } else throw new Error(data.error);
+  } catch (e) {
+    msgEl.textContent = 'Error: ' + e.message;
+    msgEl.style.color = '#ef4444'; msgEl.style.display = 'block';
+  }
+  btn.textContent = 'Add Film to Store'; btn.disabled = false;
+}
+
+async function saveEditFilm(filmId) {
+  const title = document.getElementById('film-form-title').value.trim();
+  const link = document.getElementById('film-form-link').value.trim();
+  const price = document.getElementById('film-form-price').value;
+  const days = document.getElementById('film-form-days').value;
+  const msgEl = document.getElementById('film-form-msg');
+  const btn = document.getElementById('btn-admin-add-film');
+
+  btn.textContent = 'Saving...'; btn.disabled = true;
+  try {
+    const body = { adminEmail: currentUser.email, filmId, title, telegramLink: link, price: parseFloat(price) || 20, rentalDays: parseInt(days) || 3 };
+    if (adminFilmThumbBase64) body.thumbnailBase64 = adminFilmThumbBase64;
+    const res = await fetch('/api/admin/update-film', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (data.success) {
+      msgEl.textContent = '✓ Film updated!'; msgEl.style.color = '#22c55e'; msgEl.style.display = 'block';
+      resetFilmForm(); loadAdminFilms();
+    } else throw new Error(data.error);
+  } catch (e) {
+    msgEl.textContent = 'Error: ' + e.message; msgEl.style.color = '#ef4444'; msgEl.style.display = 'block';
+  }
+  btn.textContent = 'Save Changes'; btn.disabled = false;
+}
+
+function resetFilmForm() {
+  document.getElementById('film-edit-id').value = '';
+  document.getElementById('film-form-title').value = '';
+  document.getElementById('film-form-link').value = '';
+  document.getElementById('film-form-price').value = '20';
+  document.getElementById('film-form-days').value = '3';
+  document.getElementById('film-thumb-preview').style.display = 'none';
+  document.getElementById('film-thumb-label-text').textContent = 'Click to upload poster image';
+  document.getElementById('film-form-thumb').value = '';
+  document.getElementById('film-form-heading').textContent = 'Add New Film';
+  document.getElementById('btn-admin-add-film').textContent = 'Add Film to Store';
+  document.getElementById('btn-admin-cancel-edit').style.display = 'none';
+  document.getElementById('film-form-msg').style.display = 'none';
+  adminFilmThumbBase64 = '';
+}
+
+function startEditFilm(film) {
+  document.getElementById('film-edit-id').value = film.filmId;
+  document.getElementById('film-form-title').value = film.title;
+  document.getElementById('film-form-link').value = film.telegramLink || '';
+  document.getElementById('film-form-price').value = film.price || 20;
+  document.getElementById('film-form-days').value = film.rentalDays || 3;
+  document.getElementById('film-form-heading').textContent = 'Edit Film';
+  document.getElementById('btn-admin-add-film').textContent = 'Save Changes';
+  document.getElementById('btn-admin-cancel-edit').style.display = 'block';
+  if (film.thumbnailBase64) {
+    const preview = document.getElementById('film-thumb-preview');
+    preview.src = film.thumbnailBase64; preview.style.display = 'block';
+    document.getElementById('film-thumb-label-text').textContent = '✓ Existing poster — click to change';
+    adminFilmThumbBase64 = film.thumbnailBase64;
+  }
+  // Scroll to form
+  document.getElementById('film-form-heading').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function deleteFilm(filmId, btn) {
+  if (!confirm('Delete this film from the store? This cannot be undone.')) return;
+  const orig = btn.textContent; btn.textContent = '...'; btn.disabled = true;
+  try {
+    const res = await fetch('/api/admin/delete-film', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminEmail: currentUser.email, filmId })
+    });
+    const data = await res.json();
+    if (data.success) loadAdminFilms();
+    else { btn.textContent = orig; btn.disabled = false; alert('Error: ' + data.error); }
+  } catch (e) { btn.textContent = orig; btn.disabled = false; }
+}
+
+window.loadAdminFilms = async function() {
+  const list = document.getElementById('admin-films-list');
+  if (!list || !currentUser) return;
+  list.innerHTML = '<p style="color:#52525b;font-size:0.875rem;">Loading...</p>';
+  try {
+    const res = await fetch(`/api/admin/films?adminEmail=${encodeURIComponent(currentUser.email)}`);
+    const data = await res.json();
+    if (!data.success || !data.films || data.films.length === 0) {
+      list.innerHTML = '<p style="color:#52525b;font-size:0.875rem;font-style:italic;">No films added yet.</p>';
+      return;
+    }
+    list.innerHTML = '';
+    data.films.forEach(film => {
+      const row = document.createElement('div');
+      row.className = 'admin-film-row';
+      row.innerHTML = `
+        <div class="admin-film-row-thumb">
+          ${film.thumbnailBase64 ? `<img src="${film.thumbnailBase64}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#27272a;border-radius:8px;font-size:1.25rem;">🎬</div>'}
+        </div>
+        <div class="admin-film-row-info">
+          <div class="admin-film-row-title">${film.title}</div>
+          <div class="admin-film-row-meta">₹${film.price} · ${film.rentalDays} day${film.rentalDays > 1 ? 's' : ''} · <span style="color:${film.isActive ? '#22c55e' : '#ef4444'}">${film.isActive ? 'Active' : 'Hidden'}</span></div>
+          <div class="admin-film-row-link" title="${film.telegramLink || ''}">${(film.telegramLink || '').substring(0, 50)}${(film.telegramLink || '').length > 50 ? '…' : ''}</div>
+        </div>
+        <div class="admin-film-row-actions">
+          <button class="btn-edit-film btn btn-secondary" style="padding:0.4rem 0.75rem;font-size:0.75rem;min-height:auto;width:auto;">Edit</button>
+          <button class="btn-toggle-film btn btn-outline" style="padding:0.4rem 0.75rem;font-size:0.75rem;min-height:auto;width:auto;">${film.isActive ? 'Hide' : 'Show'}</button>
+          <button class="btn-delete-film btn" style="padding:0.4rem 0.75rem;font-size:0.75rem;min-height:auto;width:auto;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid #ef4444;">Delete</button>
+        </div>
+      `;
+      row.querySelector('.btn-edit-film').onclick = () => startEditFilm(film);
+      row.querySelector('.btn-delete-film').onclick = (e) => deleteFilm(film.filmId, e.currentTarget);
+      row.querySelector('.btn-toggle-film').onclick = async (e) => {
+        const b = e.currentTarget; b.textContent = '...'; b.disabled = true;
+        await fetch('/api/admin/update-film', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminEmail: currentUser.email, filmId: film.filmId, isActive: !film.isActive }) });
+        loadAdminFilms();
+      };
+      list.appendChild(row);
+    });
+  } catch (e) {
+    list.innerHTML = `<p style="color:#ef4444;font-size:0.875rem;">Error: ${e.message}</p>`;
+  }
+};
+
+// =====================================================================
+// WINDOW EXPORTS — expose functions used by HTML onclick="" attributes
+// (required because app.js is type="module" — module scope ≠ global scope)
+// =====================================================================
+window.loadRentalLedger = loadRentalLedger;
+window.loadCodeUsers    = loadCodeUsers;
