@@ -317,7 +317,7 @@ async function startServer() {
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: https: blob:; " +
       "media-src 'self' blob: https:; " +
-      "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firestore.googleapis.com https://api.razorpay.com wss:; " +
+      "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firestore.googleapis.com https://api.razorpay.com https://vaanisethu-bot.onrender.com wss:; " +
       "frame-src https://checkout.razorpay.com https://api.razorpay.com https://accounts.google.com https://*.firebaseapp.com; " +
       "worker-src 'self' blob:;"
     );
