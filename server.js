@@ -312,7 +312,7 @@ async function startServer() {
     }
     res.setHeader('Content-Security-Policy',
       "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://www.gstatic.com https://www.googleapis.com https://apis.google.com; " +
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://cdn.razorpay.com https://www.gstatic.com https://www.googleapis.com https://apis.google.com https://cdn.jsdelivr.net; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: https: blob:; " +
@@ -571,10 +571,162 @@ async function startServer() {
 
       const isValid = hostData.activeSubscription && hostData.subscriptionExpiry > Date.now();
 
-      return res.json({ success: true, hostSubscribed: !!isValid });
+      // ✅ NEW: Also allow guests if host is on their first-time free pass day
+      const isOnFreePass = hostData.freePassActive === true &&
+                           hostData.freePassExpiry &&
+                           hostData.freePassExpiry > Date.now();
+
+      return res.json({ success: true, hostSubscribed: !!(isValid || isOnFreePass) });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Failed to check room access" });
+    }
+  });
+
+  // ================================================================
+  // VISITOR COUNTER, FREE PASS & FREE DAY ROUTES
+  // ================================================================
+
+  // Register a new unique visitor (called once on first-time account creation)
+  app.post('/api/register-visitor', async (req, res) => {
+    try {
+      const { userId, displayName } = req.body;
+      if (!adminDb || !userId) return res.status(400).json({ error: "Missing parameters" });
+      // Idempotent — if already registered, ignore
+      const visitorRef = adminDb.collection('visitors').doc(userId);
+      const existing = await visitorRef.get();
+      if (!existing.exists) {
+        await visitorRef.set({ userId, displayName: displayName || 'Unknown', visitedAt: Date.now() });
+      }
+      res.json({ success: true });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Get total unique visitor count (admin only)
+  app.get('/api/visitor-stats', async (req, res) => {
+    try {
+      const { adminEmail } = req.query;
+      if (adminEmail !== 'anubhabmohapatra.01@gmail.com') return res.status(403).json({ error: "Unauthorized" });
+      const snap = await adminDb.collection('visitors').get();
+      res.json({ success: true, totalVisitors: snap.size });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Get platform config (public) — freeDayActive status
+  app.get('/api/platform-config', async (req, res) => {
+    try {
+      const configRef = adminDb.collection('config').doc('platformSettings');
+      const snap = await configRef.get();
+      const freeDayActive = snap.exists ? (snap.data().freeDayActive === true) : false;
+      res.json({ success: true, freeDayActive });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Admin: Set Free Day toggle on/off
+  app.post('/api/admin/set-free-day', async (req, res) => {
+    try {
+      const { adminEmail, freeDayActive } = req.body;
+      if (adminEmail !== 'anubhabmohapatra.01@gmail.com') return res.status(403).json({ error: "Unauthorized" });
+      await adminDb.collection('config').doc('platformSettings').set(
+        { freeDayActive: !!freeDayActive },
+        { merge: true }
+      );
+      res.json({ success: true, freeDayActive: !!freeDayActive });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Claim first-time free pass (anti-abuse: fingerprint + IP check)
+  app.post('/api/claim-free-pass', async (req, res) => {
+    try {
+      const { userId, fingerprint, localKey } = req.body;
+      if (!adminDb || !userId) return res.status(400).json({ error: "Missing parameters" });
+
+      // REQUIRE fingerprint — if client couldn't generate one, reject
+      if (!fingerprint || fingerprint.trim() === '') {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Device fingerprint not ready. Please wait a moment and try again." 
+        });
+      }
+
+      const ip = (req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim();
+      const claimsRef = adminDb.collection('freePassClaims');
+
+      // 1. Fingerprint check — same device, different account
+      const fpSnap = await claimsRef.where('fingerprint', '==', fingerprint).limit(1).get();
+      if (!fpSnap.empty) {
+        return res.status(403).json({ 
+          success: false, 
+          error: "Free pass already claimed on this device. Please purchase a plan to continue." 
+        });
+      }
+
+      // 2. IP check — same network/router, different account (applies everywhere including localhost)
+      if (ip) {
+        const ipSnap = await claimsRef.where('ip', '==', ip).limit(1).get();
+        if (!ipSnap.empty) {
+          return res.status(403).json({ 
+            success: false, 
+            error: "Free pass already used from this network. Please purchase a plan to continue." 
+          });
+        }
+      }
+
+      // 3. localKey check — localStorage token sent by client (added as extra safety layer)
+      if (localKey && localKey.trim() !== '') {
+        const lkSnap = await claimsRef.where('localKey', '==', localKey).limit(1).get();
+        if (!lkSnap.empty) {
+          return res.status(403).json({ 
+            success: false, 
+            error: "Free pass already claimed from this browser. Please purchase a plan." 
+          });
+        }
+      }
+
+      // 4. userId direct check
+      const userClaimSnap = await claimsRef.where('userId', '==', userId).limit(1).get();
+      if (!userClaimSnap.empty) {
+        return res.status(403).json({ 
+          success: false, 
+          error: "You have already used your free pass." 
+        });
+      }
+
+      // All checks passed — grant 24hr free pass
+      const freePassExpiry = Date.now() + (24 * 60 * 60 * 1000);
+
+      // Save claim record
+      await claimsRef.add({ 
+        userId, 
+        fingerprint, 
+        ip, 
+        localKey: localKey || '', 
+        claimedAt: Date.now() 
+      });
+
+      // Update user document
+      await adminDb.collection('users').doc(userId).update({
+        freePassActive: true,
+        freePassExpiry,
+        freePassClaimedAt: Date.now()
+      });
+
+      res.json({ success: true, freePassExpiry, message: "Free pass activated! Enjoy 24 hours of free access." });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
     }
   });
 

@@ -42,6 +42,45 @@ let currentRoomUsers = new Set();
 let currentRoomOwnerUid = null;
 let currentGuestAccessRoom = null; // Stores room code if guest pass granted
 
+// Platform Config Cache
+let _platformConfig = null; // { freeDayActive: bool }
+let _deviceFingerprint = ''; // FingerprintJS hash
+let _fpReady = false; // true once FingerprintJS has resolved
+
+// Generate a persistent localStorage key for this browser (survives account changes)
+function getLocalClaimKey() {
+  let key = localStorage.getItem('_vns_fpkey');
+  if (!key) {
+    key = 'lk_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+    localStorage.setItem('_vns_fpkey', key);
+  }
+  return key;
+}
+
+// Generate device fingerprint on load (async)
+(async () => {
+  try {
+    const fp = await window.FingerprintJS?.load();
+    if (fp) {
+      const result = await fp.get();
+      _deviceFingerprint = result.visitorId || '';
+    }
+  } catch(e) { console.warn('Fingerprint unavailable:', e); }
+  _fpReady = true;
+})();
+
+async function getPlatformConfig() {
+  if (_platformConfig !== null) return _platformConfig;
+  try {
+    const res = await fetch('/api/platform-config');
+    const data = await res.json();
+    _platformConfig = data.success ? data : { freeDayActive: false };
+  } catch(e) {
+    _platformConfig = { freeDayActive: false };
+  }
+  return _platformConfig;
+}
+
 // Views
 const authView = document.getElementById('auth-view');
 const setupProfileView = document.getElementById('setup-profile-view');
@@ -319,6 +358,13 @@ btnSaveProfile.addEventListener('click', async () => {
 
         sessionUserName = name;
         if(dashboardUserName) dashboardUserName.textContent = `Hi, ${name}`;
+
+        // Register as a new unique visitor (server deduplicates with userId doc)
+        fetch('/api/register-visitor', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: auth.currentUser.uid, displayName: name })
+        }).catch(() => {}); // Non-blocking
         
         listenToUserDoc();
         initWebSocket(true);
@@ -335,7 +381,8 @@ onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
         sessionUserId = user.uid;
-        authView.classList.add('hidden');
+        // ⚠️ DO NOT hide authView here — wait until we know which view to show
+        // authView will be hidden inside the branches below to prevent black screen
         
         initWebSocket(true); // Sign into Presence Layer
 
@@ -344,6 +391,7 @@ onAuthStateChanged(auth, async (user) => {
             const userSnap = await getDoc(userRef);
 
             if (!userSnap.exists()) {
+                authView.classList.add('hidden'); // hide auth only now
                 if (user.displayName) {
                     // Google Login provides a name, so auto-complete profile setup!
                     setupNameInput.value = user.displayName;
@@ -353,12 +401,14 @@ onAuthStateChanged(auth, async (user) => {
                     dashView.classList.add('hidden');
                 }
             } else if (!userSnap.data().displayName) {
+                authView.classList.add('hidden'); // hide auth only now
                 setupProfileView.classList.remove('hidden');
                 dashView.classList.add('hidden');
             } else {
                 currentUserDoc = userSnap.data();
                 sessionUserName = currentUserDoc.displayName;
                 if(dashboardUserName) dashboardUserName.textContent = `Hi, ${currentUserDoc.displayName}`;
+                authView.classList.add('hidden'); // hide auth only now
                 setupProfileView.classList.add('hidden');
                 
                 if (user.email === 'anubhabmohapatra.01@gmail.com') {
@@ -366,6 +416,13 @@ onAuthStateChanged(auth, async (user) => {
                 } else {
                     btnAdminDash.classList.add('hidden');
                 }
+
+                // Register visitor for ALL users (server deduplicates by userId — no double count)
+                fetch('/api/register-visitor', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: user.uid, displayName: currentUserDoc.displayName })
+                }).catch(() => {});
 
                 checkAccessAndRoute();
                 listenToUserDoc();
@@ -375,7 +432,7 @@ onAuthStateChanged(auth, async (user) => {
             authError.classList.remove('hidden', 'bg-green-900', 'text-green-500');
             authError.classList.add('bg-red-900', 'text-red-500');
             authError.textContent = "Database Error: " + err.message + " (Firebase Security Rules Need Update)";
-            authView.classList.remove('hidden');
+            // authView stays visible so user can see the error
         }
     } else {
         currentUser = null;
@@ -414,8 +471,13 @@ function listenToUserDoc() {
 // ==== ACCESS GATEKEEPER & PAYMENTS ====
 function hasValidAccess() {
     if (currentUser.email === 'anubhabmohapatra.01@gmail.com') return true;
+    // Active subscription
     if (currentUserDoc && currentUserDoc.activeSubscription && currentUserDoc.subscriptionExpiry) {
         if (Date.now() < currentUserDoc.subscriptionExpiry) return true;
+    }
+    // First-time free pass (claim kiya hua, abhi valid hai)
+    if (currentUserDoc && currentUserDoc.freePassActive && currentUserDoc.freePassExpiry) {
+        if (Date.now() < currentUserDoc.freePassExpiry) return true;
     }
     return false;
 }
@@ -427,7 +489,7 @@ function checkAccessAndRoute() {
     const joinCode = urlParams.get('join') ? urlParams.get('join').toUpperCase() : null;
 
     if (!hasValidAccess() && joinCode) {
-        // Evaluate if joinCode's owner is subbed
+        // Evaluate if joinCode's owner is subbed OR on their free day
         fetch(`/api/check-room-access?roomCode=${joinCode}`)
             .then(res => res.json())
             .then(data => {
@@ -441,9 +503,10 @@ function checkAccessAndRoute() {
                     roomView.classList.add('hidden');
                     paymentView.classList.remove('hidden');
                     window.history.replaceState({}, document.title, window.location.pathname);
+                    showFreePassCardIfEligible();
                 }
             })
-            .catch(e => {
+            .catch(() => {
                 dashView.classList.add('hidden');
                 roomView.classList.add('hidden');
                 paymentView.classList.remove('hidden');
@@ -452,11 +515,26 @@ function checkAccessAndRoute() {
     }
 
     if (!hasValidAccess()) {
+        // 🔧 FIX: IMMEDIATELY show payment view (no black screen)
         dashView.classList.add('hidden');
         roomView.classList.add('hidden');
         paymentView.classList.remove('hidden');
         currentGuestAccessRoom = null;
         if (!_spaHandlingPop) spaPushState('payment');
+        showFreePassCardIfEligible();
+
+        // THEN check if admin turned Free Day ON (async, updates if needed)
+        getPlatformConfig().then(config => {
+            if (config && config.freeDayActive) {
+                // Free Day active — override payment wall
+                paymentView.classList.add('hidden');
+                if (!currentRoomId) {
+                    dashView.classList.remove('hidden');
+                    if (!_spaHandlingPop) spaPushState('dashboard');
+                }
+            }
+            // else: payment view already shown above, nothing to do
+        });
     } else {
         paymentView.classList.add('hidden');
         if (joinCode && !currentRoomId) {
@@ -466,6 +544,113 @@ function checkAccessAndRoute() {
             dashView.classList.remove('hidden');
             if (!_spaHandlingPop) spaPushState('dashboard');
         }
+    }
+}
+
+// Show/hide the "Claim Free Pass" card on payment view based on eligibility
+function showFreePassCardIfEligible() {
+    const freePassCard = document.getElementById('free-pass-card');
+    if (!freePassCard || !currentUser) return;
+
+    // Already claimed in Firestore
+    const claimedInDb = currentUserDoc && 
+        (currentUserDoc.freePassActive || currentUserDoc.freePassClaimedAt);
+    // Already claimed in localStorage (same browser, different account)
+    const claimedInBrowser = localStorage.getItem('_vns_claimed') === '1';
+
+    if (claimedInDb || claimedInBrowser) {
+        freePassCard.style.display = 'none';
+    } else {
+        freePassCard.style.display = 'block';
+    }
+}
+
+async function claimFreePass() {
+    const btn = document.getElementById('btn-claim-free-pass');
+    const msgEl = document.getElementById('free-pass-msg');
+    if (!btn || !currentUser) return;
+
+    btn.disabled = true;
+    if (msgEl) { msgEl.textContent = ''; msgEl.classList.add('hidden'); }
+
+    // Wait for fingerprint to be ready (max 4 seconds)
+    if (!_fpReady) {
+        btn.textContent = 'Preparing...';
+        await new Promise(resolve => {
+            const check = setInterval(() => {
+                if (_fpReady) { clearInterval(check); resolve(); }
+            }, 200);
+            setTimeout(() => { clearInterval(check); resolve(); }, 4000);
+        });
+    }
+
+    // If fingerprint still empty after waiting, fallback to localKey-only approach
+    // but still block (server will reject empty fingerprint)
+    if (!_deviceFingerprint) {
+        if (msgEl) {
+            msgEl.textContent = 'Could not verify your device. Please refresh and try again.';
+            msgEl.className = 'text-xs mt-3 text-red-400';
+            msgEl.classList.remove('hidden');
+        }
+        btn.textContent = 'Claim Free 24-Hour Pass';
+        btn.disabled = false;
+        return;
+    }
+
+    btn.textContent = 'Claiming...';
+
+    // Check localStorage FIRST before even hitting server
+    if (localStorage.getItem('_vns_claimed') === '1') {
+        if (msgEl) {
+            msgEl.textContent = 'Free pass already claimed on this browser. Please purchase a plan.';
+            msgEl.className = 'text-xs mt-3 text-red-400';
+            msgEl.classList.remove('hidden');
+        }
+        btn.textContent = 'Already Claimed';
+        btn.disabled = true;
+        showFreePassCardIfEligible();
+        return;
+    }
+
+    try {
+        const localKey = getLocalClaimKey();
+        const res = await fetch('/api/claim-free-pass', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                userId: currentUser.uid, 
+                fingerprint: _deviceFingerprint,
+                localKey
+            })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            // Mark in localStorage so same browser can't claim again even with new account
+            localStorage.setItem('_vns_claimed', '1');
+            if (msgEl) {
+                msgEl.textContent = 'Free Pass Activated! Entering dashboard...';
+                msgEl.className = 'text-xs mt-3 text-green-400';
+                msgEl.classList.remove('hidden');
+            }
+            // listenToUserDoc snapshot will pick up freePassActive and route to dashboard
+        } else {
+            if (msgEl) {
+                msgEl.textContent = data.error || 'Could not claim free pass.';
+                msgEl.className = 'text-xs mt-3 text-red-400';
+                msgEl.classList.remove('hidden');
+            }
+            btn.textContent = 'Claim Free 24-Hour Pass';
+            btn.disabled = false;
+        }
+    } catch(e) {
+        if (msgEl) {
+            msgEl.textContent = 'Network error. Please try again.';
+            msgEl.className = 'text-xs mt-3 text-red-400';
+            msgEl.classList.remove('hidden');
+        }
+        btn.textContent = 'Claim Free 24-Hour Pass';
+        btn.disabled = false;
     }
 }
 
@@ -616,8 +801,17 @@ if (btnAdminDash) {
         loadAdminLedger();
         loadCodeUsers();
         loadRentalLedger();
+        loadVisitorStats();
+        loadFreeDayStatus();
     });
 }
+
+// Free Pass claim button
+document.addEventListener('click', (e) => {
+    if (e.target && e.target.id === 'btn-claim-free-pass') {
+        claimFreePass();
+    }
+});
 if (btnAdminClose) {
     btnAdminClose.addEventListener('click', () => {
         adminView.classList.add('hidden');
@@ -1998,3 +2192,67 @@ window.loadAdminFilms = async function() {
 // =====================================================================
 window.loadRentalLedger = loadRentalLedger;
 window.loadCodeUsers    = loadCodeUsers;
+
+// ==== ADMIN: Visitor Stats ====
+window.loadVisitorStats = async function() {
+    const el = document.getElementById('admin-visitor-count');
+    const spinner = document.getElementById('visitor-stats-spinner');
+    if (!el || !currentUser) return;
+    if (spinner) spinner.style.display = 'inline-block';
+    try {
+        const res = await fetch(`/api/visitor-stats?adminEmail=${encodeURIComponent(currentUser.email)}`);
+        const data = await res.json();
+        if (data.success) {
+            el.textContent = data.totalVisitors || 0;
+        } else {
+            el.textContent = 'Error';
+        }
+    } catch(e) {
+        el.textContent = '—';
+    } finally {
+        if (spinner) spinner.style.display = 'none';
+    }
+};
+
+// ==== ADMIN: Free Day Toggle ====
+window.loadFreeDayStatus = async function() {
+    const toggle = document.getElementById('free-day-toggle');
+    const label = document.getElementById('free-day-label');
+    if (!toggle) return;
+    try {
+        const res = await fetch('/api/platform-config');
+        const data = await res.json();
+        toggle.checked = data.freeDayActive === true;
+        if (label) label.textContent = data.freeDayActive ? '🟢 Free Day: ON (all users have free access)' : '🔴 Free Day: OFF (normal access rules apply)';
+    } catch(e) {
+        if (label) label.textContent = 'Error loading status';
+    }
+};
+
+window.toggleFreeDay = async function() {
+    const toggle = document.getElementById('free-day-toggle');
+    const label = document.getElementById('free-day-label');
+    if (!toggle || !currentUser) return;
+    const newState = toggle.checked;
+    try {
+        const res = await fetch('/api/admin/set-free-day', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ adminEmail: currentUser.email, freeDayActive: newState })
+        });
+        const data = await res.json();
+        if (data.success) {
+            // Reset platform config cache so next checkAccessAndRoute picks up new state
+            _platformConfig = null;
+            if (label) label.textContent = newState 
+                ? '🟢 Free Day: ON (all users have free access)' 
+                : '🔴 Free Day: OFF (normal access rules apply)';
+        } else {
+            toggle.checked = !newState; // Revert
+            alert('Error: ' + data.error);
+        }
+    } catch(e) {
+        toggle.checked = !newState; // Revert
+        alert('Network error. Try again.');
+    }
+};

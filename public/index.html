@@ -329,6 +329,22 @@
          <p id="guest-join-msg" class="text-xs mt-3 hidden"></p>
       </div>
 
+      <!-- First-Time Free Pass Card (JS shows this for eligible users only) -->
+      <div id="free-pass-card" class="card max-w-md mx-auto mt-4" style="display:none;border:1px solid rgba(74,222,128,0.35);background:linear-gradient(135deg,rgba(5,46,22,0.6),rgba(10,10,15,0.9));">
+        <div class="flex items-center gap-3 mb-3">
+          <div style="background:rgba(74,222,128,0.15);border-radius:50%;padding:0.6rem;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <div>
+            <h4 class="text-white font-bold text-base mb-0">Welcome Gift &mdash; Free 24-Hour Pass</h4>
+            <p class="text-green-400 text-xs mt-0">First-time user? Get full access for free!</p>
+          </div>
+        </div>
+        <p class="text-zinc-400 text-xs mb-4">Claim your complimentary 24-hour pass. No payment needed. One pass per person/device.</p>
+        <button id="btn-claim-free-pass" class="btn w-full" style="background:linear-gradient(135deg,#166534,#15803d);color:#bbf7d0;font-weight:800;border:1px solid rgba(74,222,128,0.4);">Claim Free 24-Hour Pass</button>
+        <p id="free-pass-msg" class="text-xs mt-3 hidden text-center"></p>
+      </div>
+
     </div>
   </div>
 
@@ -343,7 +359,37 @@
              <button id="btn-admin-close" class="btn btn-outline px-4 py-2 text-sm">Return Home</button>
          </div>
          
-         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+             <!-- Platform Stats + Free Day Toggle -->
+             <div class="card flex flex-col gap-5 col-span-1 border border-zinc-800 bg-zinc-900/50">
+               <div>
+                 <h2 class="text-base text-white m-0 mb-1">Platform Stats</h2>
+                 <p class="text-xs text-zinc-500 m-0 mb-3">Unique registered visitors.</p>
+                 <div style="background:#0a0a0c;border:1px solid #1c1c1e;border-radius:0.85rem;padding:0.85rem 1rem;display:flex;align-items:center;justify-content:space-between;">
+                   <div>
+                     <span class="text-xs text-zinc-600 uppercase font-bold tracking-widest block mb-1">Total Visitors</span>
+                     <span id="admin-visitor-count" class="text-3xl font-black text-blue-400">-</span>
+                     <span id="visitor-stats-spinner" style="display:none;" class="text-zinc-500 text-xs ml-2">...</span>
+                   </div>
+                   <button onclick="loadVisitorStats()" class="icon-btn hover-bg bg-black border border-zinc-800" style="width:30px;height:30px;" title="Refresh">
+                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 2v6h6"/></svg>
+                   </button>
+                 </div>
+               </div>
+               <div style="border-top:1px solid #1f1f23;padding-top:1rem;">
+                 <h2 class="text-base text-white m-0 mb-1">Free Day Control</h2>
+                 <p class="text-xs text-zinc-500 m-0 mb-3">Give all users free access today.</p>
+                 <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;padding:0.75rem 0.9rem;background:#0a0a0c;border:1px solid #1c1c1e;border-radius:0.85rem;">
+                   <div style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;">
+                     <input type="checkbox" id="free-day-toggle" onchange="toggleFreeDay()" style="opacity:0;width:0;height:0;position:absolute;">
+                     <span style="position:absolute;cursor:pointer;inset:0;background:#27272a;border-radius:34px;transition:0.3s;" id="free-day-slider"></span>
+                   </div>
+                   <span id="free-day-label" class="text-xs text-zinc-400">Free Day: OFF</span>
+                 </label>
+                 <style>#free-day-toggle:checked+#free-day-slider{background:#166534!important}#free-day-toggle:checked+#free-day-slider::before{transform:translateX(20px)}#free-day-slider::before{content:"";position:absolute;height:16px;width:16px;left:4px;bottom:4px;background:white;border-radius:50%;transition:.3s}</style>
+               </div>
+             </div>
+
              <!-- Code Generator -->
              <div class="card flex flex-col gap-4 col-span-1 border border-zinc-800 bg-zinc-900/50">
                  <h2 class="text-lg text-white m-0">Generate Access Code</h2>
@@ -870,6 +916,7 @@
 
 </main>
 
-  <script type="module" src="/app.js?v=5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js"></script>
+  <script type="module" src="/app.js?v=10"></script>
 </body>
 </html>
