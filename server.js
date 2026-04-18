@@ -10,6 +10,7 @@ import { getFirestore } from "firebase-admin/firestore";
 import crypto from "crypto";
 
 dotenv.config();
+import nodemailer from 'nodemailer';
 
 let adminDb = null;
 try {
@@ -24,6 +25,15 @@ try {
 } catch (e) {
   console.warn("Firebase Admin Init Warning (Ensure env is setup):", e.message);
 }
+
+// Nodemailer transporter for Gmail SMTP
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_PASS,
+  },
+});
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_missing_key",
@@ -312,13 +322,29 @@ async function startServer() {
     }
     res.setHeader('Content-Security-Policy',
       "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://cdn.razorpay.com https://www.gstatic.com https://www.googleapis.com https://apis.google.com https://cdn.jsdelivr.net; " +
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' " +
+        "https://checkout.razorpay.com https://cdn.razorpay.com " +
+        "https://www.gstatic.com https://www.googleapis.com https://apis.google.com " +
+        "https://cdn.jsdelivr.net " +
+        // AdSterra / highperformanceformat ad network
+        "https://www.profitablecpmratenetwork.com https://*.profitablecpmratenetwork.com " +
+        "https://www.highperformanceformat.com https://*.highperformanceformat.com; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "font-src 'self' https://fonts.gstatic.com; " +
-      "img-src 'self' data: https: blob:; " +
+      "img-src 'self' data: https: blob: " +
+        "https://*.profitablecpmratenetwork.com https://*.highperformanceformat.com; " +
       "media-src 'self' blob: https:; " +
-      "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firestore.googleapis.com https://api.razorpay.com https://vaanisethu-bot.onrender.com wss:; " +
-      "frame-src https://checkout.razorpay.com https://api.razorpay.com https://accounts.google.com https://*.firebaseapp.com; " +
+      "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com " +
+        "https://securetoken.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com " +
+        "https://*.firestore.googleapis.com https://api.razorpay.com " +
+        "https://vaanisethu-bot.onrender.com wss: " +
+        "https://www.profitablecpmratenetwork.com https://*.profitablecpmratenetwork.com " +
+        "https://www.highperformanceformat.com https://*.highperformanceformat.com; " +
+      "frame-src https://checkout.razorpay.com https://api.razorpay.com " +
+        "https://accounts.google.com https://*.firebaseapp.com " +
+        // AdSterra ad iframes
+        "https://www.profitablecpmratenetwork.com https://*.profitablecpmratenetwork.com " +
+        "https://www.highperformanceformat.com https://*.highperformanceformat.com; " +
       "worker-src 'self' blob:;"
     );
     next();
@@ -384,6 +410,29 @@ async function startServer() {
       }
     } catch (err) {
       console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Contact form submission via nodemailer
+  app.post('/api/send-contact', async (req, res) => {
+    try {
+      const { name, email, message, screenshotBase64 } = req.body;
+      const mailOptions = {
+        from: process.env.GMAIL_USER,
+        to: ['anubhabmohapatra.01@gmail.com', 'anubhab.01@vaanisethu.online'],
+        subject: `Vaanisethu Contact: ${name || 'Anonymous'}`,
+        text: `Message from ${name || 'Anonymous'} (${email || 'no-reply'}):\n\n${message}`,
+      };
+      if (screenshotBase64 && screenshotBase64.length < 1_000_000) {
+        mailOptions.attachments = [{ filename: 'screenshot.png', content: screenshotBase64.split("base64,")[1] || screenshotBase64, encoding: 'base64' }];
+      } else if (screenshotBase64) {
+        mailOptions.text += '\n\n[Screenshot attached was too large to send]';
+      }
+      await transporter.sendMail(mailOptions);
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Contact email error:', err);
       res.status(500).json({ error: err.message });
     }
   });
@@ -571,21 +620,70 @@ async function startServer() {
 
       const isValid = hostData.activeSubscription && hostData.subscriptionExpiry > Date.now();
 
-      // ✅ NEW: Also allow guests if host is on their first-time free pass day
+      // ✅ Allow if host is on free pass
       const isOnFreePass = hostData.freePassActive === true &&
                            hostData.freePassExpiry &&
                            hostData.freePassExpiry > Date.now();
 
-      return res.json({ success: true, hostSubscribed: !!(isValid || isOnFreePass) });
+      // ✅ Allow if host is on an ad-pass (watched ads for free access)
+      const isOnAdPass = hostData.adPassActive === true &&
+                         hostData.adPassExpiry &&
+                         hostData.adPassExpiry > Date.now();
+
+      return res.json({ success: true, hostSubscribed: !!(isValid || isOnFreePass || isOnAdPass) });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Failed to check room access" });
     }
+    });
+
+  // Returns host's current ad context for a room — used by guests to set _roomHostAccessType
+  app.get('/api/room-ad-context', async (req, res) => {
+    try {
+      const { roomCode } = req.query;
+      if (!adminDb || !roomCode) return res.status(400).json({ error: 'Missing roomCode' });
+      const cleanCode = roomCode.trim().toUpperCase();
+      const snap = await adminDb.collection('users').where('roomCode', '==', cleanCode).get();
+      if (snap.empty) return res.json({ success: false, error: 'Room not found' });
+
+      const hostData = snap.docs[0].data();
+      const hostUid  = snap.docs[0].id;
+
+      // Determine host access type
+      let hostAccessType = 'generic';
+      try {
+        const hostAuth = await admin.auth().getUser(hostUid);
+        if (isAdmin(hostAuth.email || '')) hostAccessType = 'premium';
+      } catch (_) {}
+
+      if (hostAccessType !== 'premium') {
+        const now = Date.now();
+        const isPremiumSub = hostData.activeSubscription && hostData.subscriptionExpiry > now
+                             && hostData.activeSubscription !== 'ad-pass';
+        if (isPremiumSub) {
+          hostAccessType = 'premium'; // paid subscription = premium tier
+        } else if (hostData.adPassActive && hostData.adPassExpiry > now) {
+          // Host used ad-pass — but their film access type written by client is more accurate
+          hostAccessType = hostData.roomHostAccessType || 'ad-unlock';
+        } else if (hostData.freePassActive && hostData.freePassExpiry > now) {
+          hostAccessType = hostData.roomHostAccessType || 'generic';
+        } else {
+          hostAccessType = hostData.roomHostAccessType || 'generic';
+        }
+      }
+
+      res.json({
+        success: true,
+        hostAccessType,
+        filmAdEnabled: hostData.roomFilmAdEnabled !== false // default true
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
   });
 
-  // ================================================================
-  // VISITOR COUNTER, FREE PASS & FREE DAY ROUTES
-  // ================================================================
+
 
   // Register a new unique visitor (called once on first-time account creation)
   app.post('/api/register-visitor', async (req, res) => {
@@ -605,13 +703,32 @@ async function startServer() {
     }
   });
 
-  // Get total unique visitor count (admin only)
+  // Get total unique visitor count (now public)
   app.get('/api/visitor-stats', async (req, res) => {
     try {
-      const { adminEmail } = req.query;
-      if (adminEmail !== 'anubhabmohapatra.01@gmail.com') return res.status(403).json({ error: "Unauthorized" });
+      // Made public as requested (Option A or Option B, user chose Option B for footer but we do both, we will use page-view-count for anonymous counter)
       const snap = await adminDb.collection('visitors').get();
       res.json({ success: true, totalVisitors: snap.size });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Public page view counter (anonymous)
+  app.get('/api/page-view-count', async (req, res) => {
+    try {
+      const counterRef = adminDb.collection('pageViews').doc('counter');
+      await adminDb.runTransaction(async (t) => {
+        const doc = await t.get(counterRef);
+        let count = 0;
+        if (doc.exists) {
+          count = doc.data().count || 0;
+        }
+        count += 1;
+        t.set(counterRef, { count }, { merge: true });
+        res.json({ success: true, totalPageViews: count });
+      });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: err.message });
@@ -731,6 +848,338 @@ async function startServer() {
   });
 
 
+  // ================================================================
+  // AD MONETIZATION SYSTEM
+  // ================================================================
+
+  // Step 1: Client calls this after each ad completes to get a signed token
+  app.post('/api/verify-ad-completion', async (req, res) => {
+    try {
+      const { userId, adIndex } = req.body; // adIndex = 1 or 2
+      if (!adminDb || !userId) return res.status(400).json({ error: 'Missing parameters' });
+
+      // Generate a secure random token tied to this user + ad slot + time
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = Date.now() + (10 * 60 * 1000); // token valid for 10 minutes only
+
+      // Store token in Firestore so grant endpoint can verify it
+      await adminDb.collection('adTokens').add({
+        userId,
+        adIndex,
+        token,
+        expiresAt,
+        createdAt: Date.now(),
+        used: false
+      });
+
+      res.json({ success: true, token, expiresAt });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Step 2: After watching all required ads, grant 24hr ad-pass
+  app.post('/api/grant-ad-pass', async (req, res) => {
+    try {
+      const { userId, tokens, fingerprint } = req.body; // tokens = array of 4 verified ad tokens
+      const REQUIRED_ADS = 4;
+      if (!adminDb || !userId || !Array.isArray(tokens) || tokens.length < REQUIRED_ADS) {
+        return res.status(400).json({ error: `Need ${REQUIRED_ADS} ad tokens to grant access.` });
+      }
+
+      // All tokens must be unique
+      if (new Set(tokens).size < REQUIRED_ADS) {
+        return res.status(403).json({ success: false, error: 'Duplicate tokens detected. Please restart the ad flow.' });
+      }
+
+      const tokensRef = adminDb.collection('adTokens');
+      const now = Date.now();
+      const batch = adminDb.batch();
+
+      // Verify all tokens in sequence
+      for (let i = 0; i < REQUIRED_ADS; i++) {
+        const t = tokens[i];
+        if (!t) return res.status(400).json({ success: false, error: `Token ${i + 1} is missing.` });
+
+        const snap = await tokensRef
+          .where('userId', '==', userId)
+          .where('token', '==', t)
+          .where('used', '==', false)
+          .limit(1).get();
+
+        if (snap.empty) return res.status(403).json({ success: false, error: `Ad ${i + 1} token is invalid or already used. Please restart.` });
+        if (snap.docs[0].data().expiresAt < now) return res.status(403).json({ success: false, error: `Ad ${i + 1} token expired. Please restart.` });
+
+        batch.update(tokensRef.doc(snap.docs[0].id), { used: true });
+      }
+
+      // Grant 24hr ad-pass on user document
+      // Also set activeSubscription + subscriptionExpiry so hasValidAccess() routes to dashboard
+      const adPassExpiry = now + (24 * 60 * 60 * 1000);
+      const userRef = adminDb.collection('users').doc(userId);
+      batch.update(userRef, {
+        adPassActive: true,
+        adPassExpiry,
+        adPassGrantedAt: now,
+        activeSubscription: 'ad-pass',
+        subscriptionExpiry: adPassExpiry
+      });
+
+      // Log ad-pass grant
+      const adPassRef = adminDb.collection('adPasses').doc();
+      batch.set(adPassRef, {
+        userId,
+        fingerprint: fingerprint || '',
+        adsWatched: REQUIRED_ADS,
+        grantedAt: now,
+        expiresAt: adPassExpiry
+      });
+
+      await batch.commit();
+
+      res.json({ success: true, adPassExpiry, message: '🎉 24-hour free access granted! Enjoy Vaanisethu.' });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Film ad unlock: watch 1 ad → get 4hr access to a specific film
+  app.post('/api/grant-film-ad-unlock', async (req, res) => {
+    try {
+      const { userId, filmId, token } = req.body;
+      if (!adminDb || !userId || !filmId || !token) {
+        return res.status(400).json({ error: 'Missing parameters' });
+      }
+
+      const now = Date.now();
+
+      // Verify the ad token
+      const tokensRef = adminDb.collection('adTokens');
+      const tSnap = await tokensRef
+        .where('userId', '==', userId)
+        .where('token', '==', token)
+        .where('used', '==', false)
+        .limit(1).get();
+      if (tSnap.empty) return res.status(403).json({ success: false, error: 'Invalid or expired ad token. Please watch the ad again.' });
+      if (tSnap.docs[0].data().expiresAt < now) return res.status(403).json({ success: false, error: 'Ad token expired. Please retry.' });
+
+      // Check film exists and ad unlock is enabled
+      const filmRef = adminDb.collection('films').doc(filmId);
+      const filmSnap = await filmRef.get();
+      if (!filmSnap.exists) return res.status(404).json({ success: false, error: 'Film not found.' });
+      const filmData = filmSnap.data();
+      if (filmData.adUnlockEnabled === false) {
+        return res.status(403).json({ success: false, error: 'Ad unlock is not available for this film.' });
+      }
+
+      const unlockHours = filmData.adUnlockHours || 1; // default: 1 hour
+      const expiresAt = now + (unlockHours * 60 * 60 * 1000);
+
+      // Mark token used
+      await adminDb.collection('adTokens').doc(tSnap.docs[0].id).update({ used: true });
+
+      // Create unlock record — use userId+filmId as doc ID so we can overwrite/extend
+      const unlockId = `${userId}_${filmId}`;
+      await adminDb.collection('adFilmUnlocks').doc(unlockId).set({
+        userId,
+        filmId,
+        filmTitle: filmData.title,
+        telegramLink: filmData.telegramLink,
+        unlockedAt: now,
+        expiresAt
+      });
+
+      res.json({
+        success: true,
+        expiresAt,
+        telegramLink: filmData.telegramLink,
+        filmTitle: filmData.title,
+        message: `🎬 Film unlocked for ${unlockHours} hours! Enjoy.`
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Get current user's active ad-unlocked films
+  app.get('/api/my-ad-unlocks', async (req, res) => {
+    try {
+      const { userId } = req.query;
+      if (!adminDb || !userId) return res.status(400).json({ error: 'Missing userId' });
+
+      const now = Date.now();
+      const snap = await adminDb.collection('adFilmUnlocks')
+        .where('userId', '==', userId)
+        .get();
+
+      const unlocks = [];
+      snap.forEach(doc => {
+        const d = doc.data();
+        unlocks.push({
+          filmId: d.filmId,
+          filmTitle: d.filmTitle,
+          telegramLink: d.expiresAt > now ? d.telegramLink : null, // hide link if expired
+          unlockedAt: d.unlockedAt,
+          expiresAt: d.expiresAt,
+          isActive: d.expiresAt > now
+        });
+      });
+
+      res.json({ success: true, unlocks });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Admin: Toggle ad-unlock per film + set unlock duration
+  app.post('/api/admin/set-film-ad-unlock', async (req, res) => {
+    try {
+      const { adminEmail, filmId, adUnlockEnabled, adUnlockHours } = req.body;
+      if (adminEmail !== 'anubhabmohapatra.01@gmail.com') return res.status(403).json({ error: 'Unauthorized' });
+      if (!filmId) return res.status(400).json({ error: 'filmId required' });
+
+      const update = {};
+      if (adUnlockEnabled !== undefined) update.adUnlockEnabled = !!adUnlockEnabled;
+      if (adUnlockHours !== undefined) update.adUnlockHours = parseInt(adUnlockHours) || 4;
+
+      await adminDb.collection('films').doc(filmId).update(update);
+      res.json({ success: true });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Admin: Ad analytics overview
+  app.get('/api/admin/ad-analytics', async (req, res) => {
+    try {
+      const { adminEmail } = req.query;
+      if (adminEmail !== 'anubhabmohapatra.01@gmail.com') return res.status(403).json({ error: 'Unauthorized' });
+
+      const now = Date.now();
+      const oneDayAgo = now - (24 * 60 * 60 * 1000);
+
+      const [passSnap, unlockSnap] = await Promise.all([
+        adminDb.collection('adPasses').get(),
+        adminDb.collection('adFilmUnlocks').get()
+      ]);
+
+      let todayPasses = 0;
+      passSnap.forEach(d => { if (d.data().grantedAt >= oneDayAgo) todayPasses++; });
+
+      const filmCounts = {};
+      let activeUnlocks = 0;
+      unlockSnap.forEach(d => {
+        const data = d.data();
+        filmCounts[data.filmTitle] = (filmCounts[data.filmTitle] || 0) + 1;
+        if (data.expiresAt > now) activeUnlocks++;
+      });
+
+      const topFilm = Object.entries(filmCounts).sort((a, b) => b[1] - a[1])[0];
+
+      res.json({
+        success: true,
+        totalAdPasses: passSnap.size,
+        todayAdPasses: todayPasses,
+        totalFilmUnlocks: unlockSnap.size,
+        activeFilmUnlocks: activeUnlocks,
+        topFilm: topFilm ? { title: topFilm[0], count: topFilm[1] } : null
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+
+  // ==== FREE PASS MANAGEMENT (Admin) ====
+
+  // GET /api/admin/free-pass-users — list all users who ever claimed a free pass
+  app.get('/api/admin/free-pass-users', async (req, res) => {
+    try {
+      const { adminEmail } = req.query;
+      if (adminEmail !== 'anubhabmohapatra.01@gmail.com') return res.status(403).json({ error: 'Unauthorized' });
+      if (!adminDb) return res.status(503).json({ error: 'DB unavailable' });
+
+      const now = Date.now();
+      let docs = [];
+
+      try {
+        // Try ordered query first (requires Firestore composite index)
+        const snap = await adminDb.collection('users')
+          .where('freePassClaimedAt', '>', 0)
+          .orderBy('freePassClaimedAt', 'desc')
+          .limit(200)
+          .get();
+        docs = snap.docs;
+      } catch (indexErr) {
+        // Fallback: simple filter (no index needed), sort in memory
+        const allSnap = await adminDb.collection('users')
+          .where('freePassClaimedAt', '>', 0)
+          .limit(200)
+          .get();
+        docs = allSnap.docs.sort((a, b) => (b.data().freePassClaimedAt || 0) - (a.data().freePassClaimedAt || 0));
+      }
+
+      const users = docs.map(d => {
+        const data = d.data();
+        return {
+          uid: d.id,
+          displayName: data.displayName || data.name || '—',
+          email: data.email || '',
+          freePassActive: !!(data.freePassActive && data.freePassExpiry > now),
+          freePassExpiry: data.freePassExpiry || 0,
+          freePassGrantedAt: data.freePassClaimedAt || 0,
+        };
+      });
+
+      res.json({ success: true, users });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // POST /api/admin/manage-free-pass — extend (+24h) or revoke a user's free pass
+  app.post('/api/admin/manage-free-pass', async (req, res) => {
+    try {
+      const { adminEmail, userId, action } = req.body;
+      if (adminEmail !== 'anubhabmohapatra.01@gmail.com') return res.status(403).json({ error: 'Unauthorized' });
+      if (!adminDb || !userId || !action) return res.status(400).json({ error: 'Missing params' });
+
+      const userRef = adminDb.collection('users').doc(userId);
+      const snap = await userRef.get();
+      if (!snap.exists) return res.status(404).json({ error: 'User not found' });
+
+      const now = Date.now();
+
+      if (action === 'extend-24h') {
+        const currentExpiry = Math.max(snap.data().freePassExpiry || 0, now);
+        await userRef.update({
+          freePassActive: true,
+          freePassExpiry: currentExpiry + (24 * 60 * 60 * 1000),
+        });
+        res.json({ success: true, message: 'Extended by 24 hours.' });
+      } else if (action === 'revoke') {
+        await userRef.update({
+          freePassActive: false,
+          freePassExpiry: 0,
+        });
+        res.json({ success: true, message: 'Free pass revoked.' });
+      } else {
+        res.status(400).json({ error: 'Unknown action' });
+      }
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+
   // ==== FILM STORE ROUTES ====
 
   // Admin: Add a new film
@@ -747,6 +1196,8 @@ async function startServer() {
         price: parseFloat(price) || 20,
         rentalDays: parseInt(rentalDays) || 3,
         isActive: true,
+        adUnlockEnabled: adUnlockEnabled !== false, // default true
+        adUnlockHours: 1,
         createdAt: Date.now()
       });
       res.json({ success: true, filmId: filmRef.id });
@@ -756,7 +1207,7 @@ async function startServer() {
   // Admin: Update a film
   app.post('/api/admin/update-film', async (req, res) => {
     try {
-      const { adminEmail, filmId, title, telegramLink, thumbnailBase64, price, rentalDays, isActive } = req.body;
+      const { adminEmail, filmId, title, telegramLink, thumbnailBase64, price, rentalDays, isActive, adUnlockEnabled } = req.body;
       if (adminEmail !== 'anubhabmohapatra.01@gmail.com') return res.status(403).json({ error: "Unauthorized" });
       if (!filmId) return res.status(400).json({ error: "Film ID required" });
 
@@ -767,6 +1218,7 @@ async function startServer() {
       if (price !== undefined) updateData.price = parseFloat(price) || 20;
       if (rentalDays !== undefined) updateData.rentalDays = parseInt(rentalDays) || 3;
       if (isActive !== undefined) updateData.isActive = Boolean(isActive);
+      if (adUnlockEnabled !== undefined) updateData.adUnlockEnabled = Boolean(adUnlockEnabled);
 
       await adminDb.collection('films').doc(filmId).update(updateData);
       res.json({ success: true });
@@ -793,7 +1245,7 @@ async function startServer() {
       const films = [];
       snap.forEach(doc => {
         const d = doc.data();
-        films.push({ filmId: doc.id, title: d.title, telegramLink: d.telegramLink, thumbnailBase64: d.thumbnailBase64 || '', price: d.price || 20, rentalDays: d.rentalDays || 3, isActive: d.isActive, createdAt: d.createdAt });
+        films.push({ filmId: doc.id, title: d.title, telegramLink: d.telegramLink, thumbnailBase64: d.thumbnailBase64 || '', price: d.price || 20, rentalDays: d.rentalDays || 3, isActive: d.isActive, adUnlockEnabled: d.adUnlockEnabled !== false, createdAt: d.createdAt });
       });
       res.json({ success: true, films });
     } catch (err) { console.error(err); res.status(500).json({ error: err.message }); }

@@ -199,14 +199,33 @@
   <link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin>
   <link rel="dns-prefetch" href="https://checkout.razorpay.com">
 
-  <link rel="stylesheet" href="/style.css?v=4">
+  <link rel="stylesheet" href="/style.css?v=12">
+
+  <!-- Skip loading screen on back-navigation (runs before render) -->
+  <script>if(sessionStorage.getItem('_vns_loaded')){document.documentElement.classList.add('no-splash');}</script>
+  <style>html.no-splash #loading-screen{display:none!important;}</style>
+  <link rel="manifest" href="/manifest.json">
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
+
+<!-- ====== Branded Loading Screen ====== -->
+<div id="loading-screen" aria-hidden="true">
+  <div class="loading-logo-wrap">
+    <img src="/logo.png" alt="Vaanisethu" class="loading-logo">
+    <div class="loading-brand">Vaanisethu</div>
+    <div class="loading-dots"><span></span><span></span><span></span></div>
+  </div>
+</div>
+
 <main id="app-root" style="display:contents" aria-label="Vaanisethu App">
 
   <!-- Auth View -->
   <div id="auth-view" class="view min-h-screen items-center justify-center fade-in">
+    <!-- Animated background orbs -->
+    <div class="auth-orb auth-orb-1" aria-hidden="true"></div>
+    <div class="auth-orb auth-orb-2" aria-hidden="true"></div>
+    <div class="auth-orb auth-orb-3" aria-hidden="true"></div>
     <div class="header-center mx-auto fade-down">
       <img src="/logo.png" alt="Logo" class="mx-auto mb-4" style="width: 80px; height: 80px; object-fit: cover; border-radius: 20px;">
       <h1 class="gradient-text">Vaanisethu.online</h1>
@@ -260,7 +279,31 @@
   <div id="payment-view" class="view hidden min-h-screen items-center justify-center fade-in">
     <div class="header-center mx-auto fade-down text-center w-full px-4">
       <h1 class="gradient-text mb-2">Select Your Access Pass</h1>
-      <p class="subtitle text-zinc-400 mb-8 max-w-lg mx-auto">Vaanisetu requires an active subscription. Choose a plan that works for you or redeem an access code.</p>
+      <p class="subtitle text-zinc-400 mb-6 max-w-lg mx-auto">Vaanisetu requires an active subscription. Choose a plan that works for you or redeem an access code.</p>
+
+      <!-- How It Works -->
+      <div class="how-it-works max-w-2xl mx-auto mb-8">
+        <p class="text-xs uppercase tracking-widest text-zinc-600 font-bold mb-5 text-center">How It Works</p>
+        <div class="how-steps">
+          <div class="how-step">
+            <div class="how-step-icon">🔑</div>
+            <div class="how-step-title">Sign In</div>
+            <div class="how-step-sub">Create a free account in seconds</div>
+          </div>
+          <div class="how-step-arrow">→</div>
+          <div class="how-step">
+            <div class="how-step-icon">💳</div>
+            <div class="how-step-title">Pick a Pass</div>
+            <div class="how-step-sub">Choose a plan or use a free code</div>
+          </div>
+          <div class="how-step-arrow">→</div>
+          <div class="how-step">
+            <div class="how-step-icon">🎬</div>
+            <div class="how-step-title">Watch Together</div>
+            <div class="how-step-sub">Create a room &amp; invite friends</div>
+          </div>
+        </div>
+      </div>
       
       <div class="card-grid max-w-4xl mx-auto gap-6 mb-8 text-left" style="align-items: stretch; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
         
@@ -329,7 +372,7 @@
          <p id="guest-join-msg" class="text-xs mt-3 hidden"></p>
       </div>
 
-      <!-- First-Time Free Pass Card (JS shows this for eligible users only) -->
+      <!-- ===== FREE PASS CARD ===== -->
       <div id="free-pass-card" class="card max-w-md mx-auto mt-4" style="display:none;border:1px solid rgba(74,222,128,0.35);background:linear-gradient(135deg,rgba(5,46,22,0.6),rgba(10,10,15,0.9));">
         <div class="flex items-center gap-3 mb-3">
           <div style="background:rgba(74,222,128,0.15);border-radius:50%;padding:0.6rem;">
@@ -343,6 +386,43 @@
         <p class="text-zinc-400 text-xs mb-4">Claim your complimentary 24-hour pass. No payment needed. One pass per person/device.</p>
         <button id="btn-claim-free-pass" class="btn w-full" style="background:linear-gradient(135deg,#166534,#15803d);color:#bbf7d0;font-weight:800;border:1px solid rgba(74,222,128,0.4);">Claim Free 24-Hour Pass</button>
         <p id="free-pass-msg" class="text-xs mt-3 hidden text-center"></p>
+      </div>
+
+      <!-- ===== WATCH ADS FOR FREE ACCESS CARD ===== -->
+      <div id="ad-access-card" class="card max-w-md mx-auto mt-4" style="border:1px solid rgba(168,85,247,0.35);background:linear-gradient(135deg,rgba(46,16,101,0.6),rgba(10,10,15,0.9));">
+        <div class="flex items-center gap-3 mb-3">
+          <div style="background:rgba(168,85,247,0.15);border-radius:50%;padding:0.6rem;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+          </div>
+          <div>
+            <h4 class="text-white font-bold text-base mb-0">Free Access via Ads 📺</h4>
+            <p style="color:#c084fc;" class="text-xs mt-0">Watch 2 short ads → get 24hr full access</p>
+          </div>
+        </div>
+        <p class="text-zinc-400 text-xs mb-3">No payment required. Support Vaanisethu by watching 4 short ads and get a full 24-hour access pass. You can repeat this every 24 hours!</p>
+        <div class="flex gap-1 mb-3 items-center">
+          <div id="ad-step-1" class="ad-step-indicator ad-step-pending">
+            <span class="ad-step-num">1</span><span class="ad-step-label">Ad 1</span>
+          </div>
+          <div class="ad-step-connector"></div>
+          <div id="ad-step-2" class="ad-step-indicator ad-step-pending">
+            <span class="ad-step-num">2</span><span class="ad-step-label">Ad 2</span>
+          </div>
+          <div class="ad-step-connector"></div>
+          <div id="ad-step-3" class="ad-step-indicator ad-step-pending">
+            <span class="ad-step-num">3</span><span class="ad-step-label">Ad 3</span>
+          </div>
+          <div class="ad-step-connector"></div>
+          <div id="ad-step-4" class="ad-step-indicator ad-step-pending">
+            <span class="ad-step-num">4</span><span class="ad-step-label">Ad 4</span>
+          </div>
+          <div class="ad-step-connector"></div>
+          <div id="ad-step-5" class="ad-step-indicator ad-step-pending">
+            <span class="ad-step-num">✓</span><span class="ad-step-label">Access</span>
+          </div>
+        </div>
+        <button id="btn-start-ad-flow" class="btn w-full" style="background:linear-gradient(135deg,#6d28d9,#a855f7);color:white;font-weight:800;border:1px solid rgba(168,85,247,0.4);">📺 Watch 4 Ads &amp; Get Free 24hr Access</button>
+        <p id="ad-pass-msg" class="text-xs mt-3 hidden text-center"></p>
       </div>
 
     </div>
@@ -464,6 +544,39 @@
              </div>
          </div>
 
+          <!-- Free Pass Users -->
+          <div class="card col-span-1 lg:col-span-3 border border-zinc-800 bg-zinc-900/30 flex flex-col overflow-hidden mt-8" style="padding:0;align-items:stretch;text-align:left;">
+              <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
+                <div>
+                  <h2 class="text-lg text-white m-0 font-bold tracking-tight flex items-center gap-2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    Free Pass Users
+                  </h2>
+                  <p class="text-xs text-zinc-500 m-0 mt-1">All users who claimed the first-time free 24h pass.</p>
+                </div>
+                <button onclick="loadFreePassUsers()" class="icon-btn hover-bg bg-black shadow-inner border border-zinc-800" style="width:32px;height:32px" title="Refresh">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 2v6h6"/></svg>
+                </button>
+              </div>
+              <div class="overflow-x-auto overflow-y-auto flex-1 custom-scrollbar bg-[#0a0a0a]" style="max-height:380px;-webkit-overflow-scrolling:touch;">
+                <table class="w-full text-left text-sm text-zinc-400" style="min-width:780px;">
+                  <thead class="bg-zinc-900/80 sticky top-0 z-10 backdrop-blur border-b border-zinc-800 text-zinc-500 text-[0.7rem] uppercase tracking-wider">
+                    <tr>
+                      <th class="px-6 py-3 font-semibold">Name</th>
+                      <th class="px-6 py-3 font-semibold">Email / UID</th>
+                      <th class="px-6 py-3 font-semibold">Status</th>
+                      <th class="px-6 py-3 font-semibold">Expiry</th>
+                      <th class="px-6 py-3 font-semibold">Claimed At</th>
+                      <th class="px-6 py-3 font-semibold text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="free-pass-users-body" class="divide-y divide-zinc-800/50">
+                    <tr><td colspan="6" class="py-10 text-center italic text-zinc-600">Click refresh ↑ to load...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+          </div>
+
           <!-- Film Store Manager (Admin) -->
           <div class="mt-8">
             <div class="card col-span-1 lg:col-span-3 border border-zinc-800 bg-zinc-900/30" style="padding:0;align-items:stretch;text-align:left;">
@@ -517,6 +630,18 @@
                         </select>
                       </div>
                     </div>
+                    <!-- Ad Unlock toggle -->
+                    <label style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.7rem 0.9rem;background:#0a0a0c;border:1px solid #1c1c1e;border-radius:0.75rem;cursor:pointer;" title="If enabled, users can watch 1 ad to get 1hr free access to this film">
+                      <div>
+                        <span class="text-xs text-zinc-300 font-bold block">Allow Ad Unlock (Watch 1 Ad → 1hr Free)</span>
+                        <span class="text-xs text-zinc-600">Users can unlock this film by watching a short ad</span>
+                      </div>
+                      <div style="position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0;">
+                        <input type="checkbox" id="film-form-ad-unlock" checked style="opacity:0;width:0;height:0;position:absolute;">
+                        <span id="film-form-ad-unlock-slider" style="position:absolute;cursor:pointer;inset:0;background:#27272a;border-radius:34px;transition:0.3s;"></span>
+                      </div>
+                    </label>
+                    <style>#film-form-ad-unlock:checked+#film-form-ad-unlock-slider{background:#7c3aed!important}#film-form-ad-unlock:checked+#film-form-ad-unlock-slider::before{transform:translateX(18px)}#film-form-ad-unlock-slider::before{content:"";position:absolute;height:14px;width:14px;left:4px;bottom:4px;background:white;border-radius:50%;transition:.3s}</style>
                     <button id="btn-admin-add-film" class="btn w-full" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;">Add Film to Store</button>
                     <button id="btn-admin-cancel-edit" class="btn btn-outline w-full" style="display:none;">Cancel Edit</button>
                     <p id="film-form-msg" class="text-xs text-center" style="display:none;margin-top:0.25rem;"></p>
@@ -710,6 +835,18 @@
       <div id="custom-player-wrapper" class="player-wrapper hidden relative w-full h-full flex items-center justify-center">
         <!-- Main Video Tag (Native Controls Restored) -->
         <video id="main-video" controls playsinline webkit-playsinline class="max-w-full max-h-full" style="touch-action: manipulation;"></video>
+
+        <!-- Ad Break Timeline Bar — yellow markers below video -->
+        <div id="ad-timeline-bar" class="ad-timeline-bar hidden">
+          <div class="ad-timeline-inner">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="#f97316" style="flex-shrink:0;opacity:0.7"><path d="M2 7h20v13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7z"/><path d="M16 2 12 7 8 2" fill="none" stroke="#f97316" stroke-width="2"/></svg>
+            <div class="ad-timeline-track" id="ad-timeline-track">
+              <div class="ad-timeline-cursor" id="ad-timeline-cursor"></div>
+              <!-- Yellow ad break markers injected by JS -->
+            </div>
+            <span class="ad-timeline-label">Ad Breaks</span>
+          </div>
+        </div>
       </div>
 
       <!-- Waiting UI (For guests in an empty room) -->
@@ -916,7 +1053,114 @@
 
 </main>
 
+<!-- ====== Site Footer (Page View Counter) ====== -->
+<footer id="site-footer" class="site-footer" aria-label="Site statistics">
+  <div class="footer-inner">
+    <span class="footer-fire">🔥</span>
+    <span class="footer-stat">
+      <span id="public-visitor-count" class="footer-count">0</span>
+      <span class="footer-label">Page Views</span>
+    </span>
+    <span class="footer-sep">·</span>
+    <span class="footer-tagline">Vaanisethu — Watch Together</span>
+    <span class="footer-sep hidden-sm">·</span>
+    <span class="footer-links hidden-sm">
+      <a href="/terms.html">Terms</a> &amp;
+      <a href="/privacy.html">Privacy</a>
+    </span>
+  </div>
+  <div class="footer-copy">&copy; 2025 Vaanisethu. All rights reserved.</div>
+</footer>
+
+<!-- ====== Help FAB Button ====== -->
+<button id="help-fab" class="help-fab" aria-label="Help and Contact" title="Help & Contact">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+</button>
+
+<!-- ====== Contact Modal ====== -->
+<div id="contact-modal" class="contact-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="contact-modal-title">
+  <div class="contact-modal-box">
+    <div class="contact-modal-header">
+      <h2 id="contact-modal-title" class="contact-modal-title">Help &amp; Contact</h2>
+      <button id="btn-close-contact" class="icon-btn hover-bg" aria-label="Close modal">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <p class="contact-modal-sub">Report a bug or send us a message. We'll reply to your email.</p>
+    <div class="contact-form">
+      <label for="contact-name" class="contact-label">Your Name</label>
+      <input type="text" id="contact-name" class="input w-full" placeholder="Display name" autocomplete="name">
+
+      <label for="contact-email" class="contact-label">Email</label>
+      <input type="email" id="contact-email" class="input w-full" placeholder="you@email.com" autocomplete="email">
+
+      <label for="contact-message" class="contact-label">Message / Bug Report</label>
+      <textarea id="contact-message" class="input w-full contact-textarea" rows="4" placeholder="Describe your issue or feedback..."></textarea>
+
+      <label for="contact-screenshot" class="contact-label">Screenshot (optional)</label>
+      <label for="contact-screenshot" class="contact-file-label" id="contact-file-label-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span id="contact-file-name">Click to attach screenshot</span>
+      </label>
+      <input type="file" id="contact-screenshot" accept="image/*" style="display:none;">
+      <img id="contact-preview" src="" alt="Screenshot preview" class="contact-preview hidden">
+
+      <button id="btn-send-contact" class="btn btn-primary w-full mt-4">Send Message</button>
+      <p id="contact-status" class="text-center text-sm mt-3 hidden"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== IN-MOVIE SKIPPABLE AD OVERLAY ====== -->
+<div id="inmovie-ad" class="inmovie-ad hidden" role="region" aria-label="Advertisement">
+  <div class="inmovie-ad-inner">
+    <div class="inmovie-ad-meta">
+      <span class="inmovie-ad-badge">AD</span>
+      <span class="inmovie-ad-tagline">Supporting Vaanisethu keeps it free 🙏</span>
+    </div>
+    <div class="inmovie-ad-player">
+      <!-- AdSterra 468×60 Banner —  loads when in-movie ad fires -->
+      <div id="adsterra-inmovie-banner" style="display:flex;align-items:center;justify-content:center;min-height:60px;overflow:hidden;"></div>
+    </div>
+    <div class="inmovie-ad-controls">
+      <span id="inmovie-ad-timer" class="inmovie-ad-timer">15s</span>
+      <button id="inmovie-skip-btn" class="inmovie-skip-btn hidden" aria-label="Skip Ad">Skip Ad ▶</button>
+    </div>
+  </div>
+  <div class="inmovie-progress-bar"><div id="inmovie-progress-fill" class="inmovie-progress-fill"></div></div>
+</div>
+
+<!-- ====== AD MODAL ====== -->
+<div id="ad-modal" class="ad-modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Watch Ad">
+  <div class="ad-modal-box">
+    <div class="ad-modal-header">
+      <div>
+        <div class="ad-modal-title" id="ad-modal-title">Watch Ad <span id="ad-modal-num">1</span> of <span id="ad-modal-total">2</span></div>
+        <div class="ad-modal-sub">Please watch the full ad to continue</div>
+      </div>
+      <div class="ad-timer-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span id="ad-countdown">30</span>s
+      </div>
+    </div>
+
+    <!-- Ad Modal full-screen countdown player — Real 300×250 AdSterra Banner -->
+    <div class="ad-player-area" id="ad-player-area" style="min-height:280px;padding:1rem;flex-direction:column;gap:0.5rem;">
+      <div id="adsterra-modal-banner" style="display:flex;align-items:center;justify-content:center;width:100%;min-height:250px;">
+        <!-- Loaded dynamically when modal opens to avoid wasted impressions -->
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="ad-progress-bar">
+      <div class="ad-progress-fill" id="ad-progress-fill"></div>
+    </div>
+
+    <p class="ad-disclaimer">🙏 Watching ads supports Vaanisethu and keeps it free for everyone.</p>
+  </div>
+</div>
+
   <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js"></script>
-  <script type="module" src="/app.js?v=10"></script>
+  <script type="module" src="/app.js?v=29"></script>
 </body>
 </html>

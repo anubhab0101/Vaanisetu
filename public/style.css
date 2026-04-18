@@ -1317,6 +1317,7 @@ input[type=range]:focus { outline: none; }
 .tier-badge-monthly { background: rgba(168,85,247,0.12); color: #c084fc; border: 1px solid rgba(168,85,247,0.25); }
 .status-badge-active  { background: rgba(34,197,94,0.12);  color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
 .status-badge-expired { background: rgba(239,68,68,0.1);   color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+.badge-success { background: rgba(34,197,94,0.1); color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
 
 /* Action selects in table rows */
 #admin-view select.input[style*="font-size"] {
@@ -1327,4 +1328,899 @@ input[type=range]:focus { outline: none; }
   font-size: 0.7rem;
   padding: 0.25rem 0.4rem;
   min-height: auto;
+}
+
+/* =========================================
+   LOADING SCREEN
+   ========================================= */
+#loading-screen {
+  position: fixed;
+  inset: 0;
+  background: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  transition: opacity 0.5s ease;
+}
+#loading-screen.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+.loading-logo-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.loading-logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  animation: loadingPulse 2s ease-in-out infinite;
+}
+.loading-brand {
+  font-size: 1.5rem;
+  font-weight: 900;
+  background: linear-gradient(to right, #f97316, #dc2626);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
+}
+.loading-dots {
+  display: flex;
+  gap: 0.45rem;
+}
+.loading-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--orange);
+  animation: dotBounce 1.3s ease-in-out infinite;
+  opacity: 0.5;
+}
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes loadingPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(249,115,22,0.5); }
+  50% { transform: scale(1.06); box-shadow: 0 0 0 14px rgba(249,115,22,0); }
+}
+@keyframes dotBounce {
+  0%, 100% { transform: translateY(0); opacity: 0.35; }
+  50% { transform: translateY(-7px); opacity: 1; }
+}
+
+/* =========================================
+   SITE FOOTER (fixed page-view counter)
+   ========================================= */
+.site-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  padding: 0.5rem 1rem;
+  padding-bottom: max(0.5rem, var(--safe-bottom));
+  background: linear-gradient(to top, rgba(8,8,10,0.97) 70%, transparent);
+  text-align: center;
+  pointer-events: none;
+}
+.footer-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.72rem;
+  color: #52525b;
+  pointer-events: auto;
+}
+.footer-fire { font-size: 0.9rem; }
+.footer-stat { display: inline-flex; align-items: center; gap: 0.3rem; }
+.footer-count {
+  font-weight: 900;
+  color: var(--orange);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+.footer-label { color: #52525b; }
+.footer-sep { color: #3f3f46; }
+.footer-tagline { color: #52525b; }
+.footer-links a {
+  color: #52525b;
+  text-decoration: none;
+  transition: color 0.2s;
+  pointer-events: auto;
+}
+.footer-links a:hover { color: var(--orange); }
+.footer-copy {
+  font-size: 0.65rem;
+  color: #3f3f46;
+  margin-top: 0.1rem;
+  pointer-events: auto;
+}
+.hidden-sm { display: none; }
+@media (min-width: 480px) { .hidden-sm { display: inline; } }
+
+/* Add bottom padding to scrollable views so footer doesn't overlap last card */
+#dashboard-view,
+#payment-view,
+#admin-view,
+#auth-view {
+  padding-bottom: max(5rem, calc(var(--safe-bottom) + 4rem));
+}
+
+/* =========================================
+   HELP FAB BUTTON
+   ========================================= */
+.help-fab {
+  position: fixed;
+  bottom: max(2.75rem, calc(var(--safe-bottom) + 2.25rem));
+  right: 1rem;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #18181b;
+  border: 1px solid #27272a;
+  color: #71717a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 45;
+  transition: background 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+.help-fab:hover {
+  background: #27272a;
+  color: white;
+  transform: scale(1.08);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+}
+
+/* =========================================
+   CONTACT MODAL
+   ========================================= */
+.contact-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(6px);
+  z-index: 99990;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+@media (min-width: 600px) {
+  .contact-modal-overlay {
+    align-items: center;
+    padding: 1rem;
+  }
+}
+.contact-modal-box {
+  background: #111113;
+  border: 1px solid #27272a;
+  border-radius: 1.5rem 1.5rem 0 0;
+  width: 100%;
+  max-width: 480px;
+  padding: 1.5rem 1.25rem max(1.5rem, calc(var(--safe-bottom) + 1rem));
+  max-height: 90dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+@media (min-width: 600px) {
+  .contact-modal-box {
+    border-radius: 1.5rem;
+    padding: 2rem;
+    max-height: 85dvh;
+  }
+}
+.contact-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+.contact-modal-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: white;
+}
+.contact-modal-sub {
+  font-size: 0.8rem;
+  color: #71717a;
+  margin-bottom: 1.25rem;
+}
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.contact-label {
+  font-size: 0.7rem;
+  color: #52525b;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  display: block;
+  margin-bottom: 0.35rem;
+}
+.contact-textarea {
+  resize: vertical;
+  min-height: 90px;
+  font-family: inherit;
+}
+.contact-file-label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #1a1a1e;
+  border: 1px dashed #3f3f46;
+  border-radius: 0.75rem;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  color: #71717a;
+  font-size: 0.82rem;
+  transition: border-color 0.2s, background 0.2s;
+}
+.contact-file-label:hover {
+  border-color: var(--orange);
+  background: rgba(249,115,22,0.05);
+  color: var(--orange);
+}
+.contact-preview {
+  width: 100%;
+  max-height: 160px;
+  object-fit: cover;
+  border-radius: 0.75rem;
+  border: 1px solid #27272a;
+  margin-top: 0.5rem;
+}
+
+/* =========================================
+   TERMS / PRIVACY PAGE TYPOGRAPHY
+   ========================================= */
+.legal-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 5rem 1.5rem 8rem;
+  line-height: 1.75;
+  color: #a1a1aa;
+}
+.legal-page h1 { color: white; font-size: 2rem; font-weight: 900; margin-bottom: 0.5rem; }
+.legal-page .legal-date { font-size: 0.78rem; color: #52525b; margin-bottom: 2.5rem; display: block; }
+.legal-page h2 { color: white; font-size: 1.1rem; font-weight: 700; margin: 2rem 0 0.5rem; }
+.legal-page p { margin-bottom: 0.75rem; font-size: 0.9rem; }
+.legal-page ul { padding-left: 1.5rem; margin-bottom: 0.75rem; font-size: 0.9rem; }
+.legal-page a { color: var(--orange); text-decoration: none; }
+.legal-page a:hover { text-decoration: underline; }
+.legal-back { display: inline-flex; align-items: center; gap: 0.4rem; color: #71717a; font-size: 0.85rem; text-decoration: none; margin-bottom: 2rem; transition: color 0.2s; }
+.legal-back:hover { color: white; }
+
+/* =========================================
+   AUTH VIEW — ANIMATED GRADIENT ORBS
+   ========================================= */
+#auth-view { position: relative; overflow: hidden; }
+.auth-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.12;
+  pointer-events: none;
+  will-change: transform;
+}
+.auth-orb-1 {
+  width: 380px; height: 380px;
+  background: radial-gradient(circle, #f97316, #dc2626);
+  top: -140px; left: -100px;
+  animation: orbDrift1 12s ease-in-out infinite;
+}
+.auth-orb-2 {
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, #7c3aed, #a855f7);
+  bottom: -100px; right: -80px;
+  animation: orbDrift2 10s ease-in-out infinite;
+}
+.auth-orb-3 {
+  width: 220px; height: 220px;
+  background: radial-gradient(circle, #dc2626, #f97316);
+  top: 40%; left: 60%;
+  animation: orbDrift3 14s ease-in-out infinite;
+}
+@keyframes orbDrift1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -25px) scale(1.07); }
+  66% { transform: translate(-20px, 20px) scale(0.93); }
+}
+@keyframes orbDrift2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40% { transform: translate(-25px, -30px) scale(1.05); }
+  70% { transform: translate(20px, 15px) scale(0.95); }
+}
+@keyframes orbDrift3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-30px, -20px) scale(1.1); }
+}
+
+/* =========================================
+   HOW IT WORKS — PAYMENT PAGE
+   ========================================= */
+.how-it-works { margin-bottom: 2rem; }
+.how-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.how-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.45rem;
+  min-width: 90px;
+}
+.how-step-icon {
+  font-size: 1.4rem;
+  width: 3.25rem;
+  height: 3.25rem;
+  background: rgba(249, 115, 22, 0.08);
+  border: 1px solid rgba(249, 115, 22, 0.18);
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, background 0.2s;
+}
+.how-step:hover .how-step-icon {
+  transform: translateY(-3px);
+  background: rgba(249, 115, 22, 0.15);
+}
+.how-step-title { font-weight: 700; color: white; font-size: 0.82rem; }
+.how-step-sub { color: #71717a; font-size: 0.7rem; line-height: 1.3; max-width: 90px; }
+.how-step-arrow { color: #3f3f46; font-size: 1.1rem; margin-bottom: 0.5rem; flex-shrink: 0; }
+@media (max-width: 480px) { .how-step-arrow { display: none; } }
+
+/* =========================================
+   TOAST NOTIFICATIONS
+   ========================================= */
+#toast-container {
+  position: fixed;
+  bottom: 5rem;
+  right: 1rem;
+  z-index: 99998;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+  max-width: 300px;
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.85rem;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: white;
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+  transform: translateX(calc(100% + 1.5rem));
+  opacity: 0;
+  transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.3s ease;
+  pointer-events: auto;
+  cursor: pointer;
+  word-break: break-word;
+}
+.toast.toast-show { transform: translateX(0); opacity: 1; }
+.toast-success { background: rgba(14, 79, 44, 0.95); border-color: rgba(74, 222, 128, 0.28); }
+.toast-error   { background: rgba(90, 22, 22, 0.95); border-color: rgba(239, 68, 68, 0.28); }
+.toast-info    { background: rgba(23, 46, 110, 0.95); border-color: rgba(96, 165, 250, 0.28); }
+.toast-warn    { background: rgba(92, 56, 10, 0.95); border-color: rgba(251, 191, 36, 0.28); }
+.toast-icon    { font-size: 1rem; flex-shrink: 0; }
+
+/* =========================================
+   AD STEP INDICATORS (payment page card)
+   ========================================= */
+.ad-step-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  flex: 1;
+}
+.ad-step-num {
+  width: 2rem; height: 2rem;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  transition: background 0.3s, color 0.3s, border-color 0.3s;
+}
+.ad-step-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.ad-step-pending .ad-step-num {
+  background: rgba(168,85,247,0.1);
+  border: 1.5px solid rgba(168,85,247,0.3);
+  color: #9d6ce0;
+}
+.ad-step-pending .ad-step-label { color: #6d28d9; }
+
+.ad-step-active .ad-step-num {
+  background: rgba(168,85,247,0.25);
+  border: 1.5px solid #a855f7;
+  color: white;
+  box-shadow: 0 0 10px rgba(168,85,247,0.4);
+  animation: adStepPulse 1s ease-in-out infinite;
+}
+.ad-step-active .ad-step-label { color: #c084fc; }
+
+.ad-step-done .ad-step-num {
+  background: rgba(34,197,94,0.2);
+  border: 1.5px solid #22c55e;
+  color: #4ade80;
+}
+.ad-step-done .ad-step-label { color: #22c55e; }
+
+@keyframes adStepPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(168,85,247,0.4); }
+  50% { box-shadow: 0 0 18px rgba(168,85,247,0.7); }
+}
+
+.ad-step-connector {
+  height: 1.5px;
+  background: rgba(168,85,247,0.2);
+  flex: 0.4;
+  margin-bottom: 1.1rem;
+  align-self: center;
+}
+
+/* =========================================
+   AD MODAL
+   ========================================= */
+.ad-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.88);
+  backdrop-filter: blur(8px);
+  z-index: 99995;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.ad-modal-box {
+  background: #0e0e12;
+  border: 1px solid #27272a;
+  border-radius: 1.5rem;
+  width: 100%;
+  max-width: 440px;
+  padding: 1.5rem;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.7);
+}
+.ad-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.ad-modal-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: white;
+}
+.ad-modal-sub {
+  font-size: 0.75rem;
+  color: #71717a;
+  margin-top: 0.15rem;
+}
+.ad-timer-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(168,85,247,0.15);
+  border: 1px solid rgba(168,85,247,0.3);
+  color: #c084fc;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 0.35rem 0.7rem;
+  border-radius: 9999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Mock Ad Player */
+.ad-player-area {
+  background: #0a0a0c;
+  border: 1px solid #1f1f23;
+  border-radius: 1rem;
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  position: relative;
+}
+.ad-mock-content {
+  text-align: center;
+  padding: 1.5rem;
+}
+.ad-mock-logo { font-size: 2.5rem; margin-bottom: 0.5rem; }
+.ad-mock-text { color: white; font-weight: 700; font-size: 1rem; margin-bottom: 0.35rem; }
+.ad-mock-sub  { color: #71717a; font-size: 0.72rem; line-height: 1.5; margin-bottom: 0.75rem; }
+.ad-mock-brand {
+  font-size: 0.7rem;
+  font-weight: 900;
+  background: linear-gradient(to right, #f97316, #dc2626);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+/* Ad Progress Bar */
+.ad-progress-bar {
+  height: 4px;
+  background: #27272a;
+  border-radius: 9999px;
+  margin-bottom: 0.85rem;
+  overflow: hidden;
+}
+.ad-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(to right, #7c3aed, #c084fc);
+  border-radius: 9999px;
+  transition: width 1s linear;
+}
+
+.ad-disclaimer {
+  font-size: 0.72rem;
+  color: #52525b;
+  text-align: center;
+  margin: 0;
+}
+
+/* Film card "Watch Ad" button */
+.film-ad-btn {
+  background: linear-gradient(135deg, #6d28d9, #a855f7);
+  color: white;
+  font-size: 0.72rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.6rem;
+  min-height: auto;
+  width: 100%;
+  font-weight: 700;
+  margin-top: 0.35rem;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.film-ad-btn:hover { opacity: 0.88; }
+.film-ad-unlocked-timer {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.68rem;
+  color: #c084fc;
+  font-weight: 600;
+}
+/* AD UNLOCKED badge on film poster */
+.film-ad-unlock-badge {
+  position: absolute;
+  top: 0.4rem;
+  left: 0.4rem;
+  background: rgba(168,85,247,0.85);
+  border: 1px solid rgba(168,85,247,0.6);
+  color: white;
+  font-size: 0.55rem;
+  font-weight: 900;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.3rem;
+  letter-spacing: 0.07em;
+  backdrop-filter: blur(4px);
+}
+
+/* =========================================
+   IN-MOVIE SKIPPABLE AD OVERLAY
+   Appears as a bottom strip over the video
+   ========================================= */
+.inmovie-ad {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 99990;
+  background: rgba(8, 8, 12, 0.97);
+  border-top: 1px solid #27272a;
+  backdrop-filter: blur(8px);
+  padding: 0;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.5);
+  animation: inmovieSlideUp 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+@keyframes inmovieSlideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+.inmovie-ad-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.65rem 1.2rem;
+  flex-wrap: nowrap;
+}
+
+.inmovie-ad-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.inmovie-ad-badge {
+  background: #f97316;
+  color: white;
+  font-size: 0.6rem;
+  font-weight: 900;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.25rem;
+  letter-spacing: 0.08em;
+}
+.inmovie-ad-tagline {
+  font-size: 0.72rem;
+  color: #71717a;
+  white-space: nowrap;
+}
+
+.inmovie-ad-player {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+.inmovie-ad-placeholder {
+  font-size: 0.8rem;
+  color: #a1a1aa;
+  font-weight: 600;
+}
+
+.inmovie-ad-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+.inmovie-ad-timer {
+  font-size: 0.75rem;
+  color: #71717a;
+  font-weight: 700;
+  min-width: 2rem;
+  text-align: right;
+}
+.inmovie-skip-btn {
+  background: rgba(249, 115, 22, 0.15);
+  border: 1px solid rgba(249, 115, 22, 0.4);
+  color: #f97316;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  white-space: nowrap;
+  animation: inmovieSkipFadeIn 0.4s ease;
+}
+.inmovie-skip-btn:hover { background: rgba(249,115,22,0.28); transform: scale(1.04); }
+
+@keyframes inmovieSkipFadeIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Slim progress bar at very top of overlay */
+.inmovie-progress-bar {
+  height: 3px;
+  background: #27272a;
+  width: 100%;
+}
+.inmovie-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(to right, #f97316, #dc2626);
+  border-radius: 0;
+  transition: width 15s linear;
+}
+
+@media (max-width: 480px) {
+  .inmovie-ad-tagline { display: none; }
+  .inmovie-ad-inner { padding: 0.5rem 0.75rem; gap: 0.6rem; }
+}
+
+/* =========================================
+   AD BREAK TIMELINE BAR (video player)
+   Yellow dots where in-movie ads will fire
+   ========================================= */
+.ad-timeline-bar {
+  position: absolute;
+  bottom: 52px;
+  left: 0; right: 0;
+  z-index: 20;
+  pointer-events: none;
+  padding: 0 4px;
+}
+.ad-timeline-inner {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(4px);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+.ad-timeline-track {
+  flex: 1; height: 3px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 9999px;
+  position: relative; overflow: visible;
+}
+.ad-timeline-marker {
+  position: absolute; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #facc15;
+  border: 1.5px solid rgba(0,0,0,0.5);
+  box-shadow: 0 0 4px rgba(250,204,21,0.6);
+  pointer-events: all; cursor: default;
+}
+.ad-timeline-cursor {
+  position: absolute; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 3px; height: 9px;
+  background: white; border-radius: 2px;
+  opacity: 0.85; pointer-events: none;
+}
+.ad-timeline-label {
+  font-size: 0.6rem; font-weight: 700;
+  color: rgba(255,255,255,0.4);
+  white-space: nowrap; text-transform: uppercase; letter-spacing: 0.07em;
+}
+
+/* Badge pill utility */
+.badge-pill {
+  display: inline-flex; align-items: center;
+  font-size: 0.65rem; font-weight: 700;
+  padding: 0.15rem 0.55rem; border-radius: 9999px;
+  line-height: 1.4; white-space: nowrap;
+}
+
+/* =====================================================================
+   MOBILE IMPROVEMENTS
+   Optimized for small screens — most users on mobile
+   ===================================================================== */
+
+/* Prevent browser from auto-fullscreening the video on orientation change */
+video {
+  /* Disable the iOS/Android native fullscreen trigger on rotate */
+  -webkit-playsinline: true;
+}
+
+/* Safe-area insets for notched phones (iPhone X+, Android punch-holes) */
+#room-view, #dashboard-view, #payment-view {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+@media (max-width: 640px) {
+  /* ---- Film Store Grid: 1 column on small phones ---- */
+  #films-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.75rem;
+  }
+
+  /* ---- Film Cards: tighter on mobile ---- */
+  .film-card-body {
+    padding: 0.6rem;
+  }
+  .film-card-title {
+    font-size: 0.78rem;
+    line-height: 1.2;
+  }
+  .film-card-price {
+    font-size: 0.9rem;
+  }
+  .film-card-days {
+    font-size: 0.65rem;
+  }
+  .btn.film-rent-btn,
+  .film-ad-btn {
+    font-size: 0.7rem;
+    padding: 0.45rem 0.5rem;
+    min-height: 2.4rem;
+  }
+
+  /* ---- In-movie ad overlay: full-width on mobile ---- */
+  #inmovie-ad .inmovie-ad-inner,
+  #inmovie-ad > div {
+    width: 98vw !important;
+    max-width: 98vw !important;
+    left: 1vw !important;
+    right: 1vw !important;
+    bottom: 12px !important;
+    border-radius: 12px;
+  }
+
+  /* ---- Admin film rows: stack on tiny screens ---- */
+  .admin-film-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .admin-film-row-actions {
+    flex-wrap: wrap;
+  }
+
+  /* ---- Room view: video player full-width ---- */
+  #custom-player-wrapper {
+    border-radius: 0;
+  }
+
+  /* ---- Chat popup: full screen on mobile ---- */
+  #chat-popup {
+    width: 100vw !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    border-radius: 12px 12px 0 0 !important;
+  }
+
+  /* ---- Payment view: stack cards vertically ---- */
+  .payment-cards-row {
+    flex-direction: column;
+  }
+
+  /* ---- Bigger tap targets ---- */
+  .btn {
+    min-height: 2.75rem;
+  }
+  .icon-btn {
+    width: 2.5rem; height: 2.5rem;
+  }
+
+  /* ---- Visitor counter: smaller text ---- */
+  .visitor-counter {
+    font-size: 0.65rem;
+    padding: 0.35rem 0.75rem;
+  }
+}
+
+@media (max-width: 375px) {
+  /* Extra small phones (iPhone SE, etc.) */
+  #films-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .film-card-poster {
+    height: 180px;
+  }
+}
+
+/* Landscape on mobile: let video expand but DON'T go fullscreen */
+@media (max-width: 900px) and (orientation: landscape) {
+  #main-video {
+    max-height: 100svh;
+    width: 100%;
+    object-fit: contain;
+  }
+  /* Keep room controls visible, just compressed */
+  #room-view {
+    padding-top: 0;
+  }
 }

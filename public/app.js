@@ -47,6 +47,18 @@ let _platformConfig = null; // { freeDayActive: bool }
 let _deviceFingerprint = ''; // FingerprintJS hash
 let _fpReady = false; // true once FingerprintJS has resolved
 
+// =====================================================================
+// AD CONTEXT GLOBALS
+// _currentPlayingFilmAdEnabled: whether the CURRENT film has ads enabled
+//   - Paid rental → false (ads off)
+//   - Ad-unlocked → true (ads on, host watched ad)
+//   - Generic URL → true (default)
+// _roomHostAccessType: read from room Firestore doc by guests
+//   - 'premium' | 'rental' | 'ad-unlock' | 'generic'
+// =====================================================================
+window._currentPlayingFilmAdEnabled = true; // default: ads on
+window._roomHostAccessType = 'generic';      // updated when room doc changes
+
 // Generate a persistent localStorage key for this browser (survives account changes)
 function getLocalClaimKey() {
   let key = localStorage.getItem('_vns_fpkey');
@@ -471,11 +483,15 @@ function listenToUserDoc() {
 // ==== ACCESS GATEKEEPER & PAYMENTS ====
 function hasValidAccess() {
     if (currentUser.email === 'anubhabmohapatra.01@gmail.com') return true;
-    // Active subscription
+    // Active paid or ad-pass subscription
     if (currentUserDoc && currentUserDoc.activeSubscription && currentUserDoc.subscriptionExpiry) {
         if (Date.now() < currentUserDoc.subscriptionExpiry) return true;
     }
-    // First-time free pass (claim kiya hua, abhi valid hai)
+    // Ad pass (legacy field fallback in case subscriptionExpiry not set by older records)
+    if (currentUserDoc && currentUserDoc.adPassActive && currentUserDoc.adPassExpiry) {
+        if (Date.now() < currentUserDoc.adPassExpiry) return true;
+    }
+    // First-time free pass
     if (currentUserDoc && currentUserDoc.freePassActive && currentUserDoc.freePassExpiry) {
         if (Date.now() < currentUserDoc.freePassExpiry) return true;
     }
@@ -1347,6 +1363,35 @@ function showRoom(roomId, url = null, file = null) {
   if(url) handleNewUrl(url, true);
   if(file) { currentVideoFile = file; handleNewUrl(URL.createObjectURL(file), false); }
   initWebSocket();
+
+  // Guests: fetch host's ad context so in-movie ads behave correctly
+  const iAmOwner = currentUserDoc && currentUserDoc.roomCode === roomId;
+  if (!iAmOwner) {
+    fetchRoomAdContext(roomId);
+  } else {
+    // Host: set own access type so shouldShowInMovieAds() works locally too
+    if (isPremiumUser()) {
+      window._roomHostAccessType = 'premium';
+      window._currentPlayingFilmAdEnabled = true; // irrelevant but reset
+    }
+    // else: host will set _roomHostAccessType when they click play in film store
+  }
+}
+
+// Fetch host's ad context for a room and set global ad flags
+async function fetchRoomAdContext(roomCode) {
+  try {
+    const res = await fetch(`/api/room-ad-context?roomCode=${encodeURIComponent(roomCode)}`);
+    const data = await res.json();
+    if (data.success) {
+      window._roomHostAccessType = data.hostAccessType || 'generic';
+      window._currentPlayingFilmAdEnabled = data.filmAdEnabled !== false;
+    }
+  } catch (e) {
+    // On error, default to showing ads (safe fallback)
+    window._roomHostAccessType = 'generic';
+    window._currentPlayingFilmAdEnabled = true;
+  }
 }
 
 function leaveRoom() {
@@ -1664,6 +1709,9 @@ function initWebSocket(isPresenceOnly = false) {
 
        if (data.room.videoState.videoUrl && !currentVideoFile) {
            handleNewUrl(data.room.videoState.videoUrl, false);
+           // Guest: re-fetch host's ad context when new video arrives
+           const iAmOwner = currentUserDoc && currentUserDoc.roomCode === currentRoomId;
+           if (!iAmOwner && currentRoomId) fetchRoomAdContext(currentRoomId);
            // Video chal raha hai — chat FAB sabko dikhao
            if (btnChatFab) btnChatFab.style.display = 'flex';
            const fabContainer = document.getElementById('chat-fab-container');
@@ -1853,7 +1901,13 @@ async function loadFilmStore() {
   if (!grid) return;
   grid.innerHTML = '<div class="text-zinc-500 text-center py-12 col-span-full"><p>Loading films...</p></div>';
   try {
-    const res = await fetch('/api/films');
+    // Fetch films + ad unlocks in parallel
+    const [res, adUnlocks] = await Promise.all([
+      fetch('/api/films'),
+      fetchMyAdUnlocks()
+    ]);
+    window._adUnlocks = adUnlocks;
+
     const data = await res.json();
     if (!data.success || !data.films || data.films.length === 0) {
       grid.innerHTML = '<div class="text-zinc-500 text-center py-12 col-span-full"><svg class="mx-auto mb-3" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 2h10l4 4v16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/></svg><p class="font-bold">No films available yet.</p><p class="text-sm mt-1">Check back soon!</p></div>';
@@ -1870,26 +1924,80 @@ async function loadFilmStore() {
 function buildFilmCard(film) {
   const card = document.createElement('div');
   card.className = 'film-card';
+
+  // Check if this film is already ad-unlocked and active
+  const adUnlock = window._adUnlocks && window._adUnlocks.get(film.filmId);
+  const isAdUnlocked = adUnlock && adUnlock.isActive;
+  const adUnlockEnabled = film.adUnlockEnabled !== false; // default true
+
   card.innerHTML = `
     <div class="film-card-poster">
       ${film.thumbnailBase64
         ? `<img src="${film.thumbnailBase64}" alt="${film.title}" style="width:100%;height:100%;object-fit:cover;">`
         : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1c1c1e;color:#52525b;font-size:2rem;">🎬</div>`}
+      ${isAdUnlocked ? '<div class="film-ad-unlock-badge">AD UNLOCKED</div>' : ''}
     </div>
     <div class="film-card-body">
       <h3 class="film-card-title">${film.title}</h3>
+      ${/* Badge: Ad unlock available */ !isAdUnlocked && adUnlockEnabled && !isPremiumUser()
+        ? `<div style="display:flex;align-items:center;gap:0.3rem;margin-bottom:0.3rem;">
+             <span style="font-size:0.6rem;font-weight:700;padding:0.15rem 0.5rem;border-radius:9999px;
+               background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.35);color:#c084fc;
+               letter-spacing:0.05em;white-space:nowrap;">
+               🔓 Unlock via Ad · 1hr
+             </span>
+           </div>`
+        : ''
+      }
       <div class="film-card-meta">
         <span class="film-card-price">₹${film.price}</span>
         <span class="film-card-days">${film.rentalDays} day${film.rentalDays > 1 ? 's' : ''}</span>
       </div>
-      <button class="btn film-rent-btn" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}" data-price="${film.price}" data-days="${film.rentalDays}">
-        Rent for ${film.rentalDays} Day${film.rentalDays > 1 ? 's' : ''} — ₹${film.price}
-      </button>
+
+      ${isAdUnlocked
+        ? `<!-- Already unlocked via ad -->
+           <div class="film-ad-unlocked-timer" style="margin-bottom:0.4rem;font-size:0.68rem;color:#c084fc;font-weight:600;display:flex;align-items:center;gap:0.3rem;">
+             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+             ${formatTimeRemaining(adUnlock.expiresAt)}
+           </div>
+           <button class="btn film-play-btn" data-link="${adUnlock.telegramLink || ''}" style="background:linear-gradient(135deg,#6d28d9,#a855f7);border:none;margin-bottom:0.3rem;">▶ Watch Now (Ad Unlocked)</button>`
+        : `<button class="btn film-rent-btn" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}" data-price="${film.price}" data-days="${film.rentalDays}">
+             Rent ${film.rentalDays}d — ₹${film.price}
+           </button>`
+      }
+
+      ${/* Show Watch Ad button only if: not ad-unlocked, ad enabled, NOT premium */ !isAdUnlocked && adUnlockEnabled && !isPremiumUser()
+        ? `<button class="film-ad-btn" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}">
+             📺 Watch 1 Ad — Free 1hr Access
+           </button>`
+        : ''
+      }
     </div>
   `;
-  card.querySelector('.film-rent-btn').addEventListener('click', () => {
-    initiateFilmRental(film.filmId, film.title, film.price, film.rentalDays);
-  });
+
+  // Rent button
+  const rentBtn = card.querySelector('.film-rent-btn');
+  if (rentBtn) {
+    rentBtn.addEventListener('click', () => initiateFilmRental(film.filmId, film.title, film.price, film.rentalDays));
+  }
+
+  // Ad-unlocked play button (host played via ad → ad-unlock access type)
+  const adPlayBtn = card.querySelector('.film-play-btn');
+  if (adPlayBtn) {
+    adPlayBtn.addEventListener('click', () => {
+      // This film was already ad-unlocked, playing it → host access type = 'ad-unlock'
+      window._currentPlayingFilmAdEnabled = film.adUnlockEnabled !== false;
+      window._roomHostAccessType = 'ad-unlock';
+      playRentedFilm(adPlayBtn.dataset.link, film.title, 'ad-unlock');
+    });
+  }
+
+  // Watch Ad button
+  const adBtn = card.querySelector('.film-ad-btn');
+  if (adBtn) {
+    adBtn.addEventListener('click', () => startFilmAdUnlock(film.filmId, film.title, adBtn));
+  }
+
   return card;
 }
 
@@ -1946,17 +2054,94 @@ async function loadMyRentals() {
   if (!grid || !currentUser) return;
   grid.innerHTML = '<div class="text-zinc-500 text-center py-12 col-span-full"><p>Loading your rentals...</p></div>';
   try {
-    const res = await fetch(`/api/my-rentals?userId=${currentUser.uid}`);
+    // Fetch paid rentals + ad unlocks in parallel
+    const [res, adUnlocks] = await Promise.all([
+      fetch(`/api/my-rentals?userId=${currentUser.uid}`),
+      fetchMyAdUnlocks()
+    ]);
+    window._adUnlocks = adUnlocks;
     const data = await res.json();
-    if (!data.success || !data.rentals || data.rentals.length === 0) {
-      grid.innerHTML = '<div class="text-zinc-500 text-center py-12 col-span-full"><svg class="mx-auto mb-3" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg><p class="font-bold">No rentals yet.</p><p class="text-sm mt-1">Browse films and rent one!</p></div>';
+
+    const hasPaidRentals = data.success && data.rentals && data.rentals.length > 0;
+    const activeAdUnlocks = [...adUnlocks.values()].filter(u => u.isActive);
+    const expiredAdUnlocks = [...adUnlocks.values()].filter(u => !u.isActive);
+
+    if (!hasPaidRentals && adUnlocks.size === 0) {
+      grid.innerHTML = '<div class="text-zinc-500 text-center py-12 col-span-full"><svg class="mx-auto mb-3" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg><p class="font-bold">No rentals yet.</p><p class="text-sm mt-1">Browse films and rent one, or watch an ad for free access!</p></div>';
       return;
     }
+
     grid.innerHTML = '';
-    data.rentals.forEach(rental => grid.appendChild(buildRentalCard(rental)));
+
+    // --- Ad-unlocked films (active) ---
+    if (activeAdUnlocks.length > 0) {
+      const header = document.createElement('div');
+      header.className = 'col-span-full';
+      header.innerHTML = `<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;margin-top:0.5rem;">
+        <span style="background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3);color:#c084fc;font-size:0.65rem;font-weight:900;padding:0.2rem 0.5rem;border-radius:0.35rem;letter-spacing:0.06em;">AD UNLOCKED</span>
+        <span style="font-size:0.75rem;color:#71717a;">Free access — watch before time runs out!</span>
+      </div>`;
+      grid.appendChild(header);
+      activeAdUnlocks.forEach(u => grid.appendChild(buildAdUnlockCard(u, false)));
+    }
+
+    // --- Paid rentals ---
+    if (hasPaidRentals) {
+      if (activeAdUnlocks.length > 0) {
+        const div = document.createElement('div');
+        div.className = 'col-span-full';
+        div.innerHTML = `<div style="border-top:1px solid #27272a;margin:0.75rem 0;"></div>
+          <div style="font-size:0.7rem;color:#52525b;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:0.75rem;">Paid Rentals</div>`;
+        grid.appendChild(div);
+      }
+      data.rentals.forEach(rental => grid.appendChild(buildRentalCard(rental)));
+    }
+
+    // --- Expired ad unlocks ---
+    if (expiredAdUnlocks.length > 0) {
+      const expHeader = document.createElement('div');
+      expHeader.className = 'col-span-full';
+      expHeader.innerHTML = `<div style="border-top:1px solid #27272a;margin:0.75rem 0;"></div>
+        <div style="font-size:0.7rem;color:#52525b;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:0.75rem;">Expired Ad Unlocks</div>`;
+      grid.appendChild(expHeader);
+      expiredAdUnlocks.forEach(u => grid.appendChild(buildAdUnlockCard(u, true)));
+    }
+
   } catch (e) {
     grid.innerHTML = `<div class="text-red-400 text-center py-12 col-span-full">Error loading rentals: ${e.message}</div>`;
   }
+}
+
+function buildAdUnlockCard(unlock, expired) {
+  const card = document.createElement('div');
+  card.className = 'film-card' + (expired ? ' film-card-expired' : '');
+  const timeLeft = expired ? 'Expired' : formatTimeRemaining(unlock.expiresAt);
+  card.innerHTML = `
+    <div class="film-card-poster">
+      <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1c1c1e;color:#52525b;font-size:2rem;">🎬</div>
+      <div class="film-ad-unlock-badge" style="${expired ? 'background:#3f3f46;border-color:#52525b;color:#71717a;' : ''}">AD${expired ? ' EXPIRED' : ' UNLOCKED'}</div>
+    </div>
+    <div class="film-card-body">
+      <h3 class="film-card-title">${unlock.filmTitle}</h3>
+      <div class="film-rental-timer ${expired ? 'expired' : ''}" style="color:${expired ? '#71717a' : '#c084fc'};">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        ${timeLeft}
+      </div>
+      ${!expired
+        ? `<button class="btn film-play-btn" style="background:linear-gradient(135deg,#6d28d9,#a855f7);border:none;">▶ Watch Now</button>`
+        : `<button class="btn film-play-btn disabled" disabled style="opacity:0.4;">Access Expired</button>`
+      }
+    </div>
+  `;
+  if (!expired && unlock.telegramLink) {
+    card.querySelector('.film-play-btn').addEventListener('click', () => {
+      // Ad-unlocked film → guests see in-movie ads (host got access by watching an ad)
+      window._currentPlayingFilmAdEnabled = true;
+      window._roomHostAccessType = 'ad-unlock';
+      playRentedFilm(unlock.telegramLink, unlock.filmTitle, 'ad-unlock');
+    });
+  }
+  return card;
 }
 
 function buildRentalCard(rental) {
@@ -1983,16 +2168,30 @@ function buildRentalCard(rental) {
   `;
   if (!rental.isExpired) {
     card.querySelector('.film-play-btn').addEventListener('click', () => {
-      playRentedFilm(rental.telegramLink, rental.filmTitle);
+      // Paid rental → no in-movie ads (premium experience)
+      window._currentPlayingFilmAdEnabled = false;
+      window._roomHostAccessType = 'rental';
+      playRentedFilm(rental.telegramLink, rental.filmTitle, 'rental');
     });
   }
   return card;
 }
 
-function playRentedFilm(link, title) {
+// accessType: 'rental' | 'ad-unlock' | 'generic' — broadcast to Firestore room doc for guests
+function playRentedFilm(link, title, accessType = 'generic') {
   if (!link) { showCustomAlert('Error', 'Stream link not available.'); return; }
   // Close the store modal
   document.getElementById('film-store-modal').style.display = 'none';
+
+  // Broadcast host access type to room doc so guests can read it
+  if (currentUser) {
+    // Write to Firestore host's user doc — guests who snapshot this will update their _roomHostAccessType
+    updateDoc(doc(db, 'users', currentUser.uid), {
+      roomHostAccessType: accessType,
+      roomFilmAdEnabled: window._currentPlayingFilmAdEnabled
+    }).catch(() => {});
+  }
+
   // Play the film using existing room infrastructure
   const formatted = formatVideoUrl(link);
   handleNewUrl(formatted, true);
@@ -2052,7 +2251,8 @@ async function addFilmToStore() {
       body: JSON.stringify({
         adminEmail: currentUser.email, title, telegramLink: link,
         thumbnailBase64: adminFilmThumbBase64, price: parseFloat(price) || 20,
-        rentalDays: parseInt(days) || 3
+        rentalDays: parseInt(days) || 3,
+        adUnlockEnabled: document.getElementById('film-form-ad-unlock')?.checked !== false
       })
     });
     const data = await res.json();
@@ -2079,13 +2279,20 @@ async function saveEditFilm(filmId) {
 
   btn.textContent = 'Saving...'; btn.disabled = true;
   try {
-    const body = { adminEmail: currentUser.email, filmId, title, telegramLink: link, price: parseFloat(price) || 20, rentalDays: parseInt(days) || 3 };
+    const body = {
+      adminEmail: currentUser.email, filmId, title, telegramLink: link,
+      price: parseFloat(price) || 20, rentalDays: parseInt(days) || 3,
+      adUnlockEnabled: document.getElementById('film-form-ad-unlock')?.checked !== false
+    };
     if (adminFilmThumbBase64) body.thumbnailBase64 = adminFilmThumbBase64;
     const res = await fetch('/api/admin/update-film', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const data = await res.json();
     if (data.success) {
       msgEl.textContent = '✓ Film updated!'; msgEl.style.color = '#22c55e'; msgEl.style.display = 'block';
       resetFilmForm(); loadAdminFilms();
+      // Sync public film store if open
+      const storeModal = document.getElementById('film-store-modal');
+      if (storeModal && storeModal.style.display !== 'none') loadFilmStore();
     } else throw new Error(data.error);
   } catch (e) {
     msgEl.textContent = 'Error: ' + e.message; msgEl.style.color = '#ef4444'; msgEl.style.display = 'block';
@@ -2099,6 +2306,8 @@ function resetFilmForm() {
   document.getElementById('film-form-link').value = '';
   document.getElementById('film-form-price').value = '20';
   document.getElementById('film-form-days').value = '3';
+  const adUnlockChk = document.getElementById('film-form-ad-unlock');
+  if (adUnlockChk) adUnlockChk.checked = true; // default ON
   document.getElementById('film-thumb-preview').style.display = 'none';
   document.getElementById('film-thumb-label-text').textContent = 'Click to upload poster image';
   document.getElementById('film-form-thumb').value = '';
@@ -2115,6 +2324,9 @@ function startEditFilm(film) {
   document.getElementById('film-form-link').value = film.telegramLink || '';
   document.getElementById('film-form-price').value = film.price || 20;
   document.getElementById('film-form-days').value = film.rentalDays || 3;
+  // Populate ad unlock toggle
+  const adUnlockChk = document.getElementById('film-form-ad-unlock');
+  if (adUnlockChk) adUnlockChk.checked = film.adUnlockEnabled !== false; // default true
   document.getElementById('film-form-heading').textContent = 'Edit Film';
   document.getElementById('btn-admin-add-film').textContent = 'Save Changes';
   document.getElementById('btn-admin-cancel-edit').style.display = 'block';
@@ -2163,17 +2375,31 @@ window.loadAdminFilms = async function() {
         </div>
         <div class="admin-film-row-info">
           <div class="admin-film-row-title">${film.title}</div>
-          <div class="admin-film-row-meta">₹${film.price} · ${film.rentalDays} day${film.rentalDays > 1 ? 's' : ''} · <span style="color:${film.isActive ? '#22c55e' : '#ef4444'}">${film.isActive ? 'Active' : 'Hidden'}</span></div>
+          <div class="admin-film-row-meta">₹${film.price} · ${film.rentalDays} day${film.rentalDays > 1 ? 's' : ''} · <span style="color:${film.isActive ? '#22c55e' : '#ef4444'}">${film.isActive ? 'Active' : 'Hidden'}</span> · <span style="color:${film.adUnlockEnabled !== false ? '#c084fc' : '#71717a'};font-weight:700;">${film.adUnlockEnabled !== false ? '📺 Ad ON' : 'Ad OFF'}</span></div>
           <div class="admin-film-row-link" title="${film.telegramLink || ''}">${(film.telegramLink || '').substring(0, 50)}${(film.telegramLink || '').length > 50 ? '…' : ''}</div>
         </div>
         <div class="admin-film-row-actions">
           <button class="btn-edit-film btn btn-secondary" style="padding:0.4rem 0.75rem;font-size:0.75rem;min-height:auto;width:auto;">Edit</button>
+          <button class="btn-toggle-ad-film btn btn-outline" style="padding:0.4rem 0.75rem;font-size:0.75rem;min-height:auto;width:auto;color:${film.adUnlockEnabled !== false ? '#c084fc' : '#71717a'};border-color:${film.adUnlockEnabled !== false ? '#7c3aed' : '#3f3f46'};">📺 ${film.adUnlockEnabled !== false ? 'Ad ON' : 'Ad OFF'}</button>
           <button class="btn-toggle-film btn btn-outline" style="padding:0.4rem 0.75rem;font-size:0.75rem;min-height:auto;width:auto;">${film.isActive ? 'Hide' : 'Show'}</button>
           <button class="btn-delete-film btn" style="padding:0.4rem 0.75rem;font-size:0.75rem;min-height:auto;width:auto;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid #ef4444;">Delete</button>
         </div>
       `;
       row.querySelector('.btn-edit-film').onclick = () => startEditFilm(film);
       row.querySelector('.btn-delete-film').onclick = (e) => deleteFilm(film.filmId, e.currentTarget);
+      // Quick Ad ON/OFF toggle
+      row.querySelector('.btn-toggle-ad-film').onclick = async (e) => {
+        const b = e.currentTarget; b.textContent = '...'; b.disabled = true;
+        const newState = film.adUnlockEnabled === false; // toggle
+        await fetch('/api/admin/update-film', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adminEmail: currentUser.email, filmId: film.filmId, adUnlockEnabled: newState })
+        });
+        loadAdminFilms();
+        // Also refresh public film store if it is open
+        const storeModal = document.getElementById('film-store-modal');
+        if (storeModal && storeModal.style.display !== 'none') loadFilmStore();
+      };
       row.querySelector('.btn-toggle-film').onclick = async (e) => {
         const b = e.currentTarget; b.textContent = '...'; b.disabled = true;
         await fetch('/api/admin/update-film', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminEmail: currentUser.email, filmId: film.filmId, isActive: !film.isActive }) });
@@ -2190,8 +2416,70 @@ window.loadAdminFilms = async function() {
 // WINDOW EXPORTS — expose functions used by HTML onclick="" attributes
 // (required because app.js is type="module" — module scope ≠ global scope)
 // =====================================================================
-window.loadRentalLedger = loadRentalLedger;
-window.loadCodeUsers    = loadCodeUsers;
+window.loadRentalLedger  = loadRentalLedger;
+window.loadCodeUsers     = loadCodeUsers;
+
+// ==== ADMIN: Free Pass Users ====
+window.loadFreePassUsers = async function() {
+    const tbody = document.getElementById('free-pass-users-body');
+    if (!tbody || !currentUser) return;
+    tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-zinc-600 italic">Loading...</td></tr>';
+
+    try {
+        const res = await fetch(`/api/admin/free-pass-users?adminEmail=${encodeURIComponent(currentUser.email)}`);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+        if (!data.users || data.users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-zinc-600 italic">No free pass claims yet.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = '';
+        data.users.forEach(u => {
+            const active = u.freePassActive;
+            const expiry = u.freePassExpiry ? new Date(u.freePassExpiry).toLocaleString('en-IN') : '—';
+            const claimedAt = u.freePassGrantedAt ? new Date(u.freePassGrantedAt).toLocaleString('en-IN') : '—';
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-zinc-900/40 transition-colors';
+            tr.innerHTML = `
+              <td class="px-6 py-3 font-medium text-white">${u.displayName || '—'}</td>
+              <td class="px-6 py-3 text-zinc-400 text-xs" title="${u.uid}">${u.email || u.uid.substring(0, 12) + '…'}</td>
+              <td class="px-6 py-3">
+                <span class="badge-pill ${active ? 'badge-success' : 'status-badge-expired'}">
+                  ${active ? '✓ Active' : '✗ Expired'}
+                </span>
+              </td>
+              <td class="px-6 py-3 text-xs text-zinc-400">${expiry}</td>
+              <td class="px-6 py-3 text-xs text-zinc-500">${claimedAt}</td>
+              <td class="px-6 py-3 text-right flex gap-2 justify-end">
+                <button onclick="manageFreePass('${u.uid}','extend-24h',this)" class="btn btn-outline text-xs py-1 px-3 text-green-400 border-green-800 hover:bg-green-900">+24h</button>
+                <button onclick="manageFreePass('${u.uid}','revoke',this)" class="btn btn-outline text-xs py-1 px-3 text-red-400 border-red-900 hover:bg-red-950">Revoke</button>
+              </td>`;
+            tbody.appendChild(tr);
+        });
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-red-400">Error: ${e.message}</td></tr>`;
+    }
+};
+
+window.manageFreePass = async function(userId, action, btn) {
+    if (!currentUser) return;
+    const orig = btn.textContent;
+    btn.disabled = true; btn.textContent = '...';
+    try {
+        const res = await fetch('/api/admin/manage-free-pass', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ adminEmail: currentUser.email, userId, action })
+        });
+        const d = await res.json();
+        if (!d.success) throw new Error(d.error);
+        showToast(d.message || 'Done!', 'success');
+        window.loadFreePassUsers(); // Reload table
+    } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+        btn.disabled = false; btn.textContent = orig;
+    }
+};
 
 // ==== ADMIN: Visitor Stats ====
 window.loadVisitorStats = async function() {
@@ -2256,3 +2544,728 @@ window.toggleFreeDay = async function() {
         alert('Network error. Try again.');
     }
 };
+
+// =====================================================================
+// LOADING SCREEN — hide once Firebase auth has resolved (either way)
+// =====================================================================
+let _authResolved = false;
+function hideLoadingScreen() {
+    const screen = document.getElementById('loading-screen');
+    if (!screen || _authResolved) return;
+    _authResolved = true;
+    sessionStorage.setItem('_vns_loaded', '1'); // skip splash on back-navigation
+    screen.classList.add('fade-out');
+    setTimeout(() => { if (screen.parentNode) screen.parentNode.removeChild(screen); }, 550);
+}
+
+// Second (lightweight) auth listener purely to dismiss the loading screen
+onAuthStateChanged(auth, () => hideLoadingScreen());
+
+// Safety net: hide loading screen after MAX 1.5 seconds regardless of auth state
+setTimeout(hideLoadingScreen, 1500);
+
+// =====================================================================
+// PUBLIC PAGE-VIEW COUNTER — animated roll-up (Footer)
+// =====================================================================
+function animateCounter(el, target, duration) {
+    const start = performance.now();
+    const update = (now) => {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3); // cubic ease-out
+        el.textContent = Math.round(target * eased).toLocaleString('en-IN');
+        if (progress < 1) requestAnimationFrame(update);
+    };
+    requestAnimationFrame(update);
+}
+
+async function fetchPublicPageViews() {
+    try {
+        const res = await fetch('/api/page-view-count');
+        const data = await res.json();
+        const el = document.getElementById('public-visitor-count');
+        if (el && data.success && data.totalPageViews) {
+            animateCounter(el, data.totalPageViews, 1400);
+        }
+    } catch(e) { /* non-critical */ }
+}
+
+// Fetch immediately — no auth required
+fetchPublicPageViews();
+
+// =====================================================================
+// HELP FAB + CONTACT MODAL
+// =====================================================================
+(function initHelpAndContact() {
+    const fab         = document.getElementById('help-fab');
+    const modal       = document.getElementById('contact-modal');
+    const btnClose    = document.getElementById('btn-close-contact');
+    const btnSend     = document.getElementById('btn-send-contact');
+    const imgInput    = document.getElementById('contact-screenshot');
+    const imgPreview  = document.getElementById('contact-preview');
+    const fileNameEl  = document.getElementById('contact-file-name');
+    const statusEl    = document.getElementById('contact-status');
+
+    if (!fab || !modal) return;
+
+    // Toggle open/close
+    fab.addEventListener('click', () => {
+        const isHidden = modal.classList.contains('hidden');
+        if (isHidden) {
+            modal.classList.remove('hidden');
+            // Pre-fill logged-in user info
+            const nameEl  = document.getElementById('contact-name');
+            const emailEl = document.getElementById('contact-email');
+            if (nameEl && sessionUserName && sessionUserName !== 'Guest') nameEl.value = sessionUserName;
+            if (emailEl && currentUser?.email) emailEl.value = currentUser.email;
+        } else {
+            modal.classList.add('hidden');
+        }
+    });
+
+    // Close buttons
+    if (btnClose) btnClose.addEventListener('click', () => modal.classList.add('hidden'));
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
+
+    // Screenshot preview
+    if (imgInput) {
+        imgInput.addEventListener('change', () => {
+            const file = imgInput.files[0];
+            if (!file) return;
+            if (fileNameEl) fileNameEl.textContent = file.name.length > 28 ? file.name.substring(0,25)+'…' : file.name;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (imgPreview) { imgPreview.src = e.target.result; imgPreview.classList.remove('hidden'); }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Form submit
+    if (btnSend) {
+        btnSend.addEventListener('click', async () => {
+            const name    = document.getElementById('contact-name')?.value?.trim() || 'Anonymous';
+            const email   = document.getElementById('contact-email')?.value?.trim() || '';
+            const message = document.getElementById('contact-message')?.value?.trim();
+
+            if (!message) {
+                if (statusEl) {
+                    statusEl.textContent = 'Please write a message first.';
+                    statusEl.className = 'text-center text-sm mt-3 text-red-400';
+                    statusEl.classList.remove('hidden');
+                }
+                return;
+            }
+
+            btnSend.textContent = 'Sending…';
+            btnSend.disabled = true;
+            if (statusEl) statusEl.classList.add('hidden');
+
+            // Read screenshot as base64 if attached
+            let screenshotBase64 = null;
+            if (imgInput?.files?.[0]) {
+                screenshotBase64 = await new Promise(resolve => {
+                    const r = new FileReader();
+                    r.onload = (ev) => resolve(ev.target.result);
+                    r.readAsDataURL(imgInput.files[0]);
+                });
+            }
+
+            try {
+                const res = await fetch('/api/send-contact', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, message, screenshotBase64 })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    if (statusEl) {
+                        statusEl.textContent = "✓ Message sent! We'll reply within 24 hours.";
+                        statusEl.className = 'text-center text-sm mt-3 text-green-400';
+                        statusEl.classList.remove('hidden');
+                    }
+                    // Reset form
+                    document.getElementById('contact-message').value = '';
+                    if (imgInput) imgInput.value = '';
+                    if (imgPreview) { imgPreview.src = ''; imgPreview.classList.add('hidden'); }
+                    if (fileNameEl) fileNameEl.textContent = 'Click to attach screenshot';
+                    setTimeout(() => modal.classList.add('hidden'), 2200);
+                } else {
+                    throw new Error(data.error || 'Server error');
+                }
+            } catch(err) {
+                if (statusEl) {
+                    statusEl.textContent = '✕ Failed to send. Check your connection and try again.';
+                    statusEl.className = 'text-center text-sm mt-3 text-red-400';
+                    statusEl.classList.remove('hidden');
+                }
+            }
+
+            btnSend.textContent = 'Send Message';
+            btnSend.disabled = false;
+        });
+    }
+})();
+
+// =====================================================================
+// FREE PASS BUTTON — wire up event (card is injected by checkAccessAndRoute)
+// =====================================================================
+document.addEventListener('click', (e) => {
+    if (e.target && e.target.id === 'btn-claim-free-pass') claimFreePass();
+});
+
+// =====================================================================
+// TOAST NOTIFICATION SYSTEM
+// =====================================================================
+const _toastIcons = { success: '✓', error: '✕', info: 'ℹ', warn: '⚠' };
+
+function showToast(message, type = 'info', duration = 3500) {
+    // Get or create container
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<span class="toast-icon">${_toastIcons[type] || _toastIcons.info}</span><span>${message}</span>`;
+
+    // Click to dismiss early
+    toast.addEventListener('click', () => dismissToast(toast));
+
+    container.appendChild(toast);
+
+    // Trigger enter animation
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => toast.classList.add('toast-show'));
+    });
+
+    // Auto-dismiss
+    setTimeout(() => dismissToast(toast), duration);
+}
+
+function dismissToast(toast) {
+    if (!toast.parentNode) return;
+    toast.classList.remove('toast-show');
+    setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 350);
+}
+
+// Make globally available
+window.showToast = showToast;
+
+
+// =====================================================================
+// AD MONETIZATION SYSTEM
+// =====================================================================
+
+// ---- Premium user guard — NO ADS for paid subscribers ----
+// Returns true if the current user has an active paid subscription or is admin.
+// Premium users bypass ALL ad experiences.
+function isPremiumUser() {
+    if (!currentUser) return false;
+    // Admin is always premium
+    if (currentUser.email === 'anubhabmohapatra.01@gmail.com') return true;
+    if (!currentUserDoc) return false;
+    // Paid subscription plans (exclude adPass, freePass, freePeriod)
+    const paidPlans = ['one-time', 'weekly', 'monthly', 'access-code', 'extended_by_admin'];
+    return paidPlans.includes(currentUserDoc.activeSubscription) &&
+           currentUserDoc.subscriptionExpiry > Date.now();
+}
+
+// ---- Ad Modal Engine ----
+// showAdModal(adNum, totalAds, durationSecs)
+// Returns a promise that resolves when ad countdown finishes.
+function showAdModal(adNum, totalAds, durationSecs = 30) {
+    return new Promise((resolve) => {
+        const modal     = document.getElementById('ad-modal');
+        const numEl     = document.getElementById('ad-modal-num');
+        const totalEl   = document.getElementById('ad-modal-total');
+        const countdown = document.getElementById('ad-countdown');
+        const fillEl    = document.getElementById('ad-progress-fill');
+        const bannerDiv = document.getElementById('adsterra-modal-banner');
+
+        if (!modal) { resolve(); return; }
+
+        // Set labels
+        if (numEl)   numEl.textContent   = adNum;
+        if (totalEl) totalEl.textContent = totalAds;
+        if (countdown) countdown.textContent = durationSecs;
+        if (fillEl)  { fillEl.style.transition = 'none'; fillEl.style.width = '0%'; }
+
+        // Inject AdSterra 300×250 banner with a clean fallback behind it
+        if (bannerDiv) {
+            bannerDiv.innerHTML = '';
+            bannerDiv.style.position = 'relative';
+            bannerDiv.style.minHeight = '250px';
+
+            // Fallback placeholder (shown when ad is blocked / unavailable)
+            const fallback = document.createElement('div');
+            fallback.id = 'ad-modal-fallback';
+            fallback.style.cssText = `
+                position:absolute;inset:0;display:flex;flex-direction:column;
+                align-items:center;justify-content:center;gap:0.75rem;
+                background:linear-gradient(135deg,#0f0f12,#1a1a1f);
+                border:1px solid #27272a;border-radius:12px;
+                font-family:inherit;text-align:center;padding:1.5rem;
+            `;
+            fallback.innerHTML = `
+                <div style="font-size:2.5rem;line-height:1;">📺</div>
+                <div style="color:#a1a1aa;font-size:0.8rem;font-weight:600;line-height:1.5;">
+                    Supporting Vaanisethu<br>
+                    <span style="color:#52525b;font-size:0.7rem;font-weight:400;">
+                        Ad unavailable on this network — countdown still counts!
+                    </span>
+                </div>
+                <div style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);border-radius:8px;padding:0.4rem 0.9rem;">
+                    <span style="color:#c084fc;font-size:0.7rem;font-weight:700;">VAANISETHU AD SLOT</span>
+                </div>
+            `;
+            bannerDiv.appendChild(fallback);
+
+            // Real ad container (placed above the fallback)
+            const adWrap = document.createElement('div');
+            adWrap.style.cssText = 'position:relative;z-index:2;display:flex;align-items:center;justify-content:center;';
+            window.atOptions = { key: '466c31e87748ad9ff1e88a1b7cd5a34c', format: 'iframe', height: 250, width: 300, params: {} };
+            const s = document.createElement('script');
+            s.src = 'https://www.highperformanceformat.com/466c31e87748ad9ff1e88a1b7cd5a34c/invoke.js';
+            s.async = true;
+            // When real ad loads and has content — hide the fallback
+            s.onload = () => {
+                setTimeout(() => {
+                    const iframe = adWrap.querySelector('iframe');
+                    if (iframe && iframe.offsetWidth > 10) {
+                        fallback.style.display = 'none';
+                    }
+                }, 1500);
+            };
+            adWrap.appendChild(s);
+            bannerDiv.appendChild(adWrap);
+        }
+
+        modal.classList.remove('hidden');
+
+        // Prevent clicking outside to close
+        const blockClose = (e) => e.stopPropagation();
+        modal.addEventListener('click', blockClose);
+
+        let remaining = durationSecs;
+
+        // Start progress bar after a tiny delay (force reflow)
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                if (fillEl) {
+                    fillEl.style.transition = `width ${durationSecs}s linear`;
+                    fillEl.style.width = '100%';
+                }
+            });
+        });
+
+        const tick = setInterval(() => {
+            remaining--;
+            if (countdown) countdown.textContent = remaining;
+
+            if (remaining <= 0) {
+                clearInterval(tick);
+                modal.removeEventListener('click', blockClose);
+                modal.classList.add('hidden');
+                // Reset progress bar
+                if (fillEl) { fillEl.style.transition = 'none'; fillEl.style.width = '0%'; }
+                // Clear ad iframe to stop audio
+                if (bannerDiv) bannerDiv.innerHTML = '';
+                resolve();
+            }
+        }, 1000);
+    });
+}
+
+// ---- Site-Access Ad Flow (Payment Page: Watch 4 Ads → 24hr pass) ----
+async function startAdFlow() {
+    if (!currentUser) {
+        showToast('Please sign in first.', 'error');
+        return;
+    }
+
+    const btn   = document.getElementById('btn-start-ad-flow');
+    const msgEl = document.getElementById('ad-pass-msg');
+
+    // Step indicator IDs: ad-step-1 … ad-step-4 = ads, ad-step-5 = Access
+    const stepEls = [1, 2, 3, 4, 5].map(i => document.getElementById(`ad-step-${i}`));
+
+    if (btn) { btn.disabled = true; btn.textContent = 'Starting ads...'; }
+
+    const TOTAL_ADS   = 4;
+    const AD_DURATION = 30; // seconds per ad
+    const collectedTokens = [];
+
+    try {
+        for (let i = 1; i <= TOTAL_ADS; i++) {
+            // Mark current ad step active
+            if (stepEls[i - 1]) stepEls[i - 1].className = 'ad-step-indicator ad-step-active';
+            if (btn) btn.textContent = `Watching Ad ${i} of ${TOTAL_ADS}...`;
+
+            await showAdModal(i, TOTAL_ADS, AD_DURATION);
+
+            // Get verification token from server
+            const r = await fetch('/api/verify-ad-completion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUser.uid, adIndex: i })
+            });
+            const d = await r.json();
+            if (!d.success) throw new Error(d.error || `Ad ${i} verification failed`);
+
+            collectedTokens.push(d.token);
+            if (stepEls[i - 1]) stepEls[i - 1].className = 'ad-step-indicator ad-step-done';
+
+            if (i < TOTAL_ADS) showToast(`Ad ${i} done! ${TOTAL_ADS - i} more to go.`, 'info', 2000);
+        }
+
+        // All 4 ads done — request access grant
+        if (stepEls[4]) stepEls[4].className = 'ad-step-indicator ad-step-active';
+        if (btn) btn.textContent = 'Granting access...';
+
+        const fp = window._fp_visitor_id || '';
+        const rGrant = await fetch('/api/grant-ad-pass', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: currentUser.uid, tokens: collectedTokens, fingerprint: fp })
+        });
+        const dGrant = await rGrant.json();
+        if (!dGrant.success) throw new Error(dGrant.error || 'Access grant failed');
+
+        if (stepEls[4]) stepEls[4].className = 'ad-step-indicator ad-step-done';
+        if (msgEl) {
+            msgEl.textContent = '🎉 24-hour access granted! Redirecting...';
+            msgEl.className = 'text-xs mt-3 text-center text-green-400';
+            msgEl.classList.remove('hidden');
+        }
+
+        showToast('🎉 24-hour free access granted!', 'success', 4000);
+
+        // Wait for Firestore onSnapshot to update currentUserDoc, then route
+        setTimeout(() => {
+            // If snapshot hasn't arrived yet, force re-read from Firestore
+            if (!currentUserDoc || currentUserDoc.activeSubscription !== 'ad-pass') {
+                import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js')
+                    .then(({ doc, getDoc }) => {
+                        getDoc(doc(db, 'users', currentUser.uid)).then(snap => {
+                            if (snap.exists()) currentUserDoc = snap.data();
+                            checkAccessAndRoute();
+                        }).catch(() => checkAccessAndRoute());
+                    }).catch(() => checkAccessAndRoute());
+            } else {
+                checkAccessAndRoute();
+            }
+        }, 2500);
+
+    } catch (err) {
+        showToast('Ad flow error: ' + err.message, 'error');
+        if (msgEl) {
+            msgEl.textContent = '✕ ' + err.message;
+            msgEl.className = 'text-xs mt-3 text-center text-red-400';
+            msgEl.classList.remove('hidden');
+        }
+        // Reset all steps
+        stepEls.forEach(el => { if (el) el.className = 'ad-step-indicator ad-step-pending'; });
+        if (btn) { btn.disabled = false; btn.textContent = '📺 Watch 4 Ads & Get Free 24hr Access'; }
+    }
+}
+
+// Wire up the button
+document.addEventListener('click', (e) => {
+    if (e.target && e.target.id === 'btn-start-ad-flow') startAdFlow();
+});
+
+// ---- Per-Film Ad Unlock Flow ----
+async function startFilmAdUnlock(filmId, filmTitle, adBtn) {
+    if (!currentUser) {
+        showToast('Please sign in first.', 'error');
+        return;
+    }
+
+    if (adBtn) { adBtn.disabled = true; adBtn.textContent = '⏳ Watch Ad...'; }
+
+    try {
+        // Show the ad modal — 30s countdown
+        await showAdModal(1, 1, 30);
+
+        if (adBtn) adBtn.textContent = '⏳ Verifying...';
+
+        // Get verification token
+        const r = await fetch('/api/verify-ad-completion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: currentUser.uid, adIndex: 1 })
+        });
+        const d = await r.json();
+        if (!d.success) throw new Error(d.error || 'Ad verification failed');
+
+        // Grant unlock
+        const rUnlock = await fetch('/api/grant-film-ad-unlock', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: currentUser.uid, filmId, token: d.token })
+        });
+        const dUnlock = await rUnlock.json();
+        if (!dUnlock.success) throw new Error(dUnlock.error || 'Unlock failed');
+
+        showToast(`🎬 "${filmTitle}" unlocked for 1 hour!`, 'success', 4000);
+        // Reload film store to show the unlocked state
+        loadFilmStore();
+
+    } catch (err) {
+        showToast('Film unlock failed: ' + err.message, 'error');
+        if (adBtn) { adBtn.disabled = false; adBtn.textContent = '📺 Watch 1 Ad — Free 1hr Access'; }
+    }
+}
+
+// Fetch user's ad-unlocked films (returns a Map of filmId → unlock data)
+async function fetchMyAdUnlocks() {
+    if (!currentUser) return new Map();
+    try {
+        const res = await fetch(`/api/my-ad-unlocks?userId=${encodeURIComponent(currentUser.uid)}`);
+        const data = await res.json();
+        if (!data.success) return new Map();
+        const map = new Map();
+        data.unlocks.forEach(u => map.set(u.filmId, u));
+        return map;
+    } catch(e) {
+        return new Map();
+    }
+}
+
+// Store ad unlocks globally so film card renderer can use it
+window._adUnlocks = new Map();
+
+// Called after login to populate ad unlocks
+async function refreshAdUnlocks() {
+    window._adUnlocks = await fetchMyAdUnlocks();
+}
+window.refreshAdUnlocks = refreshAdUnlocks;
+
+// Export for use in film card rendering (called from loadFilmStoreView)
+window.startFilmAdUnlock = startFilmAdUnlock;
+
+
+// =====================================================================
+// IN-MOVIE SKIPPABLE AD SYSTEM
+// Triggers skippable ad breaks at specific VIDEO timestamps (not wall clock)
+// Ad break schedule: 20min, 45min, 70min into the video
+// Skippable after 5 seconds
+// =====================================================================
+
+const _INMOVIE_AD_BREAK_SECS = [20 * 60, 45 * 60, 70 * 60]; // video seconds
+const _INMOVIE_SKIP_AFTER_SECS = 5;
+const _INMOVIE_AD_DURATION_SECS = 15;
+let _inmovieShownBreaks = new Set();
+let _inmovieCheckTimer  = null; // kept for compat but unused
+let _inmovieAdTick      = null;
+let _inmovieVideoListener = null;
+
+function startInMovieAdWatch() {
+    if (isPremiumUser()) return; // 🎖️ Premium users — no in-movie ads
+    if (_inmovieVideoListener) return; // already running
+
+    _inmovieShownBreaks.clear();
+
+    const video = document.getElementById('main-video');
+    if (!video) return;
+
+    _inmovieVideoListener = () => {
+        const roomView = document.getElementById('room-view');
+        if (!roomView || roomView.classList.contains('hidden')) return;
+        if (video.paused || video.ended) return;
+
+        const t = video.currentTime; // seconds into the video
+        for (const breakSec of _INMOVIE_AD_BREAK_SECS) {
+            // Fire if within a 15-second window past the break point (handles fast-forward)
+            if (t >= breakSec && t < breakSec + 15 && !_inmovieShownBreaks.has(breakSec)) {
+                _inmovieShownBreaks.add(breakSec);
+                showInMovieAd();
+                break;
+            }
+        }
+    };
+
+    video.addEventListener('timeupdate', _inmovieVideoListener);
+}
+
+function stopInMovieAdWatch() {
+    const video = document.getElementById('main-video');
+    if (video && _inmovieVideoListener) {
+        video.removeEventListener('timeupdate', _inmovieVideoListener);
+        _inmovieVideoListener = null;
+    }
+    if (_inmovieCheckTimer) { clearInterval(_inmovieCheckTimer); _inmovieCheckTimer = null; }
+    if (_inmovieAdTick)     { clearInterval(_inmovieAdTick);     _inmovieAdTick     = null; }
+    _inmovieShownBreaks.clear();
+    dismissInMovieAd();
+}
+
+// ---- Decision: should this user see in-movie ads right now? ----
+// Three layers checked:
+// 1. Is this user premium?
+// 2. Is the current film's adUnlockEnabled on?
+// 3. What access type did the host use to unlock this film?
+function shouldShowInMovieAds() {
+    if (isPremiumUser()) return false;                             // Guest is premium → never
+    if (window._currentPlayingFilmAdEnabled === false) return false; // Film has ads OFF → never
+    const hat = window._roomHostAccessType || 'generic';
+    if (hat === 'premium' || hat === 'rental') return false;       // Host premium/paid → no ads
+    return true; // host watched ad ('ad-unlock') or generic URL → ads on
+}
+
+function showInMovieAd() {
+    if (!shouldShowInMovieAds()) return; // 3-layer check
+    const overlay  = document.getElementById('inmovie-ad');
+    const timerEl  = document.getElementById('inmovie-ad-timer');
+    const skipBtn  = document.getElementById('inmovie-skip-btn');
+    const fillEl   = document.getElementById('inmovie-progress-fill');
+
+    if (!overlay) return;
+    if (_inmovieAdTick) clearInterval(_inmovieAdTick); // clear any existing tick
+
+    let remaining  = _INMOVIE_AD_DURATION_SECS;
+    let skipEnabled = false;
+
+    // Show overlay
+    overlay.classList.remove('hidden');
+    if (timerEl)  timerEl.textContent = `${remaining}s`;
+    if (skipBtn)  { skipBtn.classList.add('hidden'); skipBtn.disabled = true; }
+
+    // Inject real AdSterra 468×60 banner into the in-movie slot
+    const inmovieSlot = document.getElementById('adsterra-inmovie-banner');
+    if (inmovieSlot) {
+        inmovieSlot.innerHTML = '';
+        window.atOptions = { key: 'ecd99e146d7215730528710184847ec5', format: 'iframe', height: 60, width: 468, params: {} };
+        const s = document.createElement('script');
+        s.src = 'https://www.highperformanceformat.com/ecd99e146d7215730528710184847ec5/invoke.js';
+        s.async = true;
+        inmovieSlot.appendChild(s);
+    }
+
+    // Reset + animate progress bar
+    if (fillEl) { fillEl.style.transition = 'none'; fillEl.style.width = '0%'; }
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (fillEl) {
+            fillEl.style.transition = `width ${_INMOVIE_AD_DURATION_SECS}s linear`;
+            fillEl.style.width = '100%';
+        }
+    }));
+
+    _inmovieAdTick = setInterval(() => {
+        remaining--;
+        if (timerEl) timerEl.textContent = `${remaining}s`;
+
+        // Enable skip button after SKIP_AFTER seconds
+        if (!skipEnabled && remaining <= _INMOVIE_AD_DURATION_SECS - _INMOVIE_SKIP_AFTER_SECS) {
+            skipEnabled = true;
+            if (skipBtn) { skipBtn.classList.remove('hidden'); skipBtn.disabled = false; }
+        }
+
+        if (remaining <= 0) {
+            clearInterval(_inmovieAdTick);
+            _inmovieAdTick = null;
+            dismissInMovieAd();
+        }
+    }, 1000);
+
+    // Skip button handler
+    if (skipBtn) {
+        skipBtn.onclick = () => {
+            if (!skipEnabled) return;
+            if (_inmovieAdTick) { clearInterval(_inmovieAdTick); _inmovieAdTick = null; }
+            dismissInMovieAd();
+        };
+    }
+}
+
+function dismissInMovieAd() {
+    const overlay = document.getElementById('inmovie-ad');
+    if (overlay) overlay.classList.add('hidden');
+    const fill = document.getElementById('inmovie-progress-fill');
+    if (fill) { fill.style.transition = 'none'; fill.style.width = '0%'; }
+    // Clear ad iframe to stop any audio
+    const slot = document.getElementById('adsterra-inmovie-banner');
+    if (slot) slot.innerHTML = '';
+}
+
+// Auto-start/stop in-movie ads by observing room-view visibility
+(function initInMovieAdObserver() {
+    const roomView = document.getElementById('room-view');
+    if (!roomView) return;
+
+    let wasVisible = false;
+    const obs = new MutationObserver(() => {
+        const isVisible = !roomView.classList.contains('hidden');
+        if (isVisible && !wasVisible) {
+            startInMovieAdWatch();
+        } else if (!isVisible && wasVisible) {
+            stopInMovieAdWatch();
+        }
+        wasVisible = isVisible;
+    });
+    obs.observe(roomView, { attributes: true, attributeFilter: ['class'] });
+})();
+
+window.startInMovieAdWatch = startInMovieAdWatch;
+window.stopInMovieAdWatch  = stopInMovieAdWatch;
+
+
+// =====================================================================
+// AD BREAK TIMELINE BAR  (yellow markers on video progress track)
+// =====================================================================
+
+(function initAdTimeline() {
+    const video = document.getElementById('main-video');
+    if (!video) return;
+
+    const AD_BREAK_SECS = typeof _INMOVIE_AD_BREAK_SECS !== 'undefined'
+        ? _INMOVIE_AD_BREAK_SECS
+        : [20 * 60, 45 * 60, 70 * 60];
+
+    function buildTimeline() {
+        if (isPremiumUser()) return; // premium users don't need this
+        const bar     = document.getElementById('ad-timeline-bar');
+        const track   = document.getElementById('ad-timeline-track');
+        const cursor  = document.getElementById('ad-timeline-cursor');
+        if (!bar || !track) return;
+
+        const duration = video.duration;
+        if (!duration || !isFinite(duration)) { bar.classList.add('hidden'); return; }
+
+        // Clear old markers (keep cursor)
+        track.querySelectorAll('.ad-timeline-marker').forEach(m => m.remove());
+
+        // Insert yellow markers only for breaks that fit in the video
+        AD_BREAK_SECS.forEach(t => {
+            if (t >= duration) return;
+            const pct = (t / duration) * 100;
+            const marker = document.createElement('div');
+            marker.className = 'ad-timeline-marker';
+            marker.style.left = pct + '%';
+            marker.title = `Ad break at ${Math.floor(t / 60)}m`;
+            track.appendChild(marker);
+        });
+
+        bar.classList.remove('hidden');
+    }
+
+    function updateCursor() {
+        const cursor   = document.getElementById('ad-timeline-cursor');
+        const duration = video.duration;
+        if (!cursor || !duration || !isFinite(duration)) return;
+        const pct = (video.currentTime / duration) * 100;
+        cursor.style.left = Math.min(pct, 100) + '%';
+    }
+
+    video.addEventListener('loadedmetadata', buildTimeline);
+    video.addEventListener('timeupdate', updateCursor);
+
+    // Hide bar when video is cleared
+    video.addEventListener('emptied', () => {
+        const bar = document.getElementById('ad-timeline-bar');
+        if (bar) bar.classList.add('hidden');
+    });
+})();
