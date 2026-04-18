@@ -4,10 +4,10 @@
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 
-  <!-- Homepage / Main App -->
+  <!-- Main app page -->
   <url>
     <loc>https://vaanisethu.online/</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>

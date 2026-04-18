@@ -61,6 +61,24 @@
   <link rel="apple-touch-icon" href="/logo.png">
   <link rel="shortcut icon" href="/logo.png">
 
+  <!-- ===================== SITEMAP ===================== -->
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml">
+
+  <!-- ===================== PERFORMANCE: PRE-WARM CONNECTIONS ===================== -->
+  <!-- Razorpay payment gateway — pre-connect so checkout opens instantly -->
+  <link rel="preconnect" href="https://checkout.razorpay.com">
+  <link rel="dns-prefetch" href="https://checkout.razorpay.com">
+  <link rel="preconnect" href="https://api.razorpay.com">
+  <link rel="dns-prefetch" href="https://api.razorpay.com">
+  <link rel="preconnect" href="https://cdn.razorpay.com">
+  <link rel="dns-prefetch" href="https://cdn.razorpay.com">
+  <!-- Firebase -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://firestore.googleapis.com">
+  <!-- Google Fonts if used -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
   <!-- ===================== JSON-LD STRUCTURED DATA (Schema.org) ===================== -->
   <script type="application/ld+json">
   {
@@ -199,7 +217,7 @@
   <link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin>
   <link rel="dns-prefetch" href="https://checkout.razorpay.com">
 
-  <link rel="stylesheet" href="/style.css?v=12">
+  <link rel="stylesheet" href="/style.css?v=13">
 
   <!-- Skip loading screen on back-navigation (runs before render) -->
   <script>if(sessionStorage.getItem('_vns_loaded')){document.documentElement.classList.add('no-splash');}</script>
@@ -316,6 +334,7 @@
                <ul class="text-zinc-300 text-sm mb-6 space-y-2">
                  <li>✓ Unlimited Watch Time</li>
                  <li>✓ HD Sync</li>
+                 <li>✓ No Ads 🚫📺</li>
                </ul>
            </div>
            <button class="btn btn-outline hover-bg w-full" id="btn-pay-one-time">Select Pass</button>
@@ -331,6 +350,7 @@
                <ul class="text-zinc-300 text-sm mb-6 space-y-2">
                  <li>✓ Full Access for 7 Days</li>
                  <li>✓ Invite Unlimited Friends</li>
+                 <li>✓ No Ads 🚫📺</li>
                </ul>
            </div>
            <button class="btn btn-primary w-full" id="btn-pay-weekly">Select Weekly</button>
@@ -345,6 +365,7 @@
                <ul class="text-zinc-300 text-sm mb-6 space-y-2">
                  <li>✓ 30 Days of Access</li>
                  <li>✓ Support the Developer</li>
+                 <li>✓ No Ads 🚫📺</li>
                </ul>
            </div>
            <button class="btn btn-outline hover-bg w-full" id="btn-pay-monthly">Select Monthly</button>
@@ -1112,23 +1133,40 @@
 </div>
 
 <!-- ====== IN-MOVIE SKIPPABLE AD OVERLAY ====== -->
-<div id="inmovie-ad" class="inmovie-ad hidden" role="region" aria-label="Advertisement">
-  <div class="inmovie-ad-inner">
-    <div class="inmovie-ad-meta">
+<!-- ====== IN-MOVIE FULLSCREEN AD OVERLAY ====== -->
+<div id="inmovie-ad" class="inmovie-ad hidden" role="dialog" aria-modal="true" aria-label="Advertisement">
+
+  <!-- Top bar: AD badge + timer + skip button -->
+  <div class="inmovie-top-bar">
+    <div class="inmovie-top-left">
       <span class="inmovie-ad-badge">AD</span>
       <span class="inmovie-ad-tagline">Supporting Vaanisethu keeps it free 🙏</span>
     </div>
-    <div class="inmovie-ad-player">
-      <!-- AdSterra 468×60 Banner —  loads when in-movie ad fires -->
-      <div id="adsterra-inmovie-banner" style="display:flex;align-items:center;justify-content:center;min-height:60px;overflow:hidden;"></div>
-    </div>
-    <div class="inmovie-ad-controls">
-      <span id="inmovie-ad-timer" class="inmovie-ad-timer">15s</span>
-      <button id="inmovie-skip-btn" class="inmovie-skip-btn hidden" aria-label="Skip Ad">Skip Ad ▶</button>
+    <div class="inmovie-top-right">
+      <span id="inmovie-ad-timer" class="inmovie-ad-timer-fs">15s</span>
+      <button id="inmovie-skip-btn" class="inmovie-skip-btn hidden" aria-label="Skip Ad">
+        Skip Ad ▶
+      </button>
     </div>
   </div>
-  <div class="inmovie-progress-bar"><div id="inmovie-progress-fill" class="inmovie-progress-fill"></div></div>
+
+  <!-- Centered ad content area -->
+  <div class="inmovie-center">
+    <div class="inmovie-ad-label">Advertisement</div>
+    <!-- AdSterra 300×250 (highest revenue standard unit) -->
+    <div id="adsterra-inmovie-banner" class="inmovie-banner-slot"></div>
+    <div class="inmovie-resume-hint" id="inmovie-resume-hint">
+      ⏸ Movie paused · Ad ends in <span id="inmovie-hint-timer">15s</span>
+    </div>
+  </div>
+
+  <!-- Progress bar at bottom -->
+  <div class="inmovie-progress-bar">
+    <div id="inmovie-progress-fill" class="inmovie-progress-fill"></div>
+  </div>
+
 </div>
+
 
 <!-- ====== AD MODAL ====== -->
 <div id="ad-modal" class="ad-modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Watch Ad">
@@ -1161,6 +1199,6 @@
 </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js"></script>
-  <script type="module" src="/app.js?v=29"></script>
+  <script type="module" src="/app.js?v=33"></script>
 </body>
 </html>

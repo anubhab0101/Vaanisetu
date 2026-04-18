@@ -1914,6 +1914,7 @@ async function loadFilmStore() {
       return;
     }
     filmStoreData = data.films;
+    window._allFilms = data.films; // cache for ad-enable pre-check in startFilmAdUnlock
     grid.innerHTML = '';
     data.films.forEach(film => grid.appendChild(buildFilmCard(film)));
   } catch (e) {
@@ -2984,6 +2985,30 @@ async function startFilmAdUnlock(filmId, filmTitle, adBtn) {
         return;
     }
 
+    // ✅ Pre-check: verify this film still has ad unlock enabled BEFORE showing the ad
+    // (Admin may have turned it off after the page loaded)
+    const cachedFilm = window._allFilms && window._allFilms.find(f => f.filmId === filmId);
+    if (cachedFilm && cachedFilm.adUnlockEnabled === false) {
+        showToast('❌ Ad unlock is not available for this film.', 'error');
+        if (adBtn) { adBtn.disabled = false; adBtn.textContent = '📺 Watch 1 Ad — Free 1hr Access'; }
+        return;
+    }
+
+    // Also do a fresh server-side pre-check via /api/films
+    try {
+        const freshFilms = await fetch('/api/films').then(r => r.json());
+        if (freshFilms.success) {
+            const freshFilm = (freshFilms.films || []).find(f => f.filmId === filmId);
+            if (freshFilm && freshFilm.adUnlockEnabled === false) {
+                showToast('❌ Ad unlock is not available for this film.', 'error');
+                if (adBtn) { adBtn.disabled = false; adBtn.textContent = '📺 Watch 1 Ad — Free 1hr Access'; }
+                // Also refresh the film store so the button disappears
+                loadFilmStore();
+                return;
+            }
+        }
+    } catch (_) { /* continue even if fresh check fails */ }
+
     if (adBtn) { adBtn.disabled = true; adBtn.textContent = '⏳ Watch Ad...'; }
 
     try {
@@ -3129,21 +3154,83 @@ function showInMovieAd() {
     let remaining  = _INMOVIE_AD_DURATION_SECS;
     let skipEnabled = false;
 
-    // Show overlay
+    // ⏸ PAUSE the video so ad gets full attention
+    const video = document.getElementById('main-video');
+    if (video && !video.paused) video.pause();
+
+    // Show fullscreen overlay
     overlay.classList.remove('hidden');
     if (timerEl)  timerEl.textContent = `${remaining}s`;
     if (skipBtn)  { skipBtn.classList.add('hidden'); skipBtn.disabled = true; }
 
-    // Inject real AdSterra 468×60 banner into the in-movie slot
+    // Update inline hint timer too
+    const hintTimer = document.getElementById('inmovie-hint-timer');
+    if (hintTimer) hintTimer.textContent = `${remaining}s`;
+
+    // Inject AdSterra 300×250 + handle blocked/failed gracefully
     const inmovieSlot = document.getElementById('adsterra-inmovie-banner');
     if (inmovieSlot) {
         inmovieSlot.innerHTML = '';
-        window.atOptions = { key: 'ecd99e146d7215730528710184847ec5', format: 'iframe', height: 60, width: 468, params: {} };
+
+        // Fallback UI — shown if ad script fails / is blocked
+        const fallback = document.createElement('div');
+        fallback.id = 'inmovie-ad-fallback';
+        fallback.style.cssText = `
+            display:none; flex-direction:column; align-items:center; justify-content:center;
+            width:300px; min-height:250px; text-align:center; gap:0.75rem; padding:1.5rem;
+            color:#71717a; font-size:0.8rem;
+        `;
+        fallback.innerHTML = `
+            <div style="font-size:2.5rem;">🎬</div>
+            <div style="font-weight:700;color:#a1a1aa;font-size:0.9rem;">Vaanisethu</div>
+            <div style="font-size:0.72rem;color:#52525b;line-height:1.4;">
+                Watch movies together with friends.<br>Support us to keep it free!
+            </div>
+            <div style="font-size:0.65rem;color:#3f3f46;margin-top:0.5rem;">Ad loading…</div>
+        `;
+        inmovieSlot.appendChild(fallback);
+
+        // MutationObserver: kill any "ads are blocked" text injected by ad network
+        const adBlockObserver = new MutationObserver(() => {
+            // Remove any element that contains "blocked" or "adblock" text from the network
+            inmovieSlot.querySelectorAll('*').forEach(el => {
+                const txt = (el.textContent || '').toLowerCase();
+                if (
+                    (txt.includes('blocked') || txt.includes('adblock') || txt.includes('ad blocker') || txt.includes('contact the owner'))
+                    && el.children.length === 0 // leaf node
+                ) {
+                    // Hide the entire injected container
+                    let target = el;
+                    while (target.parentElement && target.parentElement !== inmovieSlot) target = target.parentElement;
+                    target.style.display = 'none';
+                    // Show our branded fallback instead
+                    fallback.style.display = 'flex';
+                }
+            });
+        });
+        adBlockObserver.observe(inmovieSlot, { childList: true, subtree: true, characterData: true });
+
+        // Inject the actual ad script
+        window.atOptions = { key: 'ecd99e146d7215730528710184847ec5', format: 'iframe', height: 250, width: 300, params: {} };
         const s = document.createElement('script');
         s.src = 'https://www.highperformanceformat.com/ecd99e146d7215730528710184847ec5/invoke.js';
         s.async = true;
+        s.onerror = () => {
+            // Script couldn't load at all (blocked by browser/CSP) → show fallback
+            fallback.style.display = 'flex';
+            fallback.querySelector('div:last-child').textContent = 'Please whitelist vaanisethu.online to support us!';
+        };
+        // 3 second timeout: if ad frame doesn't fill the slot, show fallback
+        setTimeout(() => {
+            const hasRealAd = inmovieSlot.querySelector('iframe, img[src*="ad"]');
+            if (!hasRealAd) fallback.style.display = 'flex';
+        }, 3000);
         inmovieSlot.appendChild(s);
+
+        // Cleanup observer when ad is dismissed
+        overlay._adBlockObserver = adBlockObserver;
     }
+
 
     // Reset + animate progress bar
     if (fillEl) { fillEl.style.transition = 'none'; fillEl.style.width = '0%'; }
@@ -3154,28 +3241,65 @@ function showInMovieAd() {
         }
     }));
 
-    _inmovieAdTick = setInterval(() => {
-        remaining--;
-        if (timerEl) timerEl.textContent = `${remaining}s`;
+    // ---- Start countdown tick ----
+    function startTick() {
+        _inmovieAdTick = setInterval(() => {
+            if (document.hidden) return; // page not visible — skip decrement
+            remaining--;
+            if (timerEl) timerEl.textContent = `${remaining}s`;
+            // Keep the hint timer in sync too
+            const hintT = document.getElementById('inmovie-hint-timer');
+            if (hintT) hintT.textContent = `${remaining}s`;
 
-        // Enable skip button after SKIP_AFTER seconds
-        if (!skipEnabled && remaining <= _INMOVIE_AD_DURATION_SECS - _INMOVIE_SKIP_AFTER_SECS) {
-            skipEnabled = true;
-            if (skipBtn) { skipBtn.classList.remove('hidden'); skipBtn.disabled = false; }
-        }
+            // Enable skip button after SKIP_AFTER seconds
+            if (!skipEnabled && remaining <= _INMOVIE_AD_DURATION_SECS - _INMOVIE_SKIP_AFTER_SECS) {
+                skipEnabled = true;
+                if (skipBtn) { skipBtn.classList.remove('hidden'); skipBtn.disabled = false; }
+            }
 
-        if (remaining <= 0) {
-            clearInterval(_inmovieAdTick);
-            _inmovieAdTick = null;
-            dismissInMovieAd();
+            if (remaining <= 0) {
+                clearInterval(_inmovieAdTick);
+                _inmovieAdTick = null;
+                cleanup();
+                dismissInMovieAd();
+            }
+        }, 1000);
+    }
+
+    // ---- Page Visibility: pause/resume ----
+    function onVisibilityChange() {
+        if (document.hidden) {
+            // Tab hidden / app backgrounded → pause progress bar animation
+            if (fillEl) {
+                const computedW = window.getComputedStyle(fillEl).width;
+                const parentW   = fillEl.parentElement ? window.getComputedStyle(fillEl.parentElement).width : '1px';
+                const pct = (parseFloat(computedW) / parseFloat(parentW)) * 100;
+                fillEl.style.transition = 'none';
+                fillEl.style.width = `${Math.max(0, pct)}%`;
+            }
+            // The setInterval itself still fires but skips decrement (document.hidden check above)
+        } else {
+            // Tab visible again → resume progress bar animation for remaining time
+            if (fillEl && remaining > 0) {
+                fillEl.style.transition = `width ${remaining}s linear`;
+                fillEl.style.width = '100%';
+            }
         }
-    }, 1000);
+    }
+
+    function cleanup() {
+        document.removeEventListener('visibilitychange', onVisibilityChange);
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    startTick();
 
     // Skip button handler
     if (skipBtn) {
         skipBtn.onclick = () => {
             if (!skipEnabled) return;
             if (_inmovieAdTick) { clearInterval(_inmovieAdTick); _inmovieAdTick = null; }
+            cleanup(); // remove visibilitychange listener
             dismissInMovieAd();
         };
     }
@@ -3183,12 +3307,24 @@ function showInMovieAd() {
 
 function dismissInMovieAd() {
     const overlay = document.getElementById('inmovie-ad');
-    if (overlay) overlay.classList.add('hidden');
+    if (overlay) {
+        overlay.classList.add('hidden');
+        // Cleanup MutationObserver
+        if (overlay._adBlockObserver) {
+            overlay._adBlockObserver.disconnect();
+            overlay._adBlockObserver = null;
+        }
+    }
     const fill = document.getElementById('inmovie-progress-fill');
     if (fill) { fill.style.transition = 'none'; fill.style.width = '0%'; }
     // Clear ad iframe to stop any audio
     const slot = document.getElementById('adsterra-inmovie-banner');
     if (slot) slot.innerHTML = '';
+    // ▶ RESUME video after ad
+    const video = document.getElementById('main-video');
+    if (video && video.paused && video.src) {
+        video.play().catch(() => {});
+    }
 }
 
 // Auto-start/stop in-movie ads by observing room-view visibility

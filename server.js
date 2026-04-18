@@ -8,6 +8,7 @@ import Razorpay from "razorpay";
 import admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import crypto from "crypto";
+import compression from "compression"; // GZIP compression for faster responses
 
 dotenv.config();
 import nodemailer from 'nodemailer';
@@ -296,6 +297,7 @@ async function startServer() {
   });
 
   app.use(cors());
+  app.use(compression()); // ← GZIP compress all text/JSON/HTML/CSS/JS responses
   app.use(express.json({ limit: '10mb' })); // 10mb for base64 poster images
 
   // ================================================================
@@ -326,25 +328,22 @@ async function startServer() {
         "https://checkout.razorpay.com https://cdn.razorpay.com " +
         "https://www.gstatic.com https://www.googleapis.com https://apis.google.com " +
         "https://cdn.jsdelivr.net " +
-        // AdSterra / highperformanceformat ad network
+        // AdSterra ad network + all CDN domains they may use
         "https://www.profitablecpmratenetwork.com https://*.profitablecpmratenetwork.com " +
-        "https://www.highperformanceformat.com https://*.highperformanceformat.com; " +
+        "https://www.highperformanceformat.com https://*.highperformanceformat.com " +
+        "https://a.magsrv.com https://*.magsrv.com " +
+        "https://*.adsterra.com https://adsterra.com; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "font-src 'self' https://fonts.gstatic.com; " +
-      "img-src 'self' data: https: blob: " +
-        "https://*.profitablecpmratenetwork.com https://*.highperformanceformat.com; " +
+      "img-src 'self' data: blob: https:; " +
       "media-src 'self' blob: https:; " +
       "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com " +
         "https://securetoken.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com " +
         "https://*.firestore.googleapis.com https://api.razorpay.com " +
-        "https://vaanisethu-bot.onrender.com wss: " +
-        "https://www.profitablecpmratenetwork.com https://*.profitablecpmratenetwork.com " +
-        "https://www.highperformanceformat.com https://*.highperformanceformat.com; " +
+        "https://vaanisethu-bot.onrender.com wss: https:; " +
+      // Allow any HTTPS iframe for ad delivery (ad networks use many domains for iframes)
       "frame-src https://checkout.razorpay.com https://api.razorpay.com " +
-        "https://accounts.google.com https://*.firebaseapp.com " +
-        // AdSterra ad iframes
-        "https://www.profitablecpmratenetwork.com https://*.profitablecpmratenetwork.com " +
-        "https://www.highperformanceformat.com https://*.highperformanceformat.com; " +
+        "https://accounts.google.com https://*.firebaseapp.com https:; " +
       "worker-src 'self' blob:;"
     );
     next();
@@ -1392,9 +1391,27 @@ async function startServer() {
   // ==== END FILM STORE ROUTES ====
 
   const publicPath = path.join(process.cwd(), 'public');
-  app.use(express.static(publicPath));
+
+  // Smart static caching:
+  // - versioned assets (app.js?v=X, style.css?v=X) → 1 hour cache (CDN-friendly)
+  // - index.html → no-cache so users always get the latest version
+  app.use(express.static(publicPath, {
+    etag: true,
+    lastModified: true,
+    setHeaders(res, filePath) {
+      const isHtml = filePath.endsWith('.html');
+      if (isHtml) {
+        // HTML — always revalidate so users get fresh JS/CSS version references
+        res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+      } else {
+        // CSS/JS/images — 1 hour cache (query-string versioning busts cache)
+        res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+      }
+    }
+  }));
   
   app.get('*', (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, must-revalidate');
     res.sendFile(path.join(publicPath, 'index.html'));
   });
 

@@ -1937,116 +1937,174 @@ input[type=range]:focus { outline: none; }
    IN-MOVIE SKIPPABLE AD OVERLAY
    Appears as a bottom strip over the video
    ========================================= */
+/* ==========================================================
+   IN-MOVIE FULLSCREEN AD OVERLAY  (YouTube mid-roll style)
+   ========================================================== */
+
+/* Full viewport overlay — covers everything */
 .inmovie-ad {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  inset: 0; /* top:0 right:0 bottom:0 left:0 */
   z-index: 99990;
-  background: rgba(8, 8, 12, 0.97);
-  border-top: 1px solid #27272a;
-  backdrop-filter: blur(8px);
-  padding: 0;
-  box-shadow: 0 -4px 24px rgba(0,0,0,0.5);
-  animation: inmovieSlideUp 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+  background: rgba(5, 5, 8, 0.97);
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  animation: inmovieAdFadeIn 0.3s ease;
 }
 
+@keyframes inmovieAdFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
 @keyframes inmovieSlideUp {
   from { transform: translateY(100%); opacity: 0; }
   to   { transform: translateY(0);   opacity: 1; }
 }
 
-.inmovie-ad-inner {
+/* === Top bar === */
+.inmovie-top-bar {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.65rem 1.2rem;
-  flex-wrap: nowrap;
-}
-
-.inmovie-ad-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  background: rgba(0,0,0,0.4);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
   flex-shrink: 0;
 }
+.inmovie-top-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.inmovie-top-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .inmovie-ad-badge {
   background: #f97316;
   color: white;
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   font-weight: 900;
-  padding: 0.15rem 0.4rem;
-  border-radius: 0.25rem;
-  letter-spacing: 0.08em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.3rem;
+  letter-spacing: 0.1em;
 }
 .inmovie-ad-tagline {
-  font-size: 0.72rem;
-  color: #71717a;
-  white-space: nowrap;
-}
-
-.inmovie-ad-player {
-  flex: 1;
-  text-align: center;
-  min-width: 0;
-}
-.inmovie-ad-placeholder {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #a1a1aa;
-  font-weight: 600;
 }
 
-.inmovie-ad-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  flex-shrink: 0;
-}
-.inmovie-ad-timer {
-  font-size: 0.75rem;
-  color: #71717a;
-  font-weight: 700;
-  min-width: 2rem;
-  text-align: right;
-}
-.inmovie-skip-btn {
-  background: rgba(249, 115, 22, 0.15);
-  border: 1px solid rgba(249, 115, 22, 0.4);
-  color: #f97316;
-  font-size: 0.75rem;
+/* Large timer on top-right */
+.inmovie-ad-timer-fs {
+  font-size: 1rem;
   font-weight: 800;
-  padding: 0.35rem 0.75rem;
+  color: #f4f4f5;
+  min-width: 2.5rem;
+  text-align: center;
+  background: rgba(255,255,255,0.08);
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.4rem;
+  letter-spacing: 0.02em;
+}
+
+/* Skip button — YouTube style */
+.inmovie-skip-btn {
+  background: rgba(249, 115, 22, 0.18);
+  border: 1.5px solid rgba(249, 115, 22, 0.6);
+  color: #fb923c;
+  font-size: 0.85rem;
+  font-weight: 800;
+  padding: 0.5rem 1.1rem;
   border-radius: 0.5rem;
   cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
+  transition: background 0.2s, transform 0.15s, border-color 0.2s;
   white-space: nowrap;
   animation: inmovieSkipFadeIn 0.4s ease;
+  letter-spacing: 0.02em;
 }
-.inmovie-skip-btn:hover { background: rgba(249,115,22,0.28); transform: scale(1.04); }
-
+.inmovie-skip-btn:hover {
+  background: rgba(249,115,22,0.35);
+  border-color: #f97316;
+  transform: scale(1.05);
+}
 @keyframes inmovieSkipFadeIn {
   from { opacity: 0; transform: scale(0.85); }
   to   { opacity: 1; transform: scale(1); }
 }
 
-/* Slim progress bar at very top of overlay */
+/* === Center: ad content === */
+.inmovie-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.inmovie-ad-label {
+  font-size: 0.65rem;
+  color: #52525b;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+}
+
+/* 300×250 ad banner container */
+.inmovie-banner-slot {
+  width: 300px;
+  min-height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0a0a;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+}
+
+/* "Movie paused" hint below the ad */
+.inmovie-resume-hint {
+  font-size: 0.72rem;
+  color: #52525b;
+  text-align: center;
+}
+.inmovie-resume-hint span {
+  color: #a1a1aa;
+  font-weight: 700;
+}
+
+/* === Progress bar at very bottom === */
 .inmovie-progress-bar {
-  height: 3px;
-  background: #27272a;
+  height: 5px;
+  background: #18181b;
   width: 100%;
+  flex-shrink: 0;
 }
 .inmovie-progress-fill {
   height: 100%;
   width: 0%;
   background: linear-gradient(to right, #f97316, #dc2626);
-  border-radius: 0;
   transition: width 15s linear;
 }
 
+/* Mobile: tighten up */
 @media (max-width: 480px) {
+  .inmovie-top-bar { padding: 0.6rem 1rem; }
   .inmovie-ad-tagline { display: none; }
-  .inmovie-ad-inner { padding: 0.5rem 0.75rem; gap: 0.6rem; }
+  .inmovie-banner-slot {
+    width: min(300px, 94vw);
+    min-height: 200px;
+  }
+  .inmovie-skip-btn { font-size: 0.78rem; padding: 0.45rem 0.85rem; }
 }
+
+
 
 /* =========================================
    AD BREAK TIMELINE BAR (video player)
@@ -2149,16 +2207,6 @@ video {
     min-height: 2.4rem;
   }
 
-  /* ---- In-movie ad overlay: full-width on mobile ---- */
-  #inmovie-ad .inmovie-ad-inner,
-  #inmovie-ad > div {
-    width: 98vw !important;
-    max-width: 98vw !important;
-    left: 1vw !important;
-    right: 1vw !important;
-    bottom: 12px !important;
-    border-radius: 12px;
-  }
 
   /* ---- Admin film rows: stack on tiny screens ---- */
   .admin-film-row {
