@@ -2483,6 +2483,86 @@ video {
 #emoji-tray.open { display: flex !important; }
 
 /* =========================================
+   TRAILER PREVIEW OVERLAY
+   ========================================= */
+.film-trailer-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: auto;
+}
+.film-trailer-play-hint {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.72);
+  color: white;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  white-space: nowrap;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  letter-spacing: 0.04em;
+}
+.film-trailer-play-hint:hover { background: rgba(249,115,22,0.85); }
+
+/* =========================================
+   EARLY ACCESS — GOLD BADGE + LOCK OVERLAY
+   ========================================= */
+.film-early-badge {
+  position: absolute;
+  top: 0.4rem;
+  left: 0.4rem;
+  background: linear-gradient(135deg, rgba(234,179,8,0.92), rgba(161,98,7,0.92));
+  color: #1a1200;
+  font-size: 0.52rem;
+  font-weight: 900;
+  padding: 0.18rem 0.45rem;
+  border-radius: 0.3rem;
+  letter-spacing: 0.07em;
+  z-index: 5;
+}
+
+/* Lock overlay for non-premium during early access window */
+.film-early-lock-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+}
+.film-early-lock-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.5rem;
+}
+
+/* =========================================
+   FREE RENTAL BUTTON
+   ========================================= */
+.film-free-rental-btn:hover {
+  opacity: 0.88;
+  transform: scale(1.02);
+}
+.film-free-rental-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+
+/* =========================================
    V2 FEATURES — MOBILE MEDIA QUERIES
    Covers: Emoji Tray, WhatsApp Share,
    Star Ratings, Leaderboard, Watch History,

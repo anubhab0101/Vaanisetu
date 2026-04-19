@@ -54,6 +54,22 @@ async function startServer() {
 
   const PORT = process.env.PORT || 3000;
 
+  // ── Seed admin as lifetime full-premium on every server start ──────────────
+  // This ensures admin can always access /premium.html without manual DB entry.
+  if (adminDb) {
+    try {
+      const adminRef = adminDb.collection('users').doc(ADMIN_EMAIL);
+      // Use a far-future expiry (year 2286) to represent "lifetime"
+      const LIFETIME_EXPIRY = 9999999999999;
+      await adminRef.set({
+        activeSubscription: 'monthly',
+        subscriptionExpiry: LIFETIME_EXPIRY,
+        isAdmin: true,
+        freeRentalUnlimited: true // admin gets unlimited free rentals
+      }, { merge: true });
+    } catch (_) { /* non-critical */ }
+  }
+
   // In-memory state
   const rooms = new Map();
   const connections = new Map();
@@ -1243,21 +1259,25 @@ async function startServer() {
   // Admin: Add a new film
   app.post('/api/admin/add-film', async (req, res) => {
     try {
-      const { adminEmail, title, telegramLink, thumbnailBase64, price, rentalDays, adUnlockEnabled } = req.body;
-      if (adminEmail !== 'anubhabmohapatra.01@gmail.com') return res.status(403).json({ error: "Unauthorized" });
+      const { adminEmail, title, telegramLink, thumbnailBase64, price, rentalDays, adUnlockEnabled, trailerLink, earlyAccessUntil } = req.body;
+      if (adminEmail !== ADMIN_EMAIL) return res.status(403).json({ error: "Unauthorized" });
       if (!title || !telegramLink) return res.status(400).json({ error: "Title and Telegram link required" });
 
-      const filmRef = await adminDb.collection('films').add({
+      const filmData = {
         title: title.trim(),
         telegramLink: telegramLink.trim(),
         thumbnailBase64: thumbnailBase64 || '',
         price: parseFloat(price) || 20,
         rentalDays: parseInt(rentalDays) || 3,
         isActive: true,
-        adUnlockEnabled: adUnlockEnabled !== false, // true = Free with Ads; false = Premium only
+        adUnlockEnabled: adUnlockEnabled !== false,
         adUnlockHours: 1,
         createdAt: Date.now()
-      });
+      };
+      if (trailerLink) filmData.trailerLink = trailerLink.trim();
+      if (earlyAccessUntil) filmData.earlyAccessUntil = parseInt(earlyAccessUntil);
+
+      const filmRef = await adminDb.collection('films').add(filmData);
       res.json({ success: true, filmId: filmRef.id });
     } catch (err) { console.error(err); res.status(500).json({ error: err.message }); }
   });
@@ -1265,8 +1285,8 @@ async function startServer() {
   // Admin: Update a film
   app.post('/api/admin/update-film', async (req, res) => {
     try {
-      const { adminEmail, filmId, title, telegramLink, thumbnailBase64, price, rentalDays, isActive, adUnlockEnabled } = req.body;
-      if (adminEmail !== 'anubhabmohapatra.01@gmail.com') return res.status(403).json({ error: "Unauthorized" });
+      const { adminEmail, filmId, title, telegramLink, thumbnailBase64, price, rentalDays, isActive, adUnlockEnabled, trailerLink, earlyAccessUntil } = req.body;
+      if (adminEmail !== ADMIN_EMAIL) return res.status(403).json({ error: "Unauthorized" });
       if (!filmId) return res.status(400).json({ error: "Film ID required" });
 
       const updateData = {};
@@ -1277,6 +1297,9 @@ async function startServer() {
       if (rentalDays !== undefined) updateData.rentalDays = parseInt(rentalDays) || 3;
       if (isActive !== undefined) updateData.isActive = Boolean(isActive);
       if (adUnlockEnabled !== undefined) updateData.adUnlockEnabled = Boolean(adUnlockEnabled);
+      // Trailer & early access (allow clearing with empty string)
+      if (trailerLink !== undefined) updateData.trailerLink = trailerLink ? trailerLink.trim() : null;
+      if (earlyAccessUntil !== undefined) updateData.earlyAccessUntil = earlyAccessUntil ? parseInt(earlyAccessUntil) : null;
 
       await adminDb.collection('films').doc(filmId).update(updateData);
       res.json({ success: true });
@@ -1287,11 +1310,70 @@ async function startServer() {
   app.post('/api/admin/delete-film', async (req, res) => {
     try {
       const { adminEmail, filmId } = req.body;
-      if (adminEmail !== 'anubhabmohapatra.01@gmail.com') return res.status(403).json({ error: "Unauthorized" });
+      if (adminEmail !== ADMIN_EMAIL) return res.status(403).json({ error: "Unauthorized" });
       if (!filmId) return res.status(400).json({ error: "Film ID required" });
       await adminDb.collection('films').doc(filmId).delete();
       res.json({ success: true });
     } catch (err) { console.error(err); res.status(500).json({ error: err.message }); }
+  });
+
+  // ── Free Rental (1/week for Weekly, 1/month for Monthly, unlimited for Admin) ──
+  app.post('/api/use-free-rental', async (req, res) => {
+    try {
+      const { userId, filmId } = req.body;
+      if (!userId || !filmId) return res.status(400).json({ success: false, error: 'Missing fields' });
+
+      const userRef = adminDb.collection('users').doc(userId);
+      const userSnap = await userRef.get();
+      if (!userSnap.exists) return res.status(404).json({ success: false, error: 'User not found' });
+      const userData = userSnap.data();
+
+      // Admin gets unlimited free rentals
+      const isAdminUser = userData.isAdmin === true || userData.email === ADMIN_EMAIL;
+
+      const plan = userData.activeSubscription;
+      const expiry = userData.subscriptionExpiry || 0;
+      const now = Date.now();
+
+      if (!isAdminUser) {
+        // Verify they have an active weekly or monthly plan
+        if (!['weekly','monthly'].includes(plan) || expiry < now) {
+          return res.json({ success: false, error: 'Free rental requires active Weekly or Monthly plan.' });
+        }
+        // Check if already used this cycle
+        const lastUsed = userData.freeRentalUsedAt || 0;
+        if (plan === 'weekly') {
+          // Reset at start of current week (Monday 00:00)
+          const weekStart = new Date(); weekStart.setHours(0,0,0,0);
+          weekStart.setDate(weekStart.getDate() - weekStart.getDay() + (weekStart.getDay() === 0 ? -6 : 1));
+          if (lastUsed >= weekStart.getTime()) {
+            return res.json({ success: false, error: 'You already used your 1 free rental this week.' });
+          }
+        } else if (plan === 'monthly') {
+          // Reset at start of current month
+          const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
+          if (lastUsed >= monthStart.getTime()) {
+            return res.json({ success: false, error: 'You already used your 1 free rental this month.' });
+          }
+        }
+      }
+
+      // Fetch the film's telegramLink
+      const filmSnap = await adminDb.collection('films').doc(filmId).get();
+      if (!filmSnap.exists) return res.json({ success: false, error: 'Film not found.' });
+      const filmData = filmSnap.data();
+      const telegramLink = filmData.telegramLink;
+
+      // Mark rental used (non-admin only)
+      if (!isAdminUser) {
+        await userRef.set({ freeRentalUsedAt: now, freeRentalFilmId: filmId }, { merge: true });
+      }
+
+      res.json({ success: true, telegramLink, filmTitle: filmData.title });
+    } catch (err) {
+      console.error('[free-rental]', err);
+      res.status(500).json({ success: false, error: err.message });
+    }
   });
 
   // Admin: Get all films (with telegram links)

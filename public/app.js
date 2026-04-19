@@ -116,6 +116,21 @@ function spaPushState(viewId) {
 // On app load, set the initial state so Back doesn't leave the site
 history.replaceState({ spaSite: true, view: 'auth' }, '', '/');
 
+// ── Auto-redirect already-logged-in users ────────────────────────────────────
+// Firebase SDK caches the auth state in IndexedDB. If user was previously
+// logged in, auth.currentUser is available synchronously on page load.
+// Hide authView immediately to avoid flash, then onAuthStateChanged routes them.
+(function checkCachedAuth() {
+    try {
+        // auth is initialized synchronously in Firebase SDK — check the cached user
+        const cachedUser = auth.currentUser;
+        if (cachedUser) {
+            // Hide the auth screen RIGHT NOW (before the async auth state resolves)
+            if (authView) authView.classList.add('hidden');
+        }
+    } catch(_) {}
+})();
+
 window.addEventListener('popstate', function(e) {
     if (_spaHandlingPop) return;
     _spaHandlingPop = true;
@@ -2071,14 +2086,46 @@ function buildFilmCard(film) {
   const isAdUnlocked  = adUnlock && adUnlock.isActive;
   const adUnlockEnabled = film.adUnlockEnabled !== false;
   const premium       = isPremiumUser();
+  const fullPremium   = isFullPremiumUser();
+  const isAdminUser   = currentUser && currentUser.email === 'anubhabmohapatra.01@gmail.com';
+
+  // ── Early Access logic ────────────────────────────────────────
+  const earlyUntil = film.earlyAccessUntil || 0;
+  const isEarlyAccess = earlyUntil > Date.now(); // still in early access window
+  const isLockedByEarlyAccess = isEarlyAccess && !fullPremium && !isAdminUser;
+
+  // ── Free Rental eligibility ────────────────────────────────────
+  const plan = currentUserDoc?.activeSubscription || '';
+  const hasFreeRental = isAdminUser ||
+    (plan === 'weekly' && currentUserDoc?.subscriptionExpiry > Date.now()) ||
+    (plan === 'monthly' && currentUserDoc?.subscriptionExpiry > Date.now());
+
+  // ── Trailer link helper ───────────────────────────────────────
+  const trailerLink = film.trailerLink || '';
+  const isYouTube = trailerLink && (trailerLink.includes('youtu.be') || trailerLink.includes('youtube.com'));
+  // Convert YouTube URL to embed URL
+  function ytEmbedUrl(url) {
+    const m = url.match(/(?:youtu\.be\/|v=|embed\/)([\w-]{11})/);
+    return m ? `https://www.youtube.com/embed/${m[1]}?autoplay=1&mute=1&loop=1&playlist=${m[1]}&controls=0&rel=0&modestbranding=1` : null;
+  }
+  const trailerEmbed = isYouTube ? ytEmbedUrl(trailerLink) : (trailerLink ? trailerLink : null);
 
   card.innerHTML = `
-    <div class="film-card-poster">
+    <div class="film-card-poster" style="position:relative;">
       ${film.thumbnailBase64
         ? `<img src="${film.thumbnailBase64}" alt="${film.title}" style="width:100%;height:100%;object-fit:cover;">`
         : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1c1c1e;color:#52525b;font-size:2rem;">🎬</div>`}
       ${isAdUnlocked ? '<div class="film-ad-unlock-badge">AD UNLOCKED</div>' : ''}
       ${!adUnlockEnabled ? '<div class="film-premium-badge">PREMIUM</div>' : ''}
+      ${isEarlyAccess && (fullPremium || isAdminUser) ? '<div class="film-early-badge">⭐ EARLY ACCESS</div>' : ''}
+      ${isLockedByEarlyAccess ? `<div class="film-early-lock-overlay"><div class="film-early-lock-inner"><span style="font-size:1.6rem;">🔒</span><span style="font-size:0.72rem;font-weight:700;color:#e4e4e7;margin-top:0.25rem;">Early Access</span><span style="font-size:0.6rem;color:#a1a1aa;text-align:center;">Available ${new Date(earlyUntil).toLocaleDateString()}</span></div></div>` : ''}
+      ${trailerEmbed ? `<div class="film-trailer-overlay" data-trailer="${trailerEmbed}" data-is-yt="${isYouTube}">
+        ${isYouTube
+          ? `<iframe class="film-trailer-frame" src="" data-src="${trailerEmbed}" allow="autoplay" frameborder="0" allowfullscreen style="width:100%;height:100%;position:absolute;inset:0;display:none;"></iframe>`
+          : `<video class="film-trailer-video" muted loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;" src="${trailerEmbed}"></video>`
+        }
+        <div class="film-trailer-play-hint">▶ Trailer</div>
+      </div>` : ''}
     </div>
     <div class="film-card-body">
       <h3 class="film-card-title">${film.title}</h3>
@@ -2088,36 +2135,49 @@ function buildFilmCard(film) {
         <span class="film-card-days">${film.rentalDays} day${film.rentalDays > 1 ? 's' : ''}</span>
       </div>
 
-      ${isAdUnlocked
-        ? `<!-- Already unlocked via ad -->
-           <div class="film-ad-unlocked-timer" style="margin-bottom:0.4rem;font-size:0.68rem;color:#c084fc;font-weight:600;display:flex;align-items:center;gap:0.3rem;">
-             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-             ${formatTimeRemaining(adUnlock.expiresAt)}
-           </div>
-           <button class="btn film-play-btn" data-link="${adUnlock.telegramLink || ''}" style="background:linear-gradient(135deg,#6d28d9,#a855f7);border:none;margin-bottom:0.3rem;">▶ Watch Now (Ad Unlocked)</button>
-           <button class="btn film-rent-btn btn-outline-sm" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}" data-price="${film.price}" data-days="${film.rentalDays}">
-             Rent ${film.rentalDays}d — ₹${film.price}
+      ${isLockedByEarlyAccess
+        ? `<!-- Locked — early access not yet available for this tier -->
+           <button class="btn film-rent-btn" disabled style="opacity:0.45;cursor:not-allowed;">
+             🔒 Available ${new Date(earlyUntil).toLocaleDateString()}
            </button>`
-
-        : adUnlockEnabled && !premium
-          ? `<!-- Ad film: show both Watch Ad (primary) + Rent (secondary) -->
-             <button class="film-ad-btn film-ad-btn-primary" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}">
-               📺 Watch Ad — Free 1hr
+        : hasFreeRental
+          ? `<!-- Free rental button for weekly/monthly/admin -->
+             <button class="btn film-free-rental-btn" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}"
+               style="background:linear-gradient(135deg,#16a34a,#22c55e);color:white;border:none;margin-bottom:0.35rem;font-size:0.78rem;">
+               🆓 ${isAdminUser ? 'Free (Admin)' : plan === 'weekly' ? '1 Free/Week' : '1 Free/Month'}
              </button>
              <button class="btn film-rent-btn btn-outline-sm" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}" data-price="${film.price}" data-days="${film.rentalDays}">
                Rent ${film.rentalDays}d — ₹${film.price}
              </button>`
-
-          : `<!-- Premium film OR premium user: only rent -->
-             <button class="btn film-rent-btn" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}" data-price="${film.price}" data-days="${film.rentalDays}">
-               Rent ${film.rentalDays}d — ₹${film.price}
-             </button>`
+          : isAdUnlocked
+            ? `<!-- Already unlocked via ad -->
+               <div class="film-ad-unlocked-timer" style="margin-bottom:0.4rem;font-size:0.68rem;color:#c084fc;font-weight:600;display:flex;align-items:center;gap:0.3rem;">
+                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                 ${formatTimeRemaining(adUnlock.expiresAt)}
+               </div>
+               <button class="btn film-play-btn" data-link="${adUnlock.telegramLink || ''}" style="background:linear-gradient(135deg,#6d28d9,#a855f7);border:none;margin-bottom:0.3rem;">▶ Watch Now (Ad Unlocked)</button>
+               <button class="btn film-rent-btn btn-outline-sm" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}" data-price="${film.price}" data-days="${film.rentalDays}">
+                 Rent ${film.rentalDays}d — ₹${film.price}
+               </button>`
+            : adUnlockEnabled && !premium
+              ? `<!-- Ad film: show both Watch Ad (primary) + Rent (secondary) -->
+                 <button class="film-ad-btn film-ad-btn-primary" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}">
+                   📺 Watch Ad — Free 1hr
+                 </button>
+                 <button class="btn film-rent-btn btn-outline-sm" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}" data-price="${film.price}" data-days="${film.rentalDays}">
+                   Rent ${film.rentalDays}d — ₹${film.price}
+                 </button>`
+              : `<!-- Premium film OR premium user: only rent -->
+                 <button class="btn film-rent-btn" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}" data-price="${film.price}" data-days="${film.rentalDays}">
+                   Rent ${film.rentalDays}d — ₹${film.price}
+                 </button>`
       }
     </div>
   `;
 
   // Event listeners
   card.querySelectorAll('.film-rent-btn').forEach(btn => {
+    if (btn.disabled) return; // skip locked buttons
     btn.addEventListener('click', () => initiateFilmRental(film.filmId, film.title, film.price, film.rentalDays));
   });
 
@@ -2136,7 +2196,78 @@ function buildFilmCard(film) {
     adUnlockBtn.addEventListener('click', () => startFilmAdUnlock(film.filmId, film.title, adUnlockBtn));
   }
 
-  // ⭐ Star Rating Bar — append below card body
+  // ── Free Rental button ────────────────────────────────────────
+  const freeRentalBtn = card.querySelector('.film-free-rental-btn');
+  if (freeRentalBtn) {
+    freeRentalBtn.addEventListener('click', async () => {
+      if (!currentUser) return;
+      const origText = freeRentalBtn.textContent;
+      freeRentalBtn.textContent = 'Loading...';
+      freeRentalBtn.disabled = true;
+      try {
+        const res = await fetch('/api/use-free-rental', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser.uid, filmId: film.filmId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.logWatchHistory?.(film.filmId, film.title, film.thumbnailBase64 || '');
+          playRentedFilm(data.telegramLink, film.title, 'free-rental');
+        } else {
+          showCustomAlert('Free Rental', data.error || 'Could not use free rental.');
+          freeRentalBtn.textContent = origText;
+          freeRentalBtn.disabled = false;
+        }
+      } catch(e) {
+        showCustomAlert('Error', 'Network error. Try again.');
+        freeRentalBtn.textContent = origText;
+        freeRentalBtn.disabled = false;
+      }
+    });
+  }
+
+  // ── Trailer preview hover ────────────────────────────────────────
+  const trailerOverlay = card.querySelector('.film-trailer-overlay');
+  const posterEl = card.querySelector('.film-card-poster');
+  if (trailerOverlay && posterEl) {
+    const isYT = trailerOverlay.dataset.isYt === 'true';
+    let hoverTimer = null;
+
+    const showTrailer = () => {
+      if (isYT) {
+        const iframe = trailerOverlay.querySelector('.film-trailer-frame');
+        if (iframe && !iframe.src) iframe.src = iframe.dataset.src; // lazy load
+        if (iframe) iframe.style.display = 'block';
+      } else {
+        const vid = trailerOverlay.querySelector('.film-trailer-video');
+        if (vid) { vid.style.display = 'block'; vid.play().catch(() => {}); }
+      }
+      trailerOverlay.querySelector('.film-trailer-play-hint').style.opacity = '0';
+    };
+    const hideTrailer = () => {
+      clearTimeout(hoverTimer);
+      if (isYT) {
+        const iframe = trailerOverlay.querySelector('.film-trailer-frame');
+        if (iframe) iframe.style.display = 'none';
+      } else {
+        const vid = trailerOverlay.querySelector('.film-trailer-video');
+        if (vid) { vid.pause(); vid.style.display = 'none'; }
+      }
+      trailerOverlay.querySelector('.film-trailer-play-hint').style.opacity = '1';
+    };
+
+    // Desktop: hover
+    posterEl.addEventListener('mouseenter', () => { hoverTimer = setTimeout(showTrailer, 600); });
+    posterEl.addEventListener('mouseleave', hideTrailer);
+    // Mobile: tap play hint
+    trailerOverlay.querySelector('.film-trailer-play-hint').addEventListener('click', (e) => {
+      e.stopPropagation();
+      showTrailer();
+    });
+  }
+
+  // ── Star Rating Bar ─────────────────────────────────────────
   if (window.buildStarBar) {
     const cardBody = card.querySelector('.film-card-body');
     if (cardBody) cardBody.appendChild(window.buildStarBar(film.filmId, film.title, film.avgRating, film.ratingCount));
@@ -2375,12 +2506,15 @@ document.getElementById('btn-admin-add-film')?.addEventListener('click', async (
 document.getElementById('btn-admin-cancel-edit')?.addEventListener('click', resetFilmForm);
 
 async function addFilmToStore() {
-  const title = document.getElementById('film-form-title').value.trim();
-  const link = document.getElementById('film-form-link').value.trim();
-  const price = document.getElementById('film-form-price').value;
-  const days = document.getElementById('film-form-days').value;
-  const msgEl = document.getElementById('film-form-msg');
-  const btn = document.getElementById('btn-admin-add-film');
+  const title   = document.getElementById('film-form-title').value.trim();
+  const link    = document.getElementById('film-form-link').value.trim();
+  const price   = document.getElementById('film-form-price').value;
+  const days    = document.getElementById('film-form-days').value;
+  const trailer = document.getElementById('film-form-trailer')?.value.trim() || '';
+  const earlyEl = document.getElementById('film-form-early-access');
+  const earlyUntil = earlyEl?.value ? new Date(earlyEl.value).getTime() : null;
+  const msgEl   = document.getElementById('film-form-msg');
+  const btn     = document.getElementById('btn-admin-add-film');
 
   if (!title || !link) {
     msgEl.textContent = 'Title and Stream Link are required.';
@@ -2397,7 +2531,9 @@ async function addFilmToStore() {
         adminEmail: currentUser.email, title, telegramLink: link,
         thumbnailBase64: adminFilmThumbBase64, price: parseFloat(price) || 20,
         rentalDays: parseInt(days) || 3,
-        adUnlockEnabled: document.getElementById('film-form-ad-unlock')?.checked !== false
+        adUnlockEnabled: document.getElementById('film-form-ad-unlock')?.checked !== false,
+        trailerLink: trailer || null,
+        earlyAccessUntil: earlyUntil
       })
     });
     const data = await res.json();
@@ -2415,19 +2551,24 @@ async function addFilmToStore() {
 }
 
 async function saveEditFilm(filmId) {
-  const title = document.getElementById('film-form-title').value.trim();
-  const link = document.getElementById('film-form-link').value.trim();
-  const price = document.getElementById('film-form-price').value;
-  const days = document.getElementById('film-form-days').value;
-  const msgEl = document.getElementById('film-form-msg');
-  const btn = document.getElementById('btn-admin-add-film');
+  const title   = document.getElementById('film-form-title').value.trim();
+  const link    = document.getElementById('film-form-link').value.trim();
+  const price   = document.getElementById('film-form-price').value;
+  const days    = document.getElementById('film-form-days').value;
+  const trailer = document.getElementById('film-form-trailer')?.value.trim() || '';
+  const earlyEl = document.getElementById('film-form-early-access');
+  const earlyUntil = earlyEl?.value ? new Date(earlyEl.value).getTime() : null;
+  const msgEl   = document.getElementById('film-form-msg');
+  const btn     = document.getElementById('btn-admin-add-film');
 
   btn.textContent = 'Saving...'; btn.disabled = true;
   try {
     const body = {
       adminEmail: currentUser.email, filmId, title, telegramLink: link,
       price: parseFloat(price) || 20, rentalDays: parseInt(days) || 3,
-      adUnlockEnabled: document.getElementById('film-form-ad-unlock')?.checked !== false
+      adUnlockEnabled: document.getElementById('film-form-ad-unlock')?.checked !== false,
+      trailerLink: trailer || null,
+      earlyAccessUntil: earlyUntil
     };
     if (adminFilmThumbBase64) body.thumbnailBase64 = adminFilmThumbBase64;
     const res = await fetch('/api/admin/update-film', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -2435,7 +2576,6 @@ async function saveEditFilm(filmId) {
     if (data.success) {
       msgEl.textContent = '✓ Film updated!'; msgEl.style.color = '#22c55e'; msgEl.style.display = 'block';
       resetFilmForm(); loadAdminFilms();
-      // Sync public film store if open
       const storeModal = document.getElementById('film-store-modal');
       if (storeModal && storeModal.style.display !== 'none') loadFilmStore();
     } else throw new Error(data.error);
@@ -2452,7 +2592,11 @@ function resetFilmForm() {
   document.getElementById('film-form-price').value = '20';
   document.getElementById('film-form-days').value = '3';
   const adUnlockChk = document.getElementById('film-form-ad-unlock');
-  if (adUnlockChk) adUnlockChk.checked = true; // default ON
+  if (adUnlockChk) adUnlockChk.checked = true;
+  const trailerEl = document.getElementById('film-form-trailer');
+  if (trailerEl) trailerEl.value = '';
+  const earlyEl = document.getElementById('film-form-early-access');
+  if (earlyEl) earlyEl.value = '';
   document.getElementById('film-thumb-preview').style.display = 'none';
   document.getElementById('film-thumb-label-text').textContent = 'Click to upload poster image';
   document.getElementById('film-form-thumb').value = '';
@@ -2469,9 +2613,17 @@ function startEditFilm(film) {
   document.getElementById('film-form-link').value = film.telegramLink || '';
   document.getElementById('film-form-price').value = film.price || 20;
   document.getElementById('film-form-days').value = film.rentalDays || 3;
-  // Populate ad unlock toggle
   const adUnlockChk = document.getElementById('film-form-ad-unlock');
-  if (adUnlockChk) adUnlockChk.checked = film.adUnlockEnabled !== false; // default true
+  if (adUnlockChk) adUnlockChk.checked = film.adUnlockEnabled !== false;
+  const trailerEl = document.getElementById('film-form-trailer');
+  if (trailerEl) trailerEl.value = film.trailerLink || '';
+  const earlyEl = document.getElementById('film-form-early-access');
+  if (earlyEl && film.earlyAccessUntil) {
+    // Convert timestamp to datetime-local value format (YYYY-MM-DDTHH:MM)
+    const dt = new Date(film.earlyAccessUntil);
+    const pad = n => String(n).padStart(2,'0');
+    earlyEl.value = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+  } else if (earlyEl) { earlyEl.value = ''; }
   document.getElementById('film-form-heading').textContent = 'Edit Film';
   document.getElementById('btn-admin-add-film').textContent = 'Save Changes';
   document.getElementById('btn-admin-cancel-edit').style.display = 'block';
@@ -2481,7 +2633,6 @@ function startEditFilm(film) {
     document.getElementById('film-thumb-label-text').textContent = '✓ Existing poster — click to change';
     adminFilmThumbBase64 = film.thumbnailBase64;
   }
-  // Scroll to form
   document.getElementById('film-form-heading').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 

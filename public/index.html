@@ -224,7 +224,7 @@
   <link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin>
   <link rel="dns-prefetch" href="https://checkout.razorpay.com">
 
-  <link rel="stylesheet" href="/style.css?v=18">
+  <link rel="stylesheet" href="/style.css?v=19">
 
   <!-- Skip loading screen on back-navigation (runs before render) -->
   <script>if (sessionStorage.getItem('_vns_loaded')) { document.documentElement.classList.add('no-splash'); }</script>
@@ -889,6 +889,19 @@
                       </select>
                     </div>
                   </div>
+                  <!-- Trailer Link (optional) -->
+                  <div>
+                    <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold block mb-1">🎬 Trailer Link <span style="color:#52525b;font-weight:400;">(optional)</span></label>
+                    <input type="url" id="film-form-trailer" class="input w-full bg-black"
+                      placeholder="YouTube: https://youtu.be/xxxx  or  direct .mp4 URL">
+                    <span style="font-size:0.65rem;color:#52525b;display:block;margin-top:0.2rem;">Paste YouTube link OR a direct .mp4 URL — shown on hover over poster</span>
+                  </div>
+                  <!-- Early Access (optional) -->
+                  <div>
+                    <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold block mb-1">⭐ Early Access Until <span style="color:#52525b;font-weight:400;">(optional — full premium only before this date)</span></label>
+                    <input type="datetime-local" id="film-form-early-access" class="input w-full bg-black">
+                    <span style="font-size:0.65rem;color:#52525b;display:block;margin-top:0.2rem;">Leave blank for immediate public access. Set a future date to restrict non-premium users until then.</span>
+                  </div>
                   <!-- Ad Unlock toggle -->
                   <label
                     style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.7rem 0.9rem;background:#0a0a0c;border:1px solid #1c1c1e;border-radius:0.75rem;cursor:pointer;"
@@ -1216,9 +1229,11 @@
         <!-- Custom Player Wrapper -->
         <div id="custom-player-wrapper"
           class="player-wrapper hidden relative w-full h-full flex items-center justify-center">
-          <!-- Main Video Tag (Native Controls Restored) -->
+          <!-- Main Video Tag — download/context-menu disabled to protect content -->
           <video id="main-video" controls playsinline webkit-playsinline class="max-w-full max-h-full"
-            style="touch-action: manipulation;"></video>
+            controlsList="nodownload noremoteplayback"
+            oncontextmenu="return false;"
+            style="touch-action: manipulation; -webkit-user-select:none; user-select:none;"></video>
 
           <!-- Ad Break Timeline Bar — yellow markers below video -->
           <div id="ad-timeline-bar" class="ad-timeline-bar hidden">
@@ -1675,7 +1690,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js"></script>
   <!-- AdSterra Social Bar — floating ad unit for additional revenue (normal users only) -->
   <script src="https://millionairelucidlytransmitted.com/82/3a/60/823a60f46b088bcbd52fceb040961ab1.js"></script>
-  <script type="module" src="/app.js?v=42"></script>
+  <script type="module" src="/app.js?v=43"></script>
 </body>
 
 </html>
