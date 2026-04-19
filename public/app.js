@@ -3619,10 +3619,27 @@ function spawnFloatingEmoji(emoji, userName) {
 
   trayBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    tray.classList.toggle('open');
+    const isOpen = tray.style.display === 'flex';
+    if (isOpen) {
+      tray.style.display = 'none';
+      return;
+    }
+    // Position fixed tray below the button using screen coordinates
+    const rect = trayBtn.getBoundingClientRect();
+    tray.style.top  = (rect.bottom + 8) + 'px';
+    // Center horizontally on the button, keep within viewport
+    const trayW = 260; // approximate width
+    let left = rect.left + rect.width / 2 - trayW / 2;
+    left = Math.max(8, Math.min(left, window.innerWidth - trayW - 8));
+    tray.style.left = left + 'px';
+    tray.style.display = 'flex';
   });
 
-  document.addEventListener('click', () => tray.classList.remove('open'));
+  document.addEventListener('click', (e) => {
+    if (!tray.contains(e.target) && e.target !== trayBtn) {
+      tray.style.display = 'none';
+    }
+  });
 
   tray.addEventListener('click', (e) => {
     const btn = e.target.closest('.emoji-btn');
@@ -3634,7 +3651,7 @@ function spawnFloatingEmoji(emoji, userName) {
     if (ws && ws.readyState === WebSocket.OPEN && currentRoomId) {
       ws.send(JSON.stringify({ type: 'reaction', emoji, userName: sessionUserName }));
     }
-    tray.classList.remove('open');
+    tray.style.display = 'none';
   });
 })();
 
