@@ -1468,17 +1468,17 @@ async function startServer() {
       const r = parseInt(rating);
       if (r < 1 || r > 5) return res.json({ success: false, error: 'Rating must be 1-5' });
 
-      const ratingRef = db.collection('filmRatings').doc(`${userId}_${filmId}`);
+      const ratingRef = adminDb.collection('filmRatings').doc(`${userId}_${filmId}`);
       await ratingRef.set({ userId, filmId, filmTitle: filmTitle || '', rating: r, createdAt: Date.now() }, { merge: true });
 
       // Recompute avg
-      const snap = await db.collection('filmRatings').where('filmId', '==', filmId).get();
+      const snap = await adminDb.collection('filmRatings').where('filmId', '==', filmId).get();
       let total = 0, count = 0;
       snap.forEach(d => { total += d.data().rating; count++; });
       const avg = count > 0 ? (total / count).toFixed(1) : null;
 
       // Persist avg on film doc
-      await db.collection('films').doc(filmId).set({ avgRating: avg ? parseFloat(avg) : null, ratingCount: count }, { merge: true });
+      await adminDb.collection('films').doc(filmId).set({ avgRating: avg ? parseFloat(avg) : null, ratingCount: count }, { merge: true });
       res.json({ success: true, avg, count });
     } catch (err) { console.error(err); res.status(500).json({ success: false, error: err.message }); }
   });
@@ -1488,7 +1488,7 @@ async function startServer() {
     try {
       const { userId, filmId } = req.query;
       if (!userId || !filmId) return res.json({ success: false, rating: null });
-      const doc = await db.collection('filmRatings').doc(`${userId}_${filmId}`).get();
+      const doc = await adminDb.collection('filmRatings').doc(`${userId}_${filmId}`).get();
       res.json({ success: true, rating: doc.exists ? doc.data().rating : null });
     } catch (err) { res.json({ success: false, rating: null }); }
   });
@@ -1498,7 +1498,7 @@ async function startServer() {
     try {
       const { userId, filmId, filmTitle, thumbnailBase64 } = req.body;
       if (!userId || !filmId) return res.json({ success: false });
-      await db.collection('watchHistory').add({
+      await adminDb.collection('watchHistory').add({
         userId, filmId, filmTitle: filmTitle || '', thumbnailBase64: thumbnailBase64 || '',
         watchedAt: Date.now()
       });
@@ -1511,7 +1511,7 @@ async function startServer() {
     try {
       const { userId } = req.query;
       if (!userId) return res.json({ success: false, history: [] });
-      const snap = await db.collection('watchHistory')
+      const snap = await adminDb.collection('watchHistory')
         .where('userId', '==', userId)
         .orderBy('watchedAt', 'desc')
         .limit(20)
@@ -1527,7 +1527,7 @@ async function startServer() {
     try {
       const monthStart = new Date();
       monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
-      const snap = await db.collection('watchHistory')
+      const snap = await adminDb.collection('watchHistory')
         .where('watchedAt', '>=', monthStart.getTime())
         .get();
       const counts = {};
@@ -1539,7 +1539,7 @@ async function startServer() {
       // Get names from users collection
       const userIds = Object.keys(counts);
       if (userIds.length > 0) {
-        const userSnap = await db.collection('users').where('uid', 'in', userIds.slice(0, 10)).get();
+        const userSnap = await adminDb.collection('users').where('uid', 'in', userIds.slice(0, 10)).get();
         userSnap.forEach(d => { names[d.id] = d.data().displayName || 'User'; });
       }
       const board = Object.entries(counts)
@@ -1563,7 +1563,7 @@ async function startServer() {
 
       // Anti-abuse — check if this device already claimed a referral bonus before
       if (deviceFingerprint) {
-        const abuseSn = await db.collection('referralClaims')
+        const abuseSn = await adminDb.collection('referralClaims')
           .where('deviceFingerprint', '==', deviceFingerprint).limit(1).get();
         if (!abuseSn.empty) {
           return res.json({ success: false, error: 'This device has already used a referral bonus.' });
@@ -1571,7 +1571,7 @@ async function startServer() {
       }
 
       // Find owner of refCode
-      const snap = await db.collection('users').where('roomCode', '==', refUpper).get();
+      const snap = await adminDb.collection('users').where('roomCode', '==', refUpper).get();
       if (snap.empty) return res.json({ success: false, error: 'Referral code not found. Check the code and try again.' });
 
       const referrerDoc = snap.docs[0];
@@ -1579,7 +1579,7 @@ async function startServer() {
       if (referrerId === newUserId) return res.json({ success: false, error: 'You cannot refer yourself.' });
 
       // Check new user hasn't already used / pended a referral
-      const newUserDoc = await db.collection('users').doc(newUserId).get();
+      const newUserDoc = await adminDb.collection('users').doc(newUserId).get();
       const newUserData = newUserDoc.exists ? newUserDoc.data() : {};
       if (newUserData.referredBy || newUserData.referralBonusApplied) {
         return res.json({ success: false, error: 'You have already used a referral code.' });
@@ -1598,7 +1598,7 @@ async function startServer() {
       const bonusDays = referrerIsPremium ? 7 : 3;
 
       // Store PENDING referral on the new user's doc (bonus applied on first purchase)
-      await db.collection('users').doc(newUserId).set({
+      await adminDb.collection('users').doc(newUserId).set({
         referredBy: referrerId,
         referredByCode: refUpper,
         pendingReferralBonusDays: bonusDays,
