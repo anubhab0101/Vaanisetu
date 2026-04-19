@@ -35,12 +35,7 @@
 <!-- Loaded dynamically by redirecting here from app.js after confirming premium status -->
 <!-- For maintainability, we use the same app.js module which checks _IS_PREMIUM_PAGE -->
 
-<script type="module">
-  // Dynamically load the full app HTML structure
-  // Since premium.html is same structure as index.html, just import the app module
-  // The _IS_PREMIUM_PAGE flag tells app.js to skip ad scripts
-  import('/app.js?v=40').catch(e => console.error('App load error:', e));
-</script>
+
 
 <!-- Redirect to real app with premium flag -->
 <script>
