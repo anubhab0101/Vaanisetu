@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="en" xml:lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
   <!-- ===================== PRIMARY SEO ===================== -->
   <title>Vaanisethu — Watch Movies Together Online | Synchronized Watch Party India</title>
-  <meta name="description" content="Vaanisethu is a free synchronized watch party platform. Watch movies and videos together with friends and family in real-time, anywhere in India. Includes live chat, film rental, and HD sync.">
-  <meta name="keywords" content="watch party india, watch movies together online, synchronized video, online movie night, watch together app, watch party platform, film rental india, vaanisethu, vaanisetu">
+  <meta name="description"
+    content="Vaanisethu is a free synchronized watch party platform. Watch movies and videos together with friends and family in real-time, anywhere in India. Includes live chat, film rental, and HD sync.">
+  <meta name="keywords"
+    content="watch party india, watch movies together online, synchronized video, online movie night, watch together app, watch party platform, film rental india, vaanisethu, vaanisetu, couple movies, watch movies with friends, watch movies with family, watch movies online, watch movies together, watch movies online free, watch movies online with friends, watch movies online with family, watch movies online with girlfriend, watch movies online with boyfriend, watch movies online with family, watch movies online with friends, watch movies online with girlfriend, watch movies online with boyfriend, watch movies online free, watch movies online with friends, watch movies online with family, watch movies online with girlfriend, watch movies online with boyfriend, watch movies online free, watch movies online with friends, watch movies online with family, watch movies online with girlfriend, watch movies online with boyfriend, watch movies online free, watch movies online with friends, watch movies online with family, watch movies online with girlfriend, watch movies online with boyfriend,sync movie platform,movie sync platform,movie sync app,movie sync online,movie sync software,movie sync tool,movie sync website,movie sync app,movie sync online,movie sync software,movie sync tool,movie sync website,movie sync app,movie sync online,movie sync software,movie sync tool,movie sync website">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
   <meta name="author" content="Vaanisethu">
   <meta name="application-name" content="Vaanisethu">
@@ -31,7 +34,8 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://vaanisethu.online/">
   <meta property="og:title" content="Vaanisethu — Watch Movies Together Online">
-  <meta property="og:description" content="Watch movies and videos in perfect sync with friends. Real-time chat, film rental & HD streaming. Join free — no download needed.">
+  <meta property="og:description"
+    content="Watch movies and videos in perfect sync with friends. Real-time chat, film rental & HD streaming. Join free — no download needed.">
   <meta property="og:image" content="https://vaanisethu.online/og-cover.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -43,7 +47,8 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@vaanisethu">
   <meta name="twitter:title" content="Vaanisethu — Watch Movies Together Online">
-  <meta name="twitter:description" content="Watch movies in sync with friends & family. Live chat, film rental & HD streaming. Free to join!">
+  <meta name="twitter:description"
+    content="Watch movies in sync with friends & family. Live chat, film rental & HD streaming. Free to join!">
   <meta name="twitter:image" content="https://vaanisethu.online/og-cover.png">
   <meta name="twitter:image:alt" content="Vaanisethu Watch Party Platform">
 
@@ -217,988 +222,1377 @@
   <link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin>
   <link rel="dns-prefetch" href="https://checkout.razorpay.com">
 
-  <link rel="stylesheet" href="/style.css?v=13">
+  <link rel="stylesheet" href="/style.css?v=17">
 
   <!-- Skip loading screen on back-navigation (runs before render) -->
-  <script>if(sessionStorage.getItem('_vns_loaded')){document.documentElement.classList.add('no-splash');}</script>
-  <style>html.no-splash #loading-screen{display:none!important;}</style>
+  <script>if (sessionStorage.getItem('_vns_loaded')) { document.documentElement.classList.add('no-splash'); }</script>
+  <style>
+    html.no-splash #loading-screen {
+      display: none !important;
+    }
+  </style>
   <link rel="manifest" href="/manifest.json">
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
+
 <body>
 
-<!-- ====== Branded Loading Screen ====== -->
-<div id="loading-screen" aria-hidden="true">
-  <div class="loading-logo-wrap">
-    <img src="/logo.png" alt="Vaanisethu" class="loading-logo">
-    <div class="loading-brand">Vaanisethu</div>
-    <div class="loading-dots"><span></span><span></span><span></span></div>
+  <!-- ====== Branded Loading Screen ====== -->
+  <div id="loading-screen" aria-hidden="true">
+    <div class="loading-logo-wrap">
+      <img src="/logo.png" alt="Vaanisethu" class="loading-logo">
+      <div class="loading-brand">Vaanisethu</div>
+      <div class="loading-dots"><span></span><span></span><span></span></div>
+    </div>
   </div>
-</div>
 
-<main id="app-root" style="display:contents" aria-label="Vaanisethu App">
+  <main id="app-root" style="display:contents" aria-label="Vaanisethu App">
 
-  <!-- Auth View -->
-  <div id="auth-view" class="view min-h-screen items-center justify-center fade-in">
-    <!-- Animated background orbs -->
-    <div class="auth-orb auth-orb-1" aria-hidden="true"></div>
-    <div class="auth-orb auth-orb-2" aria-hidden="true"></div>
-    <div class="auth-orb auth-orb-3" aria-hidden="true"></div>
-    <div class="header-center mx-auto fade-down">
-      <img src="/logo.png" alt="Logo" class="mx-auto mb-4" style="width: 80px; height: 80px; object-fit: cover; border-radius: 20px;">
-      <h1 class="gradient-text">Vaanisethu.online</h1>
-      <p class="subtitle text-zinc-400 mb-8">Login to continue</p>
-      
-      <div class="card fade-up max-w-sm w-full mx-auto" style="animation-delay: 0.1s">
-        <form id="auth-form" class="w-full form-group text-left">
-           <h2 id="auth-title" class="text-xl font-bold text-center mb-4">Sign In</h2>
-           
-           <div id="auth-error" class="hidden text-red-500 text-sm mb-4 text-center bg-red-900 bg-opacity-20 p-2 rounded"></div>
-           
-           <div class="mb-4">
+    <!-- Auth View -->
+    <div id="auth-view" class="view min-h-screen items-center justify-center fade-in">
+      <!-- Animated background orbs -->
+      <div class="auth-orb auth-orb-1" aria-hidden="true"></div>
+      <div class="auth-orb auth-orb-2" aria-hidden="true"></div>
+      <div class="auth-orb auth-orb-3" aria-hidden="true"></div>
+      <div class="header-center mx-auto fade-down">
+        <img src="/logo.png" alt="Logo" class="mx-auto mb-4"
+          style="width: 80px; height: 80px; object-fit: cover; border-radius: 20px;">
+        <h1 class="gradient-text">Vaanisethu.online</h1>
+        <p class="subtitle text-zinc-400 mb-8">Login to continue</p>
+
+        <div class="card fade-up max-w-sm w-full mx-auto" style="animation-delay: 0.1s">
+          <form id="auth-form" class="w-full form-group text-left">
+            <h2 id="auth-title" class="text-xl font-bold text-center mb-4">Sign In</h2>
+
+            <div id="auth-error"
+              class="hidden text-red-500 text-sm mb-4 text-center bg-red-900 bg-opacity-20 p-2 rounded"></div>
+
+            <div class="mb-4">
               <label for="auth-email" class="text-zinc-400 text-sm mb-1 block">Email</label>
               <input type="email" id="auth-email" class="input w-full" required autocomplete="email">
-           </div>
-           
-           <div class="mb-4" id="password-group">
+            </div>
+
+            <div class="mb-4" id="password-group">
               <label for="auth-password" class="text-zinc-400 text-sm mb-1 block">Password</label>
               <input type="password" id="auth-password" class="input w-full" required autocomplete="current-password">
-           </div>
-           
-           <button type="submit" id="btn-auth-submit" class="btn btn-primary w-full mt-4">Sign In</button>
-           
-           <div class="flex justify-between items-center text-sm mt-4 text-zinc-400 w-full mb-4">
-             <button type="button" id="btn-forgot-pwd" class="hover-text pointer bg-transparent border-none">Forgot Password?</button>
-             <button type="button" id="btn-toggle-auth" class="hover-text pointer text-orange bg-transparent border-none">Create Account</button>
-           </div>
-           
-           <div class="or-divider">OR</div>
-           
-           <button type="button" id="btn-google-login" class="btn btn-outline w-full flex justify-center items-center gap-2">
-             <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-             Continue with Google
-           </button>
-        </form>
+            </div>
+
+            <button type="submit" id="btn-auth-submit" class="btn btn-primary w-full mt-4">Sign In</button>
+
+            <div class="flex justify-between items-center text-sm mt-4 text-zinc-400 w-full mb-4">
+              <button type="button" id="btn-forgot-pwd" class="hover-text pointer bg-transparent border-none">Forgot
+                Password?</button>
+              <button type="button" id="btn-toggle-auth"
+                class="hover-text pointer text-orange bg-transparent border-none">Create Account</button>
+            </div>
+
+            <div class="or-divider">OR</div>
+
+            <button type="button" id="btn-google-login"
+              class="btn btn-outline w-full flex justify-center items-center gap-2">
+              <svg width="18" height="18" viewBox="0 0 24 24">
+                <path fill="currentColor"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="currentColor"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="currentColor"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                <path fill="currentColor"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+              </svg>
+              Continue with Google
+            </button>
+          </form>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div id="setup-profile-view" class="view hidden min-h-screen items-center justify-center fade-in">
-    <div class="card max-w-sm w-full mx-auto text-center" style="max-width: 24rem; margin: 0 auto;">
-       <h2 class="text-xl font-bold mb-2">Welcome!</h2>
-       <p class="text-zinc-400 text-sm mb-6">What should we call you in the chat?</p>
-       <label for="setup-name-input" class="sr-only">Your display name</label>
-       <input type="text" id="setup-name-input" class="input w-full text-center" placeholder="Your Name" autocomplete="nickname">
-       <button id="btn-save-profile" class="btn btn-primary w-full mt-4">Hop In</button>
+    <div id="setup-profile-view" class="view hidden min-h-screen items-center justify-center fade-in">
+      <div class="card max-w-sm w-full mx-auto text-center" style="max-width: 24rem; margin: 0 auto;">
+        <h2 class="text-xl font-bold mb-2">Welcome!</h2>
+        <p class="text-zinc-400 text-sm mb-6">What should we call you in the chat?</p>
+        <label for="setup-name-input" class="sr-only">Your display name</label>
+        <input type="text" id="setup-name-input" class="input w-full text-center" placeholder="Your Name"
+          autocomplete="nickname">
+        <div style="margin-top:0.75rem;margin-bottom:0.25rem;">
+          <label for="setup-ref-input" class="text-zinc-500 text-xs block mb-1">Have a referral code? (Optional) — gives you both 7 days bonus!</label>
+          <input type="text" id="setup-ref-input" class="input w-full text-center mono uppercase" placeholder="FRIEND'S ROOM CODE"
+            autocomplete="off" maxlength="6">
+        </div>
+        <button id="btn-save-profile" class="btn btn-primary w-full mt-4">Hop In</button>
+      </div>
     </div>
-  </div>
 
-  <!-- Subscription/Payment View -->
-  <div id="payment-view" class="view hidden min-h-screen items-center justify-center fade-in">
-    <div class="header-center mx-auto fade-down text-center w-full px-4">
-      <h1 class="gradient-text mb-2">Select Your Access Pass</h1>
-      <p class="subtitle text-zinc-400 mb-6 max-w-lg mx-auto">Vaanisetu requires an active subscription. Choose a plan that works for you or redeem an access code.</p>
+    <!-- Subscription/Payment View -->
+    <div id="payment-view" class="view hidden min-h-screen items-center justify-center fade-in">
+      <div class="header-center mx-auto fade-down text-center w-full px-4">
+        <h1 class="gradient-text mb-2">Select Your Access Pass</h1>
+        <p class="subtitle text-zinc-400 mb-6 max-w-lg mx-auto">Vaanisetu requires an active subscription. Choose a plan
+          that works for you or redeem an access code.</p>
 
-      <!-- How It Works -->
-      <div class="how-it-works max-w-2xl mx-auto mb-8">
-        <p class="text-xs uppercase tracking-widest text-zinc-600 font-bold mb-5 text-center">How It Works</p>
-        <div class="how-steps">
-          <div class="how-step">
-            <div class="how-step-icon">🔑</div>
-            <div class="how-step-title">Sign In</div>
-            <div class="how-step-sub">Create a free account in seconds</div>
-          </div>
-          <div class="how-step-arrow">→</div>
-          <div class="how-step">
-            <div class="how-step-icon">💳</div>
-            <div class="how-step-title">Pick a Pass</div>
-            <div class="how-step-sub">Choose a plan or use a free code</div>
-          </div>
-          <div class="how-step-arrow">→</div>
-          <div class="how-step">
-            <div class="how-step-icon">🎬</div>
-            <div class="how-step-title">Watch Together</div>
-            <div class="how-step-sub">Create a room &amp; invite friends</div>
+        <!-- How It Works -->
+        <div class="how-it-works max-w-2xl mx-auto mb-8">
+          <p class="text-xs uppercase tracking-widest text-zinc-600 font-bold mb-5 text-center">How It Works</p>
+          <div class="how-steps">
+            <div class="how-step">
+              <div class="how-step-icon">🔑</div>
+              <div class="how-step-title">Sign In</div>
+              <div class="how-step-sub">Create a free account in seconds</div>
+            </div>
+            <div class="how-step-arrow">→</div>
+            <div class="how-step">
+              <div class="how-step-icon">💳</div>
+              <div class="how-step-title">Pick a Pass</div>
+              <div class="how-step-sub">Choose a plan or use a free code</div>
+            </div>
+            <div class="how-step-arrow">→</div>
+            <div class="how-step">
+              <div class="how-step-icon">🎬</div>
+              <div class="how-step-title">Watch Together</div>
+              <div class="how-step-sub">Create a room &amp; invite friends</div>
+            </div>
           </div>
         </div>
+
+        <div class="card-grid max-w-4xl mx-auto gap-6 mb-8 text-left"
+          style="align-items: stretch; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+
+          <!-- One Time -->
+          <div class="card premium-card" style="display:flex;flex-direction:column;justify-content:space-between;">
+            <div>
+              <h3 class="text-white text-xl font-bold mb-2">24-Hour Pass</h3>
+              <p class="text-zinc-400 text-sm mb-4">Full access for 1 day.</p>
+              <div class="text-3xl text-orange font-bold mb-6">₹50</div>
+              <ul class="text-zinc-300 text-sm mb-6 space-y-2">
+                <li>✓ Full Access for 24 Hours</li>
+                <li>✓ HD Sync with Friends</li>
+                <li>✓ Rent Films at listed price</li>
+                <li style="color:#c084fc;">📺 Short in-movie ads play</li>
+                <li style="color:#71717a;font-size:0.75rem;">Budget entry — ads support the platform</li>
+              </ul>
+            </div>
+            <button class="btn btn-outline hover-bg w-full" id="btn-pay-one-time">Select Pass</button>
+          </div>
+
+          <!-- Weekly -->
+          <div class="card premium-card border-orange"
+            style="display:flex;flex-direction:column;justify-content:space-between; box-shadow: 0 0 20px rgba(249, 115, 22, 0.15);">
+            <div>
+              <div class="text-xs uppercase bg-orange text-white inline-block px-2 py-1 rounded font-bold mb-2">Popular
+              </div>
+              <h3 class="text-white text-xl font-bold mb-2">Weekly Pass</h3>
+              <p class="text-zinc-400 text-sm mb-4">Best for weekend binges.</p>
+              <div class="text-3xl text-orange font-bold mb-6">₹150 <span
+                  class="text-sm font-normal text-zinc-500">/week</span></div>
+              <ul class="text-zinc-300 text-sm mb-6 space-y-2">
+                <li>✓ Full Access for 7 Days</li>
+                <li>✓ Invite Unlimited Friends</li>
+                <li>✓ Rent Films at listed price</li>
+                <li>✓ Zero Ads — 100% Ad-Free 🚫📺</li>
+                <li style="color:#f97316;font-size:0.75rem;">Redirected to Premium experience</li>
+              </ul>
+            </div>
+            <button class="btn btn-primary w-full" id="btn-pay-weekly">Select Weekly</button>
+          </div>
+
+          <!-- Monthly -->
+          <div class="card premium-card" style="display:flex;flex-direction:column;justify-content:space-between;">
+            <div>
+              <h3 class="text-white text-xl font-bold mb-2">Monthly Pass</h3>
+              <p class="text-zinc-400 text-sm mb-4">For the true cinephiles.</p>
+              <div class="text-3xl text-orange font-bold mb-6">₹400 <span
+                  class="text-sm font-normal text-zinc-500">/month</span></div>
+              <ul class="text-zinc-300 text-sm mb-6 space-y-2">
+                <li>✓ 30 Days of Access</li>
+                <li>✓ Invite Unlimited Friends</li>
+                <li>✓ Rent Films at listed price</li>
+                <li>✓ Zero Ads — 100% Ad-Free 🚫📺</li>
+                <li>✓ Support the Developer ❤️</li>
+                <li style="color:#f97316;font-size:0.75rem;">Redirected to Premium experience</li>
+              </ul>
+            </div>
+            <button class="btn btn-outline hover-bg w-full" id="btn-pay-monthly">Select Monthly</button>
+          </div>
+        </div>
+
+        <div class="card max-w-md mx-auto">
+          <h4 class="text-white font-bold mb-2">Have a Free Access Code?</h4>
+          <div class="flex gap-2 w-full mt-4">
+            <label for="access-code-input" class="sr-only">Enter 16-digit access code</label>
+            <input type="text" id="access-code-input" class="input w-full text-center mono uppercase"
+              placeholder="Enter 16-digit code" autocomplete="off">
+            <button id="btn-redeem-code" class="btn btn-secondary">Redeem</button>
+          </div>
+          <p id="redeem-msg" class="text-xs mt-3 hidden"></p>
+        </div>
+
+        <div class="card max-w-md mx-auto mt-4 border-orange">
+          <h4 class="text-white font-bold mb-1">Invited to a Room?</h4>
+          <p class="text-xs text-zinc-400 mb-2">Join your friend for free if they are subscribed.</p>
+          <div class="flex gap-2 w-full mt-4">
+            <label for="guest-room-input" class="sr-only">Enter your friend's room code</label>
+            <input type="text" id="guest-room-input" class="input w-full text-center mono uppercase"
+              placeholder="Friend's Room Code" autocomplete="off">
+            <button id="btn-join-guest-room" class="btn btn-primary" style="white-space: nowrap;">Join Free</button>
+          </div>
+          <p id="guest-join-msg" class="text-xs mt-3 hidden"></p>
+        </div>
+
+        <!-- ===== FREE PASS CARD ===== -->
+        <div id="free-pass-card" class="card max-w-md mx-auto mt-4"
+          style="display:none;border:1px solid rgba(74,222,128,0.35);background:linear-gradient(135deg,rgba(5,46,22,0.6),rgba(10,10,15,0.9));">
+          <div class="flex items-center gap-3 mb-3">
+            <div style="background:rgba(74,222,128,0.15);border-radius:50%;padding:0.6rem;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2">
+                <path
+                  d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+              </svg>
+            </div>
+            <div>
+              <h4 class="text-white font-bold text-base mb-0">Welcome Gift &mdash; Free 24-Hour Pass</h4>
+              <p class="text-green-400 text-xs mt-0">First-time user? Get full access for free!</p>
+            </div>
+          </div>
+          <p class="text-zinc-400 text-xs mb-4">Claim your complimentary 24-hour pass. No payment needed. One pass per
+            person/device.</p>
+          <button id="btn-claim-free-pass" class="btn w-full"
+            style="background:linear-gradient(135deg,#166534,#15803d);color:#bbf7d0;font-weight:800;border:1px solid rgba(74,222,128,0.4);">Claim
+            Free 24-Hour Pass</button>
+          <p id="free-pass-msg" class="text-xs mt-3 hidden text-center"></p>
+        </div>
+
+        <!-- ===== WATCH ADS FOR FREE ACCESS CARD ===== -->
+        <div id="ad-access-card" class="card max-w-md mx-auto mt-4"
+          style="border:1px solid rgba(168,85,247,0.35);background:linear-gradient(135deg,rgba(46,16,101,0.6),rgba(10,10,15,0.9));">
+          <div class="flex items-center gap-3 mb-3">
+            <div style="background:rgba(168,85,247,0.15);border-radius:50%;padding:0.6rem;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2">
+                <rect x="2" y="7" width="20" height="15" rx="2" />
+                <polyline points="17 2 12 7 7 2" />
+              </svg>
+            </div>
+            <div>
+              <h4 class="text-white font-bold text-base mb-0">Free Access via Ads 📺</h4>
+              <p style="color:#c084fc;" class="text-xs mt-0">Watch 2 short ads → get 24hr full access</p>
+            </div>
+          </div>
+          <p class="text-zinc-400 text-xs mb-3">No payment required. Support Vaanisethu by watching 4 short ads and get
+            a full 24-hour access pass. You can repeat this every 24 hours!</p>
+          <div class="flex gap-1 mb-3 items-center">
+            <div id="ad-step-1" class="ad-step-indicator ad-step-pending">
+              <span class="ad-step-num">1</span><span class="ad-step-label">Ad 1</span>
+            </div>
+            <div class="ad-step-connector"></div>
+            <div id="ad-step-2" class="ad-step-indicator ad-step-pending">
+              <span class="ad-step-num">2</span><span class="ad-step-label">Ad 2</span>
+            </div>
+            <div class="ad-step-connector"></div>
+            <div id="ad-step-3" class="ad-step-indicator ad-step-pending">
+              <span class="ad-step-num">3</span><span class="ad-step-label">Ad 3</span>
+            </div>
+            <div class="ad-step-connector"></div>
+            <div id="ad-step-4" class="ad-step-indicator ad-step-pending">
+              <span class="ad-step-num">4</span><span class="ad-step-label">Ad 4</span>
+            </div>
+            <div class="ad-step-connector"></div>
+            <div id="ad-step-5" class="ad-step-indicator ad-step-pending">
+              <span class="ad-step-num">✓</span><span class="ad-step-label">Access</span>
+            </div>
+          </div>
+          <button id="btn-start-ad-flow" class="btn w-full"
+            style="background:linear-gradient(135deg,#6d28d9,#a855f7);color:white;font-weight:800;border:1px solid rgba(168,85,247,0.4);">📺
+            Watch 4 Ads &amp; Get Free 24hr Access</button>
+          <p id="ad-pass-msg" class="text-xs mt-3 hidden text-center"></p>
+        </div>
+
       </div>
-      
-      <div class="card-grid max-w-4xl mx-auto gap-6 mb-8 text-left" style="align-items: stretch; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
-        
-        <!-- One Time -->
-        <div class="card premium-card" style="display:flex;flex-direction:column;justify-content:space-between;">
-           <div>
-               <h3 class="text-white text-xl font-bold mb-2">24-Hour Pass</h3>
-               <p class="text-zinc-400 text-sm mb-4">Full access for 1 day.</p>
-               <div class="text-3xl text-orange font-bold mb-6">₹50</div>
-               <ul class="text-zinc-300 text-sm mb-6 space-y-2">
-                 <li>✓ Unlimited Watch Time</li>
-                 <li>✓ HD Sync</li>
-                 <li>✓ No Ads 🚫📺</li>
-               </ul>
-           </div>
-           <button class="btn btn-outline hover-bg w-full" id="btn-pay-one-time">Select Pass</button>
-        </div>
-
-        <!-- Weekly -->
-        <div class="card premium-card border-orange" style="display:flex;flex-direction:column;justify-content:space-between; box-shadow: 0 0 20px rgba(249, 115, 22, 0.15);">
-           <div>
-               <div class="text-xs uppercase bg-orange text-white inline-block px-2 py-1 rounded font-bold mb-2">Popular</div>
-               <h3 class="text-white text-xl font-bold mb-2">Weekly Pass</h3>
-               <p class="text-zinc-400 text-sm mb-4">Best for weekend binges.</p>
-               <div class="text-3xl text-orange font-bold mb-6">₹150 <span class="text-sm font-normal text-zinc-500">/week</span></div>
-               <ul class="text-zinc-300 text-sm mb-6 space-y-2">
-                 <li>✓ Full Access for 7 Days</li>
-                 <li>✓ Invite Unlimited Friends</li>
-                 <li>✓ No Ads 🚫📺</li>
-               </ul>
-           </div>
-           <button class="btn btn-primary w-full" id="btn-pay-weekly">Select Weekly</button>
-        </div>
-
-        <!-- Monthly -->
-        <div class="card premium-card" style="display:flex;flex-direction:column;justify-content:space-between;">
-           <div>
-               <h3 class="text-white text-xl font-bold mb-2">Monthly Pass</h3>
-               <p class="text-zinc-400 text-sm mb-4">For the true cinephiles.</p>
-               <div class="text-3xl text-orange font-bold mb-6">₹400 <span class="text-sm font-normal text-zinc-500">/month</span></div>
-               <ul class="text-zinc-300 text-sm mb-6 space-y-2">
-                 <li>✓ 30 Days of Access</li>
-                 <li>✓ Support the Developer</li>
-                 <li>✓ No Ads 🚫📺</li>
-               </ul>
-           </div>
-           <button class="btn btn-outline hover-bg w-full" id="btn-pay-monthly">Select Monthly</button>
-        </div>
-      </div>
-
-      <div class="card max-w-md mx-auto">
-         <h4 class="text-white font-bold mb-2">Have a Free Access Code?</h4>
-         <div class="flex gap-2 w-full mt-4">
-              <label for="access-code-input" class="sr-only">Enter 16-digit access code</label>
-              <input type="text" id="access-code-input" class="input w-full text-center mono uppercase" placeholder="Enter 16-digit code" autocomplete="off">
-             <button id="btn-redeem-code" class="btn btn-secondary">Redeem</button>
-         </div>
-         <p id="redeem-msg" class="text-xs mt-3 hidden"></p>
-      </div>
-
-      <div class="card max-w-md mx-auto mt-4 border-orange">
-         <h4 class="text-white font-bold mb-1">Invited to a Room?</h4>
-         <p class="text-xs text-zinc-400 mb-2">Join your friend for free if they are subscribed.</p>
-         <div class="flex gap-2 w-full mt-4">
-              <label for="guest-room-input" class="sr-only">Enter your friend's room code</label>
-              <input type="text" id="guest-room-input" class="input w-full text-center mono uppercase" placeholder="Friend's Room Code" autocomplete="off">
-             <button id="btn-join-guest-room" class="btn btn-primary" style="white-space: nowrap;">Join Free</button>
-         </div>
-         <p id="guest-join-msg" class="text-xs mt-3 hidden"></p>
-      </div>
-
-      <!-- ===== FREE PASS CARD ===== -->
-      <div id="free-pass-card" class="card max-w-md mx-auto mt-4" style="display:none;border:1px solid rgba(74,222,128,0.35);background:linear-gradient(135deg,rgba(5,46,22,0.6),rgba(10,10,15,0.9));">
-        <div class="flex items-center gap-3 mb-3">
-          <div style="background:rgba(74,222,128,0.15);border-radius:50%;padding:0.6rem;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          </div>
-          <div>
-            <h4 class="text-white font-bold text-base mb-0">Welcome Gift &mdash; Free 24-Hour Pass</h4>
-            <p class="text-green-400 text-xs mt-0">First-time user? Get full access for free!</p>
-          </div>
-        </div>
-        <p class="text-zinc-400 text-xs mb-4">Claim your complimentary 24-hour pass. No payment needed. One pass per person/device.</p>
-        <button id="btn-claim-free-pass" class="btn w-full" style="background:linear-gradient(135deg,#166534,#15803d);color:#bbf7d0;font-weight:800;border:1px solid rgba(74,222,128,0.4);">Claim Free 24-Hour Pass</button>
-        <p id="free-pass-msg" class="text-xs mt-3 hidden text-center"></p>
-      </div>
-
-      <!-- ===== WATCH ADS FOR FREE ACCESS CARD ===== -->
-      <div id="ad-access-card" class="card max-w-md mx-auto mt-4" style="border:1px solid rgba(168,85,247,0.35);background:linear-gradient(135deg,rgba(46,16,101,0.6),rgba(10,10,15,0.9));">
-        <div class="flex items-center gap-3 mb-3">
-          <div style="background:rgba(168,85,247,0.15);border-radius:50%;padding:0.6rem;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
-          </div>
-          <div>
-            <h4 class="text-white font-bold text-base mb-0">Free Access via Ads 📺</h4>
-            <p style="color:#c084fc;" class="text-xs mt-0">Watch 2 short ads → get 24hr full access</p>
-          </div>
-        </div>
-        <p class="text-zinc-400 text-xs mb-3">No payment required. Support Vaanisethu by watching 4 short ads and get a full 24-hour access pass. You can repeat this every 24 hours!</p>
-        <div class="flex gap-1 mb-3 items-center">
-          <div id="ad-step-1" class="ad-step-indicator ad-step-pending">
-            <span class="ad-step-num">1</span><span class="ad-step-label">Ad 1</span>
-          </div>
-          <div class="ad-step-connector"></div>
-          <div id="ad-step-2" class="ad-step-indicator ad-step-pending">
-            <span class="ad-step-num">2</span><span class="ad-step-label">Ad 2</span>
-          </div>
-          <div class="ad-step-connector"></div>
-          <div id="ad-step-3" class="ad-step-indicator ad-step-pending">
-            <span class="ad-step-num">3</span><span class="ad-step-label">Ad 3</span>
-          </div>
-          <div class="ad-step-connector"></div>
-          <div id="ad-step-4" class="ad-step-indicator ad-step-pending">
-            <span class="ad-step-num">4</span><span class="ad-step-label">Ad 4</span>
-          </div>
-          <div class="ad-step-connector"></div>
-          <div id="ad-step-5" class="ad-step-indicator ad-step-pending">
-            <span class="ad-step-num">✓</span><span class="ad-step-label">Access</span>
-          </div>
-        </div>
-        <button id="btn-start-ad-flow" class="btn w-full" style="background:linear-gradient(135deg,#6d28d9,#a855f7);color:white;font-weight:800;border:1px solid rgba(168,85,247,0.4);">📺 Watch 4 Ads &amp; Get Free 24hr Access</button>
-        <p id="ad-pass-msg" class="text-xs mt-3 hidden text-center"></p>
-      </div>
-
     </div>
-  </div>
 
-  <!-- Admin View -->
-  <div id="admin-view" class="view hidden min-h-screen fade-in">
+    <!-- Admin View -->
+    <div id="admin-view" class="view hidden min-h-screen fade-in">
       <div class="max-w-6xl mx-auto w-full">
-         <div class="flex items-center justify-between mb-8">
-             <h1 class="gradient-text text-2xl m-0 flex items-center gap-3">
-                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
-                 Developer Dashboard
-             </h1>
-             <button id="btn-admin-close" class="btn btn-outline px-4 py-2 text-sm">Return Home</button>
-         </div>
-         
-         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-             <!-- Platform Stats + Free Day Toggle -->
-             <div class="card flex flex-col gap-5 col-span-1 border border-zinc-800 bg-zinc-900/50">
-               <div>
-                 <h2 class="text-base text-white m-0 mb-1">Platform Stats</h2>
-                 <p class="text-xs text-zinc-500 m-0 mb-3">Unique registered visitors.</p>
-                 <div style="background:#0a0a0c;border:1px solid #1c1c1e;border-radius:0.85rem;padding:0.85rem 1rem;display:flex;align-items:center;justify-content:space-between;">
-                   <div>
-                     <span class="text-xs text-zinc-600 uppercase font-bold tracking-widest block mb-1">Total Visitors</span>
-                     <span id="admin-visitor-count" class="text-3xl font-black text-blue-400">-</span>
-                     <span id="visitor-stats-spinner" style="display:none;" class="text-zinc-500 text-xs ml-2">...</span>
-                   </div>
-                   <button onclick="loadVisitorStats()" class="icon-btn hover-bg bg-black border border-zinc-800" style="width:30px;height:30px;" title="Refresh">
-                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 2v6h6"/></svg>
-                   </button>
-                 </div>
-               </div>
-               <div style="border-top:1px solid #1f1f23;padding-top:1rem;">
-                 <h2 class="text-base text-white m-0 mb-1">Free Day Control</h2>
-                 <p class="text-xs text-zinc-500 m-0 mb-3">Give all users free access today.</p>
-                 <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;padding:0.75rem 0.9rem;background:#0a0a0c;border:1px solid #1c1c1e;border-radius:0.85rem;">
-                   <div style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;">
-                     <input type="checkbox" id="free-day-toggle" onchange="toggleFreeDay()" style="opacity:0;width:0;height:0;position:absolute;">
-                     <span style="position:absolute;cursor:pointer;inset:0;background:#27272a;border-radius:34px;transition:0.3s;" id="free-day-slider"></span>
-                   </div>
-                   <span id="free-day-label" class="text-xs text-zinc-400">Free Day: OFF</span>
-                 </label>
-                 <style>#free-day-toggle:checked+#free-day-slider{background:#166534!important}#free-day-toggle:checked+#free-day-slider::before{transform:translateX(20px)}#free-day-slider::before{content:"";position:absolute;height:16px;width:16px;left:4px;bottom:4px;background:white;border-radius:50%;transition:.3s}</style>
-               </div>
-             </div>
+        <div class="flex items-center justify-between mb-8">
+          <h1 class="gradient-text text-2xl m-0 flex items-center gap-3">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+            </svg>
+            Developer Dashboard
+          </h1>
+          <button id="btn-admin-close" class="btn btn-outline px-4 py-2 text-sm">Return Home</button>
+        </div>
 
-             <!-- Code Generator -->
-             <div class="card flex flex-col gap-4 col-span-1 border border-zinc-800 bg-zinc-900/50">
-                 <h2 class="text-lg text-white m-0">Generate Access Code</h2>
-                 <p class="text-sm text-zinc-400 m-0 mb-2">Create a 16-digit pass to bypass payment.</p>
-                 
-                 <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold">Validity / Duration</label>
-                 <select id="admin-code-duration" class="input w-full bg-black mb-2">
-                     <option value="1">1 Day</option>
-                     <option value="7">7 Days</option>
-                     <option value="30">30 Days</option>
-                     <option value="3650">Lifetime (10 Yrs)</option>
-                 </select>
-                 
-                 <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold">Max Uses</label>
-                 <input type="number" id="admin-code-uses" class="input w-full bg-black mb-4" value="1" min="1">
-                 
-                 <button id="btn-admin-generate-code" class="btn btn-primary w-full shadow-[0_0_15px_rgba(249,115,22,0.3)]">Generate Code</button>
-                 
-                 <div id="admin-code-result" class="mt-4 p-4 rounded-lg bg-zinc-950 border border-zinc-800 text-center hidden">
-                     <span class="text-xs text-green-500 uppercase font-bold block mb-2">Code Generated Successfully</span>
-                     <span class="mono text-lg text-white tracking-widest block" id="admin-new-code">xxxx-xxxx-xxxx-xxxx</span>
-                 </div>
-             </div>
-
-             <!-- Purchase Ledger -->
-             <div class="card col-span-1 lg:col-span-2 border border-zinc-800 bg-zinc-900/30 flex flex-col h-full overflow-hidden" style="padding: 0; align-items: stretch; text-align: left;">
-                 <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
-                     <h2 class="text-lg text-white m-0 font-bold tracking-tight">Purchase Ledger</h2>
-                     <button id="btn-admin-refresh-ledger" class="icon-btn hover-bg bg-black shadow-inner border border-zinc-800" style="width: 32px; height: 32px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 2v6h6"/></svg></button>
-                 </div>
-                 <div class="overflow-x-auto overflow-y-auto flex-1 custom-scrollbar bg-[#0a0a0a]" style="max-height: 400px; -webkit-overflow-scrolling: touch;">
-                     <table class="w-full text-left text-sm text-zinc-400" style="min-width: 800px;">
-                         <thead class="bg-zinc-900/80 sticky top-0 z-10 backdrop-blur border-b border-zinc-800 text-zinc-500 text-[0.7rem] uppercase tracking-wider">
-                             <tr>
-                                 <th class="px-6 py-3 font-semibold">Date & Time</th>
-                                 <th class="px-6 py-3 font-semibold">User ID</th>
-                                 <th class="px-6 py-3 font-semibold">Tier</th>
-                                 <th class="px-6 py-3 font-semibold">Amount</th>
-                                 <th class="px-6 py-3 font-semibold">Order ID</th>
-                                 <th class="px-6 py-3 font-semibold text-right">Actions</th>
-                             </tr>
-                         </thead>
-                         <tbody id="admin-ledger-body" class="divide-y divide-zinc-800/50">
-                             <tr><td colspan="6" class="py-10 text-center italic text-zinc-600">Loading data...</td></tr>
-                         </tbody>
-                     </table>
-                 </div>
-             </div>
-         </div>
-         
-         <!-- Access Code Users -->
-         <div class="card col-span-1 lg:col-span-3 border border-zinc-800 bg-zinc-900/30 flex flex-col h-full overflow-hidden mt-8" style="padding: 0; align-items: stretch; text-align: left;">
-             <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
-                 <h2 class="text-lg text-white m-0 font-bold tracking-tight">Access Code Users</h2>
-                 <button onclick="loadCodeUsers()" class="icon-btn hover-bg bg-black shadow-inner border border-zinc-800" style="width: 32px; height: 32px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 2v6h6"/></svg></button>
-             </div>
-             <div class="overflow-x-auto overflow-y-auto flex-1 custom-scrollbar bg-[#0a0a0a]" style="max-height: 400px; -webkit-overflow-scrolling: touch;">
-                 <table class="w-full text-left text-sm text-zinc-400" style="min-width: 800px;">
-                     <thead class="bg-zinc-900/80 sticky top-0 z-10 backdrop-blur border-b border-zinc-800 text-zinc-500 text-[0.7rem] uppercase tracking-wider">
-                         <tr>
-                             <th class="px-6 py-3 font-semibold">User Name</th>
-                             <th class="px-6 py-3 font-semibold">User ID</th>
-                             <th class="px-6 py-3 font-semibold">Status</th>
-                             <th class="px-6 py-3 font-semibold">Expiry Date</th>
-                             <th class="px-6 py-3 font-semibold text-right">Actions</th>
-                         </tr>
-                     </thead>
-                     <tbody id="code-users-body" class="divide-y divide-zinc-800/50">
-                         <tr><td colspan="5" class="py-10 text-center italic text-zinc-600">Loading data...</td></tr>
-                     </tbody>
-                 </table>
-             </div>
-         </div>
-
-          <!-- Free Pass Users -->
-          <div class="card col-span-1 lg:col-span-3 border border-zinc-800 bg-zinc-900/30 flex flex-col overflow-hidden mt-8" style="padding:0;align-items:stretch;text-align:left;">
-              <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <!-- Platform Stats + Free Day Toggle -->
+          <div class="card flex flex-col gap-5 col-span-1 border border-zinc-800 bg-zinc-900/50">
+            <div>
+              <h2 class="text-base text-white m-0 mb-1">Platform Stats</h2>
+              <p class="text-xs text-zinc-500 m-0 mb-3">Unique registered visitors.</p>
+              <div
+                style="background:#0a0a0c;border:1px solid #1c1c1e;border-radius:0.85rem;padding:0.85rem 1rem;display:flex;align-items:center;justify-content:space-between;">
                 <div>
-                  <h2 class="text-lg text-white m-0 font-bold tracking-tight flex items-center gap-2">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                    Free Pass Users
-                  </h2>
-                  <p class="text-xs text-zinc-500 m-0 mt-1">All users who claimed the first-time free 24h pass.</p>
+                  <span class="text-xs text-zinc-600 uppercase font-bold tracking-widest block mb-1">Total
+                    Visitors</span>
+                  <span id="admin-visitor-count" class="text-3xl font-black text-blue-400">-</span>
+                  <span id="visitor-stats-spinner" style="display:none;" class="text-zinc-500 text-xs ml-2">...</span>
                 </div>
-                <button onclick="loadFreePassUsers()" class="icon-btn hover-bg bg-black shadow-inner border border-zinc-800" style="width:32px;height:32px" title="Refresh">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 2v6h6"/></svg>
+                <button onclick="loadVisitorStats()" class="icon-btn hover-bg bg-black border border-zinc-800"
+                  style="width:30px;height:30px;" title="Refresh">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 2v6h6" />
+                  </svg>
                 </button>
               </div>
-              <div class="overflow-x-auto overflow-y-auto flex-1 custom-scrollbar bg-[#0a0a0a]" style="max-height:380px;-webkit-overflow-scrolling:touch;">
-                <table class="w-full text-left text-sm text-zinc-400" style="min-width:780px;">
-                  <thead class="bg-zinc-900/80 sticky top-0 z-10 backdrop-blur border-b border-zinc-800 text-zinc-500 text-[0.7rem] uppercase tracking-wider">
-                    <tr>
-                      <th class="px-6 py-3 font-semibold">Name</th>
-                      <th class="px-6 py-3 font-semibold">Email / UID</th>
-                      <th class="px-6 py-3 font-semibold">Status</th>
-                      <th class="px-6 py-3 font-semibold">Expiry</th>
-                      <th class="px-6 py-3 font-semibold">Claimed At</th>
-                      <th class="px-6 py-3 font-semibold text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="free-pass-users-body" class="divide-y divide-zinc-800/50">
-                    <tr><td colspan="6" class="py-10 text-center italic text-zinc-600">Click refresh ↑ to load...</td></tr>
-                  </tbody>
-                </table>
-              </div>
+            </div>
+            <div style="border-top:1px solid #1f1f23;padding-top:1rem;">
+              <h2 class="text-base text-white m-0 mb-1">Free Day Control</h2>
+              <p class="text-xs text-zinc-500 m-0 mb-3">Give all users free access today.</p>
+              <label
+                style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;padding:0.75rem 0.9rem;background:#0a0a0c;border:1px solid #1c1c1e;border-radius:0.85rem;">
+                <div style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;">
+                  <input type="checkbox" id="free-day-toggle" onchange="toggleFreeDay()"
+                    style="opacity:0;width:0;height:0;position:absolute;">
+                  <span
+                    style="position:absolute;cursor:pointer;inset:0;background:#27272a;border-radius:34px;transition:0.3s;"
+                    id="free-day-slider"></span>
+                </div>
+                <span id="free-day-label" class="text-xs text-zinc-400">Free Day: OFF</span>
+              </label>
+              <style>
+                #free-day-toggle:checked+#free-day-slider {
+                  background: #166534 !important
+                }
+
+                #free-day-toggle:checked+#free-day-slider::before {
+                  transform: translateX(20px)
+                }
+
+                #free-day-slider::before {
+                  content: "";
+                  position: absolute;
+                  height: 16px;
+                  width: 16px;
+                  left: 4px;
+                  bottom: 4px;
+                  background: white;
+                  border-radius: 50%;
+                  transition: .3s
+                }
+              </style>
+            </div>
           </div>
 
-          <!-- Film Store Manager (Admin) -->
-          <div class="mt-8">
-            <div class="card col-span-1 lg:col-span-3 border border-zinc-800 bg-zinc-900/30" style="padding:0;align-items:stretch;text-align:left;">
-              <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
-                <h2 class="text-lg text-white m-0 font-bold tracking-tight flex items-center gap-2">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2"><path d="M7 2h10l4 4v16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M9 2v4h6V2"/></svg>
-                  Film Store Manager
-                </h2>
-                <button onclick="loadAdminFilms()" class="icon-btn hover-bg bg-black shadow-inner border border-zinc-800" style="width:32px;height:32px" title="Refresh">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 2v6h6"/></svg>
-                </button>
-              </div>
-              <div class="p-6 admin-film-grid">
-                <div style="min-width:0">
-                  <h3 class="text-xs text-zinc-500 uppercase font-bold tracking-widest mb-4" id="film-form-heading">Add New Film</h3>
-                  <input type="hidden" id="film-edit-id" value="">
-                  <div class="flex flex-col gap-3">
-                    <div>
-                      <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold block mb-1">Film Title</label>
-                      <input type="text" id="film-form-title" class="input w-full bg-black" placeholder="e.g. Pushpa 2: The Rule">
-                    </div>
-                    <div>
-                      <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold block mb-1">Telegram Stream Link</label>
-                      <input type="text" id="film-form-link" class="input w-full bg-black" placeholder="https://vaanisethu-bot.onrender.com/stream/...">
-                    </div>
-                    <div>
-                      <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold block mb-2">Movie Poster</label>
-                      <label for="film-form-thumb" id="film-thumb-label" class="admin-thumb-upload-box">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#52525b" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-                        <span id="film-thumb-label-text" style="color:#71717a;font-size:0.875rem;margin-top:0.5rem;display:block;">Click to upload poster image</span>
-                        <span style="color:#52525b;font-size:0.7rem;display:block;margin-top:0.25rem;">JPG / PNG, max 2MB recommended</span>
-                      </label>
-                      <input type="file" id="film-form-thumb" accept="image/*" style="display:none;">
-                      <img id="film-thumb-preview" src="" alt="preview" style="display:none;width:100%;max-height:200px;object-fit:cover;border-radius:12px;margin-top:0.75rem;">
-                    </div>
-                    <div class="flex gap-3">
-                      <div style="flex:1">
-                        <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold block mb-1">Price (₹)</label>
-                        <input type="number" id="film-form-price" class="input w-full bg-black" placeholder="20" value="20" min="1">
-                      </div>
-                      <div style="flex:1">
-                        <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold block mb-1">Rental Period</label>
-                        <select id="film-form-days" class="input w-full bg-black">
-                          <option value="1">1 Day</option>
-                          <option value="2">2 Days</option>
-                          <option value="3" selected>3 Days</option>
-                          <option value="5">5 Days</option>
-                          <option value="7">7 Days</option>
-                          <option value="14">14 Days</option>
-                          <option value="30">30 Days</option>
-                        </select>
-                      </div>
-                    </div>
-                    <!-- Ad Unlock toggle -->
-                    <label style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.7rem 0.9rem;background:#0a0a0c;border:1px solid #1c1c1e;border-radius:0.75rem;cursor:pointer;" title="If enabled, users can watch 1 ad to get 1hr free access to this film">
-                      <div>
-                        <span class="text-xs text-zinc-300 font-bold block">Allow Ad Unlock (Watch 1 Ad → 1hr Free)</span>
-                        <span class="text-xs text-zinc-600">Users can unlock this film by watching a short ad</span>
-                      </div>
-                      <div style="position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0;">
-                        <input type="checkbox" id="film-form-ad-unlock" checked style="opacity:0;width:0;height:0;position:absolute;">
-                        <span id="film-form-ad-unlock-slider" style="position:absolute;cursor:pointer;inset:0;background:#27272a;border-radius:34px;transition:0.3s;"></span>
-                      </div>
+          <!-- Code Generator -->
+          <div class="card flex flex-col gap-4 col-span-1 border border-zinc-800 bg-zinc-900/50">
+            <h2 class="text-lg text-white m-0">Generate Access Code</h2>
+            <p class="text-sm text-zinc-400 m-0 mb-2">Create a 16-digit pass to bypass payment.</p>
+
+            <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold">Validity / Duration</label>
+            <select id="admin-code-duration" class="input w-full bg-black mb-2">
+              <option value="1">1 Day</option>
+              <option value="7">7 Days</option>
+              <option value="30">30 Days</option>
+              <option value="3650">Lifetime (10 Yrs)</option>
+            </select>
+
+            <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold">Max Uses</label>
+            <input type="number" id="admin-code-uses" class="input w-full bg-black mb-4" value="1" min="1">
+
+            <button id="btn-admin-generate-code"
+              class="btn btn-primary w-full shadow-[0_0_15px_rgba(249,115,22,0.3)]">Generate Code</button>
+
+            <div id="admin-code-result"
+              class="mt-4 p-4 rounded-lg bg-zinc-950 border border-zinc-800 text-center hidden">
+              <span class="text-xs text-green-500 uppercase font-bold block mb-2">Code Generated Successfully</span>
+              <span class="mono text-lg text-white tracking-widest block" id="admin-new-code">xxxx-xxxx-xxxx-xxxx</span>
+            </div>
+          </div>
+
+          <!-- Purchase Ledger -->
+          <div
+            class="card col-span-1 lg:col-span-2 border border-zinc-800 bg-zinc-900/30 flex flex-col h-full overflow-hidden"
+            style="padding: 0; align-items: stretch; text-align: left;">
+            <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
+              <h2 class="text-lg text-white m-0 font-bold tracking-tight">Purchase Ledger</h2>
+              <button id="btn-admin-refresh-ledger"
+                class="icon-btn hover-bg bg-black shadow-inner border border-zinc-800"
+                style="width: 32px; height: 32px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <path d="M3 2v6h6" />
+                </svg></button>
+            </div>
+            <div class="overflow-x-auto overflow-y-auto flex-1 custom-scrollbar bg-[#0a0a0a]"
+              style="max-height: 400px; -webkit-overflow-scrolling: touch;">
+              <table class="w-full text-left text-sm text-zinc-400" style="min-width: 800px;">
+                <thead
+                  class="bg-zinc-900/80 sticky top-0 z-10 backdrop-blur border-b border-zinc-800 text-zinc-500 text-[0.7rem] uppercase tracking-wider">
+                  <tr>
+                    <th class="px-6 py-3 font-semibold">Date & Time</th>
+                    <th class="px-6 py-3 font-semibold">User ID</th>
+                    <th class="px-6 py-3 font-semibold">Tier</th>
+                    <th class="px-6 py-3 font-semibold">Amount</th>
+                    <th class="px-6 py-3 font-semibold">Order ID</th>
+                    <th class="px-6 py-3 font-semibold text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-ledger-body" class="divide-y divide-zinc-800/50">
+                  <tr>
+                    <td colspan="6" class="py-10 text-center italic text-zinc-600">Loading data...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Access Code Users -->
+        <div
+          class="card col-span-1 lg:col-span-3 border border-zinc-800 bg-zinc-900/30 flex flex-col h-full overflow-hidden mt-8"
+          style="padding: 0; align-items: stretch; text-align: left;">
+          <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
+            <h2 class="text-lg text-white m-0 font-bold tracking-tight">Access Code Users</h2>
+            <button onclick="loadCodeUsers()" class="icon-btn hover-bg bg-black shadow-inner border border-zinc-800"
+              style="width: 32px; height: 32px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                <path d="M3 2v6h6" />
+              </svg></button>
+          </div>
+          <div class="overflow-x-auto overflow-y-auto flex-1 custom-scrollbar bg-[#0a0a0a]"
+            style="max-height: 400px; -webkit-overflow-scrolling: touch;">
+            <table class="w-full text-left text-sm text-zinc-400" style="min-width: 800px;">
+              <thead
+                class="bg-zinc-900/80 sticky top-0 z-10 backdrop-blur border-b border-zinc-800 text-zinc-500 text-[0.7rem] uppercase tracking-wider">
+                <tr>
+                  <th class="px-6 py-3 font-semibold">User Name</th>
+                  <th class="px-6 py-3 font-semibold">User ID</th>
+                  <th class="px-6 py-3 font-semibold">Status</th>
+                  <th class="px-6 py-3 font-semibold">Expiry Date</th>
+                  <th class="px-6 py-3 font-semibold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="code-users-body" class="divide-y divide-zinc-800/50">
+                <tr>
+                  <td colspan="5" class="py-10 text-center italic text-zinc-600">Loading data...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Free Pass Users -->
+        <div
+          class="card col-span-1 lg:col-span-3 border border-zinc-800 bg-zinc-900/30 flex flex-col overflow-hidden mt-8"
+          style="padding:0;align-items:stretch;text-align:left;">
+          <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
+            <div>
+              <h2 class="text-lg text-white m-0 font-bold tracking-tight flex items-center gap-2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2">
+                  <path
+                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+                Free Pass Users
+              </h2>
+              <p class="text-xs text-zinc-500 m-0 mt-1">All users who claimed the first-time free 24h pass.</p>
+            </div>
+            <button onclick="loadFreePassUsers()" class="icon-btn hover-bg bg-black shadow-inner border border-zinc-800"
+              style="width:32px;height:32px" title="Refresh">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                <path d="M3 2v6h6" />
+              </svg>
+            </button>
+          </div>
+          <div class="overflow-x-auto overflow-y-auto flex-1 custom-scrollbar bg-[#0a0a0a]"
+            style="max-height:380px;-webkit-overflow-scrolling:touch;">
+            <table class="w-full text-left text-sm text-zinc-400" style="min-width:780px;">
+              <thead
+                class="bg-zinc-900/80 sticky top-0 z-10 backdrop-blur border-b border-zinc-800 text-zinc-500 text-[0.7rem] uppercase tracking-wider">
+                <tr>
+                  <th class="px-6 py-3 font-semibold">Name</th>
+                  <th class="px-6 py-3 font-semibold">Email / UID</th>
+                  <th class="px-6 py-3 font-semibold">Status</th>
+                  <th class="px-6 py-3 font-semibold">Expiry</th>
+                  <th class="px-6 py-3 font-semibold">Claimed At</th>
+                  <th class="px-6 py-3 font-semibold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="free-pass-users-body" class="divide-y divide-zinc-800/50">
+                <tr>
+                  <td colspan="6" class="py-10 text-center italic text-zinc-600">Click refresh ↑ to load...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Film Store Manager (Admin) -->
+        <div class="mt-8">
+          <div class="card col-span-1 lg:col-span-3 border border-zinc-800 bg-zinc-900/30"
+            style="padding:0;align-items:stretch;text-align:left;">
+            <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
+              <h2 class="text-lg text-white m-0 font-bold tracking-tight flex items-center gap-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2">
+                  <path d="M7 2h10l4 4v16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" />
+                  <path d="M9 2v4h6V2" />
+                </svg>
+                Film Store Manager
+              </h2>
+              <button onclick="loadAdminFilms()" class="icon-btn hover-bg bg-black shadow-inner border border-zinc-800"
+                style="width:32px;height:32px" title="Refresh">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <path d="M3 2v6h6" />
+                </svg>
+              </button>
+            </div>
+            <div class="p-6 admin-film-grid">
+              <div style="min-width:0">
+                <h3 class="text-xs text-zinc-500 uppercase font-bold tracking-widest mb-4" id="film-form-heading">Add
+                  New Film</h3>
+                <input type="hidden" id="film-edit-id" value="">
+                <div class="flex flex-col gap-3">
+                  <div>
+                    <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold block mb-1">Film
+                      Title</label>
+                    <input type="text" id="film-form-title" class="input w-full bg-black"
+                      placeholder="e.g. Pushpa 2: The Rule">
+                  </div>
+                  <div>
+                    <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold block mb-1">Telegram Stream
+                      Link</label>
+                    <input type="text" id="film-form-link" class="input w-full bg-black"
+                      placeholder="https://vaanisethu-bot.onrender.com/stream/...">
+                  </div>
+                  <div>
+                    <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold block mb-2">Movie
+                      Poster</label>
+                    <label for="film-form-thumb" id="film-thumb-label" class="admin-thumb-upload-box">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#52525b" stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <path d="m21 15-5-5L5 21" />
+                      </svg>
+                      <span id="film-thumb-label-text"
+                        style="color:#71717a;font-size:0.875rem;margin-top:0.5rem;display:block;">Click to upload poster
+                        image</span>
+                      <span style="color:#52525b;font-size:0.7rem;display:block;margin-top:0.25rem;">JPG / PNG, max 2MB
+                        recommended</span>
                     </label>
-                    <style>#film-form-ad-unlock:checked+#film-form-ad-unlock-slider{background:#7c3aed!important}#film-form-ad-unlock:checked+#film-form-ad-unlock-slider::before{transform:translateX(18px)}#film-form-ad-unlock-slider::before{content:"";position:absolute;height:14px;width:14px;left:4px;bottom:4px;background:white;border-radius:50%;transition:.3s}</style>
-                    <button id="btn-admin-add-film" class="btn w-full" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;">Add Film to Store</button>
-                    <button id="btn-admin-cancel-edit" class="btn btn-outline w-full" style="display:none;">Cancel Edit</button>
-                    <p id="film-form-msg" class="text-xs text-center" style="display:none;margin-top:0.25rem;"></p>
+                    <input type="file" id="film-form-thumb" accept="image/*" style="display:none;">
+                    <img id="film-thumb-preview" src="" alt="preview"
+                      style="display:none;width:100%;max-height:200px;object-fit:cover;border-radius:12px;margin-top:0.75rem;">
                   </div>
+                  <div class="flex gap-3">
+                    <div style="flex:1">
+                      <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold block mb-1">Price
+                        (₹)</label>
+                      <input type="number" id="film-form-price" class="input w-full bg-black" placeholder="20"
+                        value="20" min="1">
+                    </div>
+                    <div style="flex:1">
+                      <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold block mb-1">Rental
+                        Period</label>
+                      <select id="film-form-days" class="input w-full bg-black">
+                        <option value="1">1 Day</option>
+                        <option value="2">2 Days</option>
+                        <option value="3" selected>3 Days</option>
+                        <option value="5">5 Days</option>
+                        <option value="7">7 Days</option>
+                        <option value="14">14 Days</option>
+                        <option value="30">30 Days</option>
+                      </select>
+                    </div>
+                  </div>
+                  <!-- Ad Unlock toggle -->
+                  <label
+                    style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.7rem 0.9rem;background:#0a0a0c;border:1px solid #1c1c1e;border-radius:0.75rem;cursor:pointer;"
+                    title="If ON → users can watch 1 ad for 1hr free access (Free with Ads section). If OFF → Premium Only, rent only.">
+                    <div>
+                      <span class="text-xs text-zinc-300 font-bold block">📺 Free with Ads (Watch Ad → 1hr Free)</span>
+                      <span class="text-xs text-zinc-600">OFF = 🎬 Premium Only — rent-only, no ad unlock</span>
+                    </div>
+                    <div style="position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0;">
+                      <input type="checkbox" id="film-form-ad-unlock" checked
+                        style="opacity:0;width:0;height:0;position:absolute;">
+                      <span id="film-form-ad-unlock-slider"
+                        style="position:absolute;cursor:pointer;inset:0;background:#27272a;border-radius:34px;transition:0.3s;"></span>
+                    </div>
+                  </label>
+                  <style>
+                    #film-form-ad-unlock:checked+#film-form-ad-unlock-slider {
+                      background: #7c3aed !important
+                    }
+
+                    #film-form-ad-unlock:checked+#film-form-ad-unlock-slider::before {
+                      transform: translateX(18px)
+                    }
+
+                    #film-form-ad-unlock-slider::before {
+                      content: "";
+                      position: absolute;
+                      height: 14px;
+                      width: 14px;
+                      left: 4px;
+                      bottom: 4px;
+                      background: white;
+                      border-radius: 50%;
+                      transition: .3s
+                    }
+                  </style>
+                  <button id="btn-admin-add-film" class="btn w-full"
+                    style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;">Add Film to Store</button>
+                  <button id="btn-admin-cancel-edit" class="btn btn-outline w-full" style="display:none;">Cancel
+                    Edit</button>
+                  <p id="film-form-msg" class="text-xs text-center" style="display:none;margin-top:0.25rem;"></p>
                 </div>
-                <div style="min-width:0">
-                  <h3 class="text-xs text-zinc-500 uppercase font-bold tracking-widest mb-4">Uploaded Films</h3>
-                  <div id="admin-films-list" class="flex flex-col gap-3">
-                    <p style="color:#52525b;font-size:0.875rem;font-style:italic;">Click refresh above to load films.</p>
-                  </div>
+              </div>
+              <div style="min-width:0">
+                <h3 class="text-xs text-zinc-500 uppercase font-bold tracking-widest mb-4">Uploaded Films</h3>
+                <div id="admin-films-list" class="flex flex-col gap-3">
+                  <p style="color:#52525b;font-size:0.875rem;font-style:italic;">Click refresh above to load films.</p>
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Film Rental Ledger (Admin) -->
-          <div class="mt-8">
-            <div class="card col-span-1 lg:col-span-3 border border-zinc-800 bg-zinc-900/30" style="padding:0;align-items:stretch;text-align:left;">
-              <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
-                <h2 class="text-lg text-white m-0 font-bold tracking-tight flex items-center gap-2">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                  Film Rental Ledger
-                </h2>
-                <button onclick="loadRentalLedger()" class="icon-btn hover-bg bg-black shadow-inner border border-zinc-800" style="width:32px;height:32px" title="Refresh">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 2v6h6"/></svg>
-                </button>
-              </div>
-              <!-- Stats row -->
-              <div id="rental-ledger-stats" class="px-6 py-4 border-b border-zinc-800/50 flex gap-6 flex-wrap" style="background:#0a0a0c;">
-                <div><span class="text-xs text-zinc-600 uppercase font-bold tracking-widest block">Total Rentals</span><span id="rl-total" class="text-xl font-black text-white">—</span></div>
-                <div><span class="text-xs text-zinc-600 uppercase font-bold tracking-widest block">Total Revenue</span><span id="rl-revenue" class="text-xl font-black text-green-400">—</span></div>
-                <div><span class="text-xs text-zinc-600 uppercase font-bold tracking-widest block">Active Now</span><span id="rl-active" class="text-xl font-black text-purple-400">—</span></div>
-              </div>
-              <div class="overflow-x-auto overflow-y-auto custom-scrollbar" style="max-height:420px;">
-                <table class="w-full text-left text-sm" style="min-width:900px;">
-                  <thead class="bg-zinc-900/80 sticky top-0 z-10 backdrop-blur border-b border-zinc-800 text-zinc-500 text-[0.7rem] uppercase tracking-wider">
-                    <tr>
-                      <th class="px-6 py-3 font-semibold">Date & Time</th>
-                      <th class="px-6 py-3 font-semibold">User</th>
-                      <th class="px-6 py-3 font-semibold">Film</th>
-                      <th class="px-6 py-3 font-semibold">Amount</th>
-                      <th class="px-6 py-3 font-semibold">Payment ID</th>
-                      <th class="px-6 py-3 font-semibold">Period</th>
-                      <th class="px-6 py-3 font-semibold">Status</th>
-                      <th class="px-6 py-3 font-semibold">Expires</th>
-                    </tr>
-                  </thead>
-                  <tbody id="rental-ledger-body" class="divide-y divide-zinc-800/50">
-                    <tr><td colspan="8" class="py-10 text-center italic text-zinc-600">Click refresh to load rental records.</td></tr>
-                  </tbody>
-                </table>
-              </div>
+        <!-- Film Rental Ledger (Admin) -->
+        <div class="mt-8">
+          <div class="card col-span-1 lg:col-span-3 border border-zinc-800 bg-zinc-900/30"
+            style="padding:0;align-items:stretch;text-align:left;">
+            <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
+              <h2 class="text-lg text-white m-0 font-bold tracking-tight flex items-center gap-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+                Film Rental Ledger
+              </h2>
+              <button onclick="loadRentalLedger()"
+                class="icon-btn hover-bg bg-black shadow-inner border border-zinc-800" style="width:32px;height:32px"
+                title="Refresh">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <path d="M3 2v6h6" />
+                </svg>
+              </button>
+            </div>
+            <!-- Stats row -->
+            <div id="rental-ledger-stats" class="px-6 py-4 border-b border-zinc-800/50 flex gap-6 flex-wrap"
+              style="background:#0a0a0c;">
+              <div><span class="text-xs text-zinc-600 uppercase font-bold tracking-widest block">Total
+                  Rentals</span><span id="rl-total" class="text-xl font-black text-white">—</span></div>
+              <div><span class="text-xs text-zinc-600 uppercase font-bold tracking-widest block">Total
+                  Revenue</span><span id="rl-revenue" class="text-xl font-black text-green-400">—</span></div>
+              <div><span class="text-xs text-zinc-600 uppercase font-bold tracking-widest block">Active Now</span><span
+                  id="rl-active" class="text-xl font-black text-purple-400">—</span></div>
+            </div>
+            <div class="overflow-x-auto overflow-y-auto custom-scrollbar" style="max-height:420px;">
+              <table class="w-full text-left text-sm" style="min-width:900px;">
+                <thead
+                  class="bg-zinc-900/80 sticky top-0 z-10 backdrop-blur border-b border-zinc-800 text-zinc-500 text-[0.7rem] uppercase tracking-wider">
+                  <tr>
+                    <th class="px-6 py-3 font-semibold">Date & Time</th>
+                    <th class="px-6 py-3 font-semibold">User</th>
+                    <th class="px-6 py-3 font-semibold">Film</th>
+                    <th class="px-6 py-3 font-semibold">Amount</th>
+                    <th class="px-6 py-3 font-semibold">Payment ID</th>
+                    <th class="px-6 py-3 font-semibold">Period</th>
+                    <th class="px-6 py-3 font-semibold">Status</th>
+                    <th class="px-6 py-3 font-semibold">Expires</th>
+                  </tr>
+                </thead>
+                <tbody id="rental-ledger-body" class="divide-y divide-zinc-800/50">
+                  <tr>
+                    <td colspan="8" class="py-10 text-center italic text-zinc-600">Click refresh to load rental records.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
+        </div>
 
-      </div>
-  </div>
-
-  <!-- Dashboard View -->
-  <div id="dashboard-view" class="view hidden min-h-screen items-center justify-center fade-in relative">
-    
-    <!-- Top Dashboard Header with Profile info -->
-    <div class="dash-top-bar">
-       <div class="dash-user-pill">
-           <span id="dashboard-user-name" class="dash-user-name"></span>
-           <div class="dash-divider"></div>
-           <button id="btn-admin-dash" class="hover-text text-green-500 text-sm pointer bg-transparent border-none font-bold hidden mr-3" style="margin-right: 0.5rem">Admin</button>
-           <button id="btn-logout" class="hover-text text-orange text-sm pointer bg-transparent border-none font-bold">Sign Out</button>
-       </div>
-    </div>
-
-    <div class="header-center fade-down">
-      <img src="/logo.png" alt="Logo" class="mx-auto mb-4" style="width: 80px; height: 80px; object-fit: cover; border-radius: 20px;">
-      <h1 class="gradient-text">Vaanisethu.online</h1>
-      <p class="subtitle text-zinc-400">Watch movies together, instantly.</p>
-      
-      <div class="mt-4 flex items-center justify-center flex-col hidden">
-        <label for="username-input" class="text-zinc-500 text-sm mb-2">Display Name</label>
-        <input type="text" id="username-input" class="input max-w-xs text-center" placeholder="Guest" value="Guest">
       </div>
     </div>
 
-    <div class="card-grid max-w-4xl mt-4 gap-8">
-      
-      <!-- My Room Column -->
-      <div class="flex flex-col gap-8 w-full">
-         <div class="card fade-up">
+    <!-- Dashboard View -->
+    <div id="dashboard-view" class="view hidden min-h-screen items-center justify-center fade-in relative">
+
+      <!-- Top Dashboard Header with Profile info -->
+      <div class="dash-top-bar">
+        <div class="dash-user-pill">
+          <span id="dashboard-user-name" class="dash-user-name"></span>
+          <div class="dash-divider"></div>
+          <button id="btn-admin-dash"
+            class="hover-text text-green-500 text-sm pointer bg-transparent border-none font-bold hidden mr-3"
+            style="margin-right: 0.5rem">Admin</button>
+          <button id="btn-logout"
+            class="hover-text text-orange text-sm pointer bg-transparent border-none font-bold">Sign Out</button>
+        </div>
+      </div>
+
+      <div class="header-center fade-down">
+        <img src="/logo.png" alt="Logo" class="mx-auto mb-4"
+          style="width: 80px; height: 80px; object-fit: cover; border-radius: 20px;">
+        <h1 class="gradient-text">Vaanisethu.online</h1>
+        <p class="subtitle text-zinc-400">Watch movies together, instantly.</p>
+
+        <div class="mt-4 flex items-center justify-center flex-col hidden">
+          <label for="username-input" class="text-zinc-500 text-sm mb-2">Display Name</label>
+          <input type="text" id="username-input" class="input max-w-xs text-center" placeholder="Guest" value="Guest">
+        </div>
+      </div>
+
+      <div class="card-grid max-w-4xl mt-4 gap-8">
+
+        <!-- My Room Column -->
+        <div class="flex flex-col gap-8 w-full">
+          <div class="card fade-up">
             <div class="icon-box orange-box mb-4">
-               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m22 8-6 4 6 4V8Z" />
+                <rect x="2" y="6" width="14" height="12" rx="2" ry="2" />
+              </svg>
             </div>
             <h2 class="mb-2">My Room</h2>
             <p class="text-zinc-400 mb-6">Your permanent shared space.</p>
-            
+
             <div class="p-6 border border-zinc-800 bg-zinc-950 rounded-xl relative w-full text-left">
-                <span class="text-zinc-500 text-xs uppercase tracking-widest block mb-3 font-bold text-center">Room Code</span>
-                <div class="flex items-center justify-center bg-[#111] p-3 rounded-xl border border-zinc-800">
-                   <span id="my-room-code" class="mono text-3xl text-white font-bold tracking-widest text-center">------</span>
-                </div>
+              <span class="text-zinc-500 text-xs uppercase tracking-widest block mb-3 font-bold text-center">Room
+                Code</span>
+              <div class="flex items-center justify-center bg-[#111] p-3 rounded-xl border border-zinc-800">
+                <span id="my-room-code"
+                  class="mono text-3xl text-white font-bold tracking-widest text-center">------</span>
+              </div>
             </div>
 
             <div class="w-full mt-6 flex flex-col gap-3">
-              <button id="btn-start-my-room" class="btn btn-primary w-full lg-btn" style="box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);">Start Room</button>
-              <button id="btn-copy-invite" class="btn btn-outline w-full lg-btn flex items-center justify-center gap-2">Copy Invite Link</button>
+              <button id="btn-start-my-room" class="btn btn-primary w-full lg-btn"
+                style="box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);">Start Room</button>
+              <button id="btn-copy-invite"
+                class="btn btn-outline w-full lg-btn flex items-center justify-center gap-2">Copy Invite Link</button>
             </div>
-         </div>
+          </div>
 
-         <!-- Manual Join Card -->
-         <div class="card fade-up" style="animation-delay: 0.1s">
+          <!-- Manual Join Card -->
+          <div class="card fade-up" style="animation-delay: 0.1s">
             <h2 class="text-lg mb-4">Join Manually</h2>
             <div class="w-full flex gap-3">
-              <input type="text" id="join-key-input" class="input text-center text-xl tracking-widest mono uppercase" placeholder="XXXXXX">
+              <input type="text" id="join-key-input" class="input text-center text-xl tracking-widest mono uppercase"
+                placeholder="XXXXXX">
               <button id="btn-join" class="btn btn-secondary w-full" style="max-width: 120px;">Join</button>
             </div>
-         </div>
-      </div>
-
-      <!-- Friends Area Column -->
-      <div class="card fade-up flex-col w-full h-full" style="animation-delay: 0.2s; padding: 0; overflow: hidden; align-items: stretch;">
-         <div class="p-6 border-b border-zinc-800 flex items-center justify-between bg-zinc-900">
-             <h2 class="m-0 text-xl flex items-center gap-2 font-bold">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                Friends
-                <button id="btn-reload-friends" class="icon-btn hover-bg ml-2 text-zinc-500 hover:text-white border-none bg-transparent" title="Refresh Contacts" style="width: 28px; height: 28px; padding: 4px;"><svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 2v6h6"/></svg></button>
-             </h2>
-             <button id="btn-open-add-friend" class="btn btn-primary text-sm" style="width: auto; padding: 0.5rem 1rem;">Add</button>
-         </div>
-         
-         <div id="friend-requests-container" class="hidden border-b border-zinc-800 p-4 bg-zinc-950">
-             <h3 class="text-zinc-400 text-xs font-bold uppercase tracking-widest mb-3">Pending Requests</h3>
-             <div id="requests-list" class="flex flex-col gap-2">
-                 <!-- Request items injected here -->
-             </div>
-         </div>
-
-         <div class="p-4 flex-1 overflow-y-auto" style="min-height: 200px;">
-             <p class="text-zinc-500 text-center text-sm mt-4 italic" id="empty-friends-msg">You have no friends yet.</p>
-             <div id="friends-list" class="flex flex-col gap-2 relative w-full"></div>
-         </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- Room View -->
-  <div id="room-view" class="view hidden h-screen bg-black overflow-hidden relative fade-in">
-    
-    <!-- Top Bar -->
-    <div class="top-bar">
-      <div class="flex items-center gap-4 ptr-auto">
-        <button id="btn-leave" class="icon-btn hover-bg" aria-label="Leave room">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        </button>
-        <div class="room-info flex-1">
-          <h1 id="room-name-display" class="font-bold text-lg text-white">Loading...</h1>
-          <div class="flex items-center gap-2 text-sm text-zinc-400">
-            <span id="room-id-display" class="mono">xxxxxx</span>
-            <button id="btn-copy" class="hover-text pointer" style="padding: 0; min-height: auto;">Copy</button>
           </div>
         </div>
-        
-        <!-- Chat Button (Moved next to room title) -->
-        <div id="chat-fab-container" class="relative ptr-auto">
-          <button id="btn-chat-fab" class="icon-btn hover-bg" style="background-color: rgba(249, 115, 22, 0.2); color: var(--orange);" title="Room Chat" aria-label="Open room chat">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            <span id="chat-badge" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold h-5 min-w-[20px] max-w-fit px-1 rounded-full flex items-center justify-center border-2 border-[#18181b]" style="top: -0.2rem; right: -0.2rem;" aria-live="polite">0</span>
-          </button>
-          <!-- Popup message preview -->
-          <div id="chat-notification" class="chat-notification">
-            <span id="notif-name" class="font-bold text-orange mr-1"></span><span id="notif-text"></span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="flex items-center gap-3 ptr-auto">
-        <button id="btn-player-settings" class="icon-btn hover-bg" title="Settings / Source" aria-label="Player settings and video source">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </button>
-      </div>
-    </div>
 
-    <!-- Video Area -->
-    <div id="video-container" class="video-area bg-zinc-950 flex items-center justify-center relative w-full h-full">
-      <div id="sync-overlay" class="absolute inset-0 bg-black-60 hidden flex items-center justify-center z-50">
-        <button id="btn-sync-playback" class="btn btn-primary lg-btn transform-hover flex items-center gap-3 ptr-auto">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg>
-          Tap to Sync Playback
-        </button>
-      </div>
-
-      <!-- Custom Player Wrapper -->
-      <div id="custom-player-wrapper" class="player-wrapper hidden relative w-full h-full flex items-center justify-center">
-        <!-- Main Video Tag (Native Controls Restored) -->
-        <video id="main-video" controls playsinline webkit-playsinline class="max-w-full max-h-full" style="touch-action: manipulation;"></video>
-
-        <!-- Ad Break Timeline Bar — yellow markers below video -->
-        <div id="ad-timeline-bar" class="ad-timeline-bar hidden">
-          <div class="ad-timeline-inner">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="#f97316" style="flex-shrink:0;opacity:0.7"><path d="M2 7h20v13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7z"/><path d="M16 2 12 7 8 2" fill="none" stroke="#f97316" stroke-width="2"/></svg>
-            <div class="ad-timeline-track" id="ad-timeline-track">
-              <div class="ad-timeline-cursor" id="ad-timeline-cursor"></div>
-              <!-- Yellow ad break markers injected by JS -->
+        <!-- Leaderboard Card -->
+        <div class="card fade-up" style="animation-delay:0.15s;">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="icon-box" style="background:rgba(234,179,8,0.15);color:#eab308;">🏆</div>
+            <div>
+              <h2 class="m-0">Leaderboard</h2>
+              <p class="text-zinc-500 text-xs m-0">Top film watchers this month</p>
             </div>
-            <span class="ad-timeline-label">Ad Breaks</span>
+          </div>
+          <div id="leaderboard-list" style="display:flex;flex-direction:column;gap:0.5rem;">
+            <p style="color:#52525b;font-size:0.8rem;text-align:center;padding:1rem;">Loading...</p>
           </div>
         </div>
+
+        <!-- Friends Area Column -->
+        <div class="card fade-up flex-col w-full h-full"
+          style="animation-delay: 0.2s; padding: 0; overflow: hidden; align-items: stretch;">
+          <div class="p-6 border-b border-zinc-800 flex items-center justify-between bg-zinc-900">
+            <h2 class="m-0 text-xl flex items-center gap-2 font-bold">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+              Friends
+              <button id="btn-reload-friends"
+                class="icon-btn hover-bg ml-2 text-zinc-500 hover:text-white border-none bg-transparent"
+                title="Refresh Contacts" style="width: 28px; height: 28px; padding: 4px;"><svg width="100%"
+                  height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <path d="M3 2v6h6" />
+                </svg></button>
+            </h2>
+            <button id="btn-open-add-friend" class="btn btn-primary text-sm"
+              style="width: auto; padding: 0.5rem 1rem;">Add</button>
+          </div>
+
+          <div id="friend-requests-container" class="hidden border-b border-zinc-800 p-4 bg-zinc-950">
+            <h3 class="text-zinc-400 text-xs font-bold uppercase tracking-widest mb-3">Pending Requests</h3>
+            <div id="requests-list" class="flex flex-col gap-2">
+              <!-- Request items injected here -->
+            </div>
+          </div>
+
+          <div class="p-4 flex-1 overflow-y-auto" style="min-height: 200px;">
+            <p class="text-zinc-500 text-center text-sm mt-4 italic" id="empty-friends-msg">You have no friends yet.</p>
+            <div id="friends-list" class="flex flex-col gap-2 relative w-full"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Room View -->
+    <div id="room-view" class="view hidden h-screen bg-black overflow-hidden relative fade-in">
+
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <div class="flex items-center gap-4 ptr-auto">
+          <button id="btn-leave" class="icon-btn hover-bg" aria-label="Leave room">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"
+              aria-hidden="true">
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <div class="room-info flex-1">
+            <h1 id="room-name-display" class="font-bold text-lg text-white">Loading...</h1>
+            <div class="flex items-center gap-2 text-sm text-zinc-400">
+              <span id="room-id-display" class="mono">xxxxxx</span>
+              <button id="btn-copy" class="hover-text pointer" style="padding: 0; min-height: auto;">Copy</button>
+            </div>
+          </div>
+
+          <!-- Chat Button -->
+          <div id="chat-fab-container" class="relative ptr-auto">
+            <button id="btn-chat-fab" class="icon-btn hover-bg"
+              style="background-color: rgba(249, 115, 22, 0.2); color: var(--orange);" title="Room Chat"
+              aria-label="Open room chat">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                aria-hidden="true">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              <span id="chat-badge"
+                class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold h-5 min-w-[20px] max-w-fit px-1 rounded-full flex items-center justify-center border-2 border-[#18181b]"
+                style="top: -0.2rem; right: -0.2rem;" aria-live="polite">0</span>
+            </button>
+            <div id="chat-notification" class="chat-notification">
+              <span id="notif-name" class="font-bold text-orange mr-1"></span><span id="notif-text"></span>
+            </div>
+          </div>
+          <!-- Emoji Reaction Button -->
+          <div class="relative ptr-auto" id="emoji-tray-container" style="display:none;">
+            <button id="btn-emoji-tray" class="icon-btn hover-bg" title="React" aria-label="Send emoji reaction"
+              style="font-size:1.1rem;line-height:1;">
+              😊
+            </button>
+            <div id="emoji-tray" style="display:none;position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#18181b;border:1px solid #27272a;border-radius:14px;padding:0.4rem 0.5rem;display:none;gap:0.3rem;z-index:9999;white-space:nowrap;">
+              <button class="emoji-btn" data-emoji="❤️">❤️</button>
+              <button class="emoji-btn" data-emoji="😂">😂</button>
+              <button class="emoji-btn" data-emoji="😮">😮</button>
+              <button class="emoji-btn" data-emoji="😢">😢</button>
+              <button class="emoji-btn" data-emoji="🔥">🔥</button>
+              <button class="emoji-btn" data-emoji="👏">👏</button>
+            </div>
+          </div>
+          <!-- WhatsApp Room Share -->
+          <button id="btn-whatsapp-share" class="icon-btn hover-bg" title="Share via WhatsApp"
+            aria-label="Share room on WhatsApp"
+            style="display:none;background-color:rgba(37,211,102,0.15);color:#25d366;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-3 ptr-auto">
+          <button id="btn-player-settings" class="icon-btn hover-bg" title="Settings / Source"
+            aria-label="Player settings and video source">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              aria-hidden="true">
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </button>
+        </div>
       </div>
 
-      <!-- Waiting UI (For guests in an empty room) -->
-      <div id="waiting-ui" class="source-ui text-center text-white p-8 max-w-md w-full fade-up hidden">
-        <div class="icon-box mx-auto mb-6 text-zinc-500" style="background: rgba(255,255,255,0.05);">
-           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <!-- Video Area -->
+      <div id="video-container" class="video-area bg-zinc-950 flex items-center justify-center relative w-full h-full">
+        <div id="sync-overlay" class="absolute inset-0 bg-black-60 hidden flex items-center justify-center z-50">
+          <button id="btn-sync-playback"
+            class="btn btn-primary lg-btn transform-hover flex items-center gap-3 ptr-auto">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m22 8-6 4 6 4V8Z" />
+              <rect x="2" y="6" width="14" height="12" rx="2" ry="2" />
+            </svg>
+            Tap to Sync Playback
+          </button>
         </div>
-        <h3 class="text-xl font-bold mb-2">Waiting for Host</h3>
-        <p class="text-zinc-500 text-sm mb-6">The room owner is currently selecting a movie. Please wait.</p>
-      </div>
 
-      <!-- Source Select UI -->
-      <div id="source-ui" class="source-ui text-center text-white p-8 max-w-md w-full fade-up">
-        <div class="icon-box dark-box mx-auto mb-6">
-           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg>
+        <!-- Custom Player Wrapper -->
+        <div id="custom-player-wrapper"
+          class="player-wrapper hidden relative w-full h-full flex items-center justify-center">
+          <!-- Main Video Tag (Native Controls Restored) -->
+          <video id="main-video" controls playsinline webkit-playsinline class="max-w-full max-h-full"
+            style="touch-action: manipulation;"></video>
+
+          <!-- Ad Break Timeline Bar — yellow markers below video -->
+          <div id="ad-timeline-bar" class="ad-timeline-bar hidden">
+            <div class="ad-timeline-inner">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="#f97316" style="flex-shrink:0;opacity:0.7">
+                <path d="M2 7h20v13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7z" />
+                <path d="M16 2 12 7 8 2" fill="none" stroke="#f97316" stroke-width="2" />
+              </svg>
+              <div class="ad-timeline-track" id="ad-timeline-track">
+                <div class="ad-timeline-cursor" id="ad-timeline-cursor"></div>
+                <!-- Yellow ad break markers injected by JS -->
+              </div>
+              <span class="ad-timeline-label">Ad Breaks</span>
+            </div>
+          </div>
         </div>
-        <h3 class="text-xl font-bold mb-2">Select Movie Source</h3>
-        <p class="text-zinc-500 text-sm mb-6">Choose how you want to play the movie.</p>
-        
-        <!-- Step 1: Choose Source Type -->
-        <div id="source-selection-step" class="flex flex-col gap-3 w-full">
+
+        <!-- Waiting UI (For guests in an empty room) -->
+        <div id="waiting-ui" class="source-ui text-center text-white p-8 max-w-md w-full fade-up hidden">
+          <div class="icon-box mx-auto mb-6 text-zinc-500" style="background: rgba(255,255,255,0.05);">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-2">Waiting for Host</h3>
+          <p class="text-zinc-500 text-sm mb-6">The room owner is currently selecting a movie. Please wait.</p>
+        </div>
+
+        <!-- Source Select UI -->
+        <div id="source-ui" class="source-ui text-center text-white p-8 max-w-md w-full fade-up">
+          <div class="icon-box dark-box mx-auto mb-6">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m22 8-6 4 6 4V8Z" />
+              <rect x="2" y="6" width="14" height="12" rx="2" ry="2" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-2">Select Movie Source</h3>
+          <p class="text-zinc-500 text-sm mb-6">Choose how you want to play the movie.</p>
+
+          <!-- Step 1: Choose Source Type -->
+          <div id="source-selection-step" class="flex flex-col gap-3 w-full">
             <button id="btn-src-dropbox" class="btn btn-secondary w-full flex items-center justify-center gap-3">
-               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12l-6.8 5.4-4-3.2-4 3.2L.4 12l6.8-5.4 4 3.2 4-3.2z"/><path d="M7.2 17.4l4 3.2 4-3.2"/></svg>
-               Dropbox Link
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 12l-6.8 5.4-4-3.2-4 3.2L.4 12l6.8-5.4 4 3.2 4-3.2z" />
+                <path d="M7.2 17.4l4 3.2 4-3.2" />
+              </svg>
+              Dropbox Link
             </button>
             <button id="btn-src-telegram" class="btn btn-secondary w-full flex items-center justify-center gap-3">
-               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-               Telegram Bot Stream
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m22 2-7 20-4-9-9-4Z" />
+                <path d="M22 2 11 13" />
+              </svg>
+              Telegram Bot Stream
             </button>
             <button id="btn-src-local" class="btn btn-secondary w-full flex items-center justify-center gap-3">
-               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-               Local File Upload
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              Local File Upload
             </button>
             <!-- Rented Films button -->
             <div class="store-divider">OR</div>
-            <button id="btn-src-rented" class="btn w-full flex items-center justify-center gap-3" style="background: linear-gradient(135deg, #1a0a2e 0%, #0f172a 100%); border: 1px solid rgba(168,85,247,0.5); color: #c084fc;">
-               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 2h10l4 4v16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M9 2v4h6V2"/><path d="M12 11v6"/><path d="M9 14l3 3 3-3"/></svg>
-               Rented Films Store
+            <button id="btn-src-rented" class="btn w-full flex items-center justify-center gap-3"
+              style="background: linear-gradient(135deg, #1a0a2e 0%, #0f172a 100%); border: 1px solid rgba(168,85,247,0.5); color: #c084fc;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M7 2h10l4 4v16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" />
+                <path d="M9 2v4h6V2" />
+                <path d="M12 11v6" />
+                <path d="M9 14l3 3 3-3" />
+              </svg>
+              Rented Films Store
             </button>
+          </div>
+
+          <!-- Step 2: Input Field -->
+          <div id="source-input-step" class="w-full form-group hidden mt-4">
+            <div class="flex items-center mb-4">
+              <button id="btn-back-source"
+                class="text-zinc-400 hover:text-white text-sm bg-transparent border-none pointer flex items-center gap-1 font-bold"
+                style="padding:0.25rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m15 18-6-6 6-6" />
+                </svg> Back
+              </button>
+              <span id="source-step-title"
+                class="text-sm text-zinc-500 uppercase tracking-widest font-bold mx-auto pr-8">Source</span>
+            </div>
+
+            <!-- Guide exclusively for Telegram -->
+            <div id="telegram-guide" class="text-left bg-zinc-900 border border-zinc-800 p-4 rounded-xl mb-6 hidden">
+              <h4 class="text-white font-bold text-sm mb-2 flex items-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 16v-4" />
+                  <path d="M12 8h.01" />
+                </svg>
+                How to get Telegram link
+              </h4>
+              <p class="text-xs text-zinc-400 mb-3 leading-relaxed">Forward your movie file on Telegram to our direct
+                streaming bot <a href="https://t.me/Vaanisetu_Streamer_bot" target="_blank"
+                  class="text-orange underline font-bold">@Vaanisetu_Streamer_bot</a>. The bot will reply with a direct
+                playable link. Copy that link and paste it below.</p>
+            </div>
+
+            <!-- URL Inputs -->
+            <div id="url-input-group" class="flex gap-2 w-full hidden">
+              <input type="text" id="room-url-input" class="input flex-1" placeholder="Paste URL Here">
+              <button id="btn-play-url" class="btn btn-primary"
+                style="width: auto; padding: 0.75rem 1.25rem;">Go</button>
+            </div>
+
+            <!-- Local File -->
+            <div id="local-input-group" class="w-full hidden mt-2">
+              <label for="room-file-upload" class="file-label">Choose Video File</label>
+              <input type="file" id="room-file-upload" accept="video/*" hidden>
+              <p class="text-xs text-zinc-500 mt-3">Local files are only streamed from your device. Syncing is
+                supported.</p>
+            </div>
+          </div>
         </div>
-
-        <!-- Step 2: Input Field -->
-        <div id="source-input-step" class="w-full form-group hidden mt-4">
-          <div class="flex items-center mb-4">
-            <button id="btn-back-source" class="text-zinc-400 hover:text-white text-sm bg-transparent border-none pointer flex items-center gap-1 font-bold" style="padding:0.25rem;">
-               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg> Back
-            </button>
-            <span id="source-step-title" class="text-sm text-zinc-500 uppercase tracking-widest font-bold mx-auto pr-8">Source</span>
-          </div>
-          
-          <!-- Guide exclusively for Telegram -->
-          <div id="telegram-guide" class="text-left bg-zinc-900 border border-zinc-800 p-4 rounded-xl mb-6 hidden">
-             <h4 class="text-white font-bold text-sm mb-2 flex items-center gap-2">
-                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                 How to get Telegram link
-             </h4>
-             <p class="text-xs text-zinc-400 mb-3 leading-relaxed">Forward your movie file on Telegram to our direct streaming bot <a href="https://t.me/Vaanisetu_Streamer_bot" target="_blank" class="text-orange underline font-bold">@Vaanisetu_Streamer_bot</a>. The bot will reply with a direct playable link. Copy that link and paste it below.</p>
-          </div>
-
-          <!-- URL Inputs -->
-          <div id="url-input-group" class="flex gap-2 w-full hidden">
-            <input type="text" id="room-url-input" class="input flex-1" placeholder="Paste URL Here">
-            <button id="btn-play-url" class="btn btn-primary" style="width: auto; padding: 0.75rem 1.25rem;">Go</button>
-          </div>
-          
-          <!-- Local File -->
-          <div id="local-input-group" class="w-full hidden mt-2">
-            <label for="room-file-upload" class="file-label">Choose Video File</label>
-            <input type="file" id="room-file-upload" accept="video/*" hidden>
-            <p class="text-xs text-zinc-500 mt-3">Local files are only streamed from your device. Syncing is supported.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Chat Popup Modal -->
-    <div id="chat-popup" class="chat-popup closed">
-      <div class="sidebar-header border-b border-zinc-800 p-4 flex items-center justify-between bg-zinc-900">
-        <h2 class="font-bold text-white flex items-center gap-2 text-md">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          Room Chat
-        </h2>
-        <button id="btn-close-sidebar" class="icon-btn hover-text text-zinc-500 bg-transparent border-none" aria-label="Close chat">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
       </div>
 
-      <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-        <!-- Messages will be injected here -->
-      </div>
-
-      <form id="chat-form" class="p-3 bg-zinc-950 border-t border-zinc-800">
-        <div class="relative w-full flex items-center">
-          <label for="chat-input" class="sr-only">Type a chat message</label>
-          <input type="text" id="chat-input" class="input w-full pr-12 text-sm bg-zinc-900" autocomplete="off" placeholder="Type a message...">
-          <button type="submit" class="absolute right-2 text-orange bg-transparent border-none ptr-auto pointer p-1" aria-label="Send message">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+      <!-- Chat Popup Modal -->
+      <div id="chat-popup" class="chat-popup closed">
+        <div class="sidebar-header border-b border-zinc-800 p-4 flex items-center justify-between bg-zinc-900">
+          <h2 class="font-bold text-white flex items-center gap-2 text-md">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            Room Chat
+          </h2>
+          <button id="btn-close-sidebar" class="icon-btn hover-text text-zinc-500 bg-transparent border-none"
+            aria-label="Close chat">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              aria-hidden="true">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
           </button>
         </div>
-      </form>
-    </div>
 
-    <!-- Player Settings Modal (inside room-view is fine, only used in room) -->
-    <div id="settings-modal" class="hidden items-center justify-center fade-in" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.6); z-index: 9999;">
-       <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl w-full max-w-sm">
-          <div class="flex items-center justify-between mb-4">
-             <h3 class="text-lg font-bold text-white">Room Settings</h3>
-             <button id="btn-close-settings" class="text-zinc-500 hover:text-white pointer bg-transparent border-none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+          <!-- Messages will be injected here -->
+        </div>
+
+        <form id="chat-form" class="p-3 bg-zinc-950 border-t border-zinc-800">
+          <div class="relative w-full flex items-center">
+            <label for="chat-input" class="sr-only">Type a chat message</label>
+            <input type="text" id="chat-input" class="input w-full pr-12 text-sm bg-zinc-900" autocomplete="off"
+              placeholder="Type a message...">
+            <button type="submit" class="absolute right-2 text-orange bg-transparent border-none ptr-auto pointer p-1"
+              aria-label="Send message">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                aria-hidden="true">
+                <path d="m22 2-7 20-4-9-9-4Z" />
+                <path d="M22 2 11 13" />
+              </svg>
+            </button>
           </div>
-          <p class="text-sm text-zinc-400 mb-6">Force a synchronization with your partner, or remove the current video to select a new one.</p>
-          
+        </form>
+      </div>
+
+      <!-- Player Settings Modal (inside room-view is fine, only used in room) -->
+      <div id="settings-modal" class="hidden items-center justify-center fade-in"
+        style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.6); z-index: 9999;">
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl w-full max-w-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-white">Room Settings</h3>
+            <button id="btn-close-settings"
+              class="text-zinc-500 hover:text-white pointer bg-transparent border-none"><svg width="20" height="20"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6 6 18M6 6l12 12" />
+              </svg></button>
+          </div>
+          <p class="text-sm text-zinc-400 mb-6">Force a synchronization with your partner, or remove the current video
+            to select a new one.</p>
+
           <button id="btn-force-sync" class="btn btn-primary w-full mb-3 flex items-center justify-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m22 8-6 4 6 4V8Z" />
+              <rect x="2" y="6" width="14" height="12" rx="2" ry="2" />
+            </svg>
             Sync with partner
           </button>
-          
-          <button id="btn-clear-chat-global" class="btn btn-outline w-full text-orange mb-3 transition-colors flex items-center justify-center gap-2" style="border-color: var(--orange);">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+
+          <button id="btn-clear-chat-global"
+            class="btn btn-outline w-full text-orange mb-3 transition-colors flex items-center justify-center gap-2"
+            style="border-color: var(--orange);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              <line x1="9" y1="9" x2="15" y2="15" />
+              <line x1="15" y1="9" x2="9" y2="15" />
+            </svg>
             Clear Chat
           </button>
-          
-          <button id="btn-remove-video" class="btn btn-outline w-full text-red-500 border-red-500 hover:bg-red-900 transition-colors flex items-center justify-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+
+          <button id="btn-remove-video"
+            class="btn btn-outline w-full text-red-500 border-red-500 hover:bg-red-900 transition-colors flex items-center justify-center gap-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            </svg>
             Remove this video
           </button>
-          
+
           <input type="hidden" id="settings-url-input">
           <button id="btn-apply-settings" class="hidden">Apply</button>
-       </div>
+        </div>
+      </div>
+
     </div>
+    <!-- END room-view -->
 
-  </div>
-  <!-- END room-view -->
-
-  <!-- Add Friend Modal — at ROOT level so it works on dashboard too -->
-  <div id="add-friend-modal" class="hidden items-center justify-center fade-in" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.6); z-index: 99999;">
-     <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl w-full max-w-sm mx-4">
+    <!-- Add Friend Modal — at ROOT level so it works on dashboard too -->
+    <div id="add-friend-modal" class="hidden items-center justify-center fade-in"
+      style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.6); z-index: 99999;">
+      <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl w-full max-w-sm mx-4">
         <div class="flex items-center justify-between mb-4">
-           <h3 class="text-lg font-bold text-white">Add a Friend</h3>
-           <button id="btn-close-add-friend" class="text-zinc-500 hover:text-white pointer bg-transparent border-none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          <h3 class="text-lg font-bold text-white">Add a Friend</h3>
+          <button id="btn-close-add-friend"
+            class="text-zinc-500 hover:text-white pointer bg-transparent border-none"><svg width="20" height="20"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg></button>
         </div>
         <p class="text-sm text-zinc-400 mb-4">Enter your friend's 6-character room code to send them a request.</p>
-        <input type="text" id="add-friend-input" class="input mb-4 text-center mono uppercase tracking-widest text-xl" placeholder="XXXXXX">
+        <input type="text" id="add-friend-input" class="input mb-4 text-center mono uppercase tracking-widest text-xl"
+          placeholder="XXXXXX">
         <button id="btn-send-request" class="btn btn-primary w-full">Send Request</button>
         <p id="add-friend-err" class="text-red-500 text-xs text-center mt-3 hidden"></p>
         <p id="add-friend-success" class="text-green-500 text-xs text-center mt-3 hidden"></p>
-     </div>
-  </div>
+      </div>
+    </div>
 
-  <!-- Alert Modal — at ROOT level so it overlays everything -->
-  <div id="alert-modal" class="hidden items-center justify-center fade-in" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.6); z-index: 99999;">
-     <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl w-full max-w-sm text-center mx-4">
+    <!-- Alert Modal — at ROOT level so it overlays everything -->
+    <div id="alert-modal" class="hidden items-center justify-center fade-in"
+      style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.6); z-index: 99999;">
+      <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl w-full max-w-sm text-center mx-4">
         <div class="flex justify-center mb-4">
-           <div class="bg-red-500/20 p-3 rounded-full text-red-500">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-           </div>
+          <div class="bg-red-500/20 p-3 rounded-full text-red-500">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+              <path d="M12 9v4" />
+              <path d="M12 17h.01" />
+            </svg>
+          </div>
         </div>
         <h3 class="text-xl font-bold text-white mb-2" id="alert-modal-title">Attention</h3>
         <p class="text-zinc-400 mb-6 text-sm" id="alert-modal-text">Something went wrong.</p>
-        <button id="btn-close-alert" class="btn btn-outline border-zinc-700 text-zinc-300 w-full hover-bg">Okay, Got it</button>
-     </div>
-  </div>
+        <button id="btn-close-alert" class="btn btn-outline border-zinc-700 text-zinc-300 w-full hover-bg">Okay, Got
+          it</button>
+      </div>
+    </div>
 
-  <!-- Film Store Modal -->
-  <div id="film-store-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.92); backdrop-filter:blur(12px); z-index:99999; overflow-y:auto;">
-    <div class="film-store-wrapper">
-      <!-- Header -->
-      <div class="film-store-header">
-        <div>
-          <h2 class="film-store-title">🎬 Film Store</h2>
-          <p class="text-zinc-500 text-sm">Rent a film and watch it for the duration you choose.</p>
+    <!-- Film Store Modal -->
+    <div id="film-store-modal"
+      style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.92); backdrop-filter:blur(12px); z-index:99999; overflow-y:auto;">
+      <div class="film-store-wrapper">
+        <!-- Header -->
+        <div class="film-store-header">
+          <div>
+            <h2 class="film-store-title">🎬 Film Store</h2>
+            <p class="text-zinc-500 text-sm">Rent a film and watch it for the duration you choose.</p>
+          </div>
+          <button id="btn-close-film-store" class="icon-btn hover-bg"
+            style="background: #27272a; width:40px; height:40px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
         </div>
-        <button id="btn-close-film-store" class="icon-btn hover-bg" style="background: #27272a; width:40px; height:40px;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+
+        <!-- Tabs -->
+        <div class="film-store-tabs-bar">
+          <button id="tab-btn-browse" class="film-tab-btn active" onclick="switchFilmTab('browse')">Browse Films</button>
+          <button id="tab-btn-rentals" class="film-tab-btn" onclick="switchFilmTab('rentals')">My Rentals</button>
+          <button id="tab-btn-history" class="film-tab-btn" onclick="switchFilmTab('history')">📊 History</button>
+        </div>
+
+        <!-- Browse Tab -->
+        <div id="film-tab-browse">
+          <div id="films-grid" class="films-grid">
+            <div class="text-zinc-500 text-center py-12 col-span-full">
+              <p>Loading films...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- My Rentals Tab -->
+        <div id="film-tab-rentals" class="hidden">
+          <div id="rentals-grid" class="films-grid">
+            <div class="text-zinc-500 text-center py-12 col-span-full">
+              <p>Loading your rentals...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Watch History Tab -->
+        <div id="film-tab-history" class="hidden">
+          <div id="history-list" style="padding:1.5rem;display:flex;flex-direction:column;gap:0.75rem;">
+            <p style="color:#52525b;text-align:center;padding:3rem 0;">Loading watch history...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ====== Site Footer (Page View Counter) ====== -->
+  <footer id="site-footer" class="site-footer" aria-label="Site statistics">
+    <div class="footer-inner">
+      <span class="footer-fire">🔥</span>
+      <span class="footer-stat">
+        <span id="public-visitor-count" class="footer-count">0</span>
+        <span class="footer-label">Page Views</span>
+      </span>
+      <span class="footer-sep">·</span>
+      <span class="footer-tagline">Vaanisethu — Watch Together</span>
+      <span class="footer-sep hidden-sm">·</span>
+      <span class="footer-links hidden-sm">
+        <a href="/terms.html">Terms</a> &amp;
+        <a href="/privacy.html">Privacy</a>
+      </span>
+    </div>
+    <div class="footer-copy">&copy; 2025 Vaanisethu. All rights reserved.</div>
+  </footer>
+
+  <!-- ====== Help FAB Button ====== -->
+  <button id="help-fab" class="help-fab" aria-label="Help and Contact" title="Help & Contact">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+      <path d="M12 17h.01" />
+    </svg>
+  </button>
+
+  <!-- ====== Contact Modal ====== -->
+  <div id="contact-modal" class="contact-modal-overlay hidden" role="dialog" aria-modal="true"
+    aria-labelledby="contact-modal-title">
+    <div class="contact-modal-box">
+      <div class="contact-modal-header">
+        <h2 id="contact-modal-title" class="contact-modal-title">Help &amp; Contact</h2>
+        <button id="btn-close-contact" class="icon-btn hover-bg" aria-label="Close modal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
         </button>
       </div>
+      <p class="contact-modal-sub">Report a bug or send us a message. We'll reply to your email.</p>
+      <div class="contact-form" id="contact-form">
+        <label for="contact-name" class="contact-label">Your Name</label>
+        <input type="text" id="contact-name" class="input w-full" placeholder="Display name" autocomplete="name">
 
-      <!-- Tabs -->
-      <div class="film-store-tabs-bar">
-        <button id="tab-btn-browse" class="film-tab-btn active" onclick="switchFilmTab('browse')">Browse Films</button>
-        <button id="tab-btn-rentals" class="film-tab-btn" onclick="switchFilmTab('rentals')">My Rentals</button>
+        <label for="contact-email" class="contact-label">Email</label>
+        <input type="email" id="contact-email" class="input w-full" placeholder="you@email.com" autocomplete="email">
+
+        <label for="contact-message" class="contact-label">Message / Bug Report</label>
+        <textarea id="contact-message" class="input w-full contact-textarea" rows="4"
+          placeholder="Describe your issue or feedback..."></textarea>
+
+        <label for="contact-screenshot" class="contact-label">Screenshot (optional)</label>
+        <label for="contact-screenshot" class="contact-file-label" id="contact-file-label-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+          <span id="contact-file-name">Click to attach screenshot</span>
+        </label>
+        <input type="file" id="contact-screenshot" accept="image/*" style="display:none;">
+        <img id="contact-preview" src="" alt="Screenshot preview" class="contact-preview hidden">
+
+        <button id="btn-send-contact" class="btn btn-primary w-full mt-4">Send Message</button>
+        <p id="contact-status" class="text-center text-sm mt-3 hidden"></p>
       </div>
+    </div>
+  </div>
 
-      <!-- Browse Tab -->
-      <div id="film-tab-browse">
-        <div id="films-grid" class="films-grid">
-          <div class="text-zinc-500 text-center py-12 col-span-full">
-            <svg class="mx-auto mb-4" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 14.14 14.14"/></svg>
-            <p>Loading films...</p>
-          </div>
+  <!-- ====== IN-MOVIE SKIPPABLE AD OVERLAY ====== -->
+  <!-- ====== IN-MOVIE FULLSCREEN AD OVERLAY ====== -->
+  <div id="inmovie-ad" class="inmovie-ad hidden" role="dialog" aria-modal="true" aria-label="Advertisement">
+
+    <!-- Top bar: AD badge + timer + skip button -->
+    <div class="inmovie-top-bar">
+      <div class="inmovie-top-left">
+        <span class="inmovie-ad-badge">AD</span>
+        <span class="inmovie-ad-tagline">Supporting Vaanisethu keeps it free 🙏</span>
+      </div>
+      <div class="inmovie-top-right">
+        <span id="inmovie-ad-timer" class="inmovie-ad-timer-fs">15s</span>
+        <button id="inmovie-skip-btn" class="inmovie-skip-btn hidden" aria-label="Skip Ad">
+          Skip Ad ▶
+        </button>
+      </div>
+    </div>
+
+    <!-- Centered ad content area -->
+    <div class="inmovie-center">
+      <div class="inmovie-ad-label">Advertisement</div>
+      <!-- AdSterra 300×250 (highest revenue standard unit) -->
+      <div id="adsterra-inmovie-banner" class="inmovie-banner-slot"></div>
+      <div class="inmovie-resume-hint" id="inmovie-resume-hint">
+        ⏸ Movie paused · Ad ends in <span id="inmovie-hint-timer">15s</span>
+      </div>
+    </div>
+
+    <!-- Progress bar at bottom -->
+    <div class="inmovie-progress-bar">
+      <div id="inmovie-progress-fill" class="inmovie-progress-fill"></div>
+    </div>
+
+  </div>
+
+
+  <!-- ====== AD MODAL ====== -->
+  <div id="ad-modal" class="ad-modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Watch Ad">
+    <div class="ad-modal-box">
+      <div class="ad-modal-header">
+        <div>
+          <div class="ad-modal-title" id="ad-modal-title">Watch Ad <span id="ad-modal-num">1</span> of <span
+              id="ad-modal-total">2</span></div>
+          <div class="ad-modal-sub">Please watch the full ad to continue</div>
+        </div>
+        <div class="ad-timer-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <span id="ad-countdown">30</span>s
         </div>
       </div>
 
-      <!-- My Rentals Tab -->
-      <div id="film-tab-rentals" class="hidden">
-        <div id="rentals-grid" class="films-grid">
-          <div class="text-zinc-500 text-center py-12 col-span-full">
-            <p>Loading your rentals...</p>
-          </div>
+      <!-- Ad Modal full-screen countdown player — Real 300×250 AdSterra Banner -->
+      <div class="ad-player-area" id="ad-player-area"
+        style="min-height:280px;padding:1rem;flex-direction:column;gap:0.5rem;">
+        <div id="adsterra-modal-banner"
+          style="display:flex;align-items:center;justify-content:center;width:100%;min-height:250px;">
+          <!-- Loaded dynamically when modal opens to avoid wasted impressions -->
         </div>
       </div>
-    </div>
-  </div>
 
-</main>
-
-<!-- ====== Site Footer (Page View Counter) ====== -->
-<footer id="site-footer" class="site-footer" aria-label="Site statistics">
-  <div class="footer-inner">
-    <span class="footer-fire">🔥</span>
-    <span class="footer-stat">
-      <span id="public-visitor-count" class="footer-count">0</span>
-      <span class="footer-label">Page Views</span>
-    </span>
-    <span class="footer-sep">·</span>
-    <span class="footer-tagline">Vaanisethu — Watch Together</span>
-    <span class="footer-sep hidden-sm">·</span>
-    <span class="footer-links hidden-sm">
-      <a href="/terms.html">Terms</a> &amp;
-      <a href="/privacy.html">Privacy</a>
-    </span>
-  </div>
-  <div class="footer-copy">&copy; 2025 Vaanisethu. All rights reserved.</div>
-</footer>
-
-<!-- ====== Help FAB Button ====== -->
-<button id="help-fab" class="help-fab" aria-label="Help and Contact" title="Help & Contact">
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
-</button>
-
-<!-- ====== Contact Modal ====== -->
-<div id="contact-modal" class="contact-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="contact-modal-title">
-  <div class="contact-modal-box">
-    <div class="contact-modal-header">
-      <h2 id="contact-modal-title" class="contact-modal-title">Help &amp; Contact</h2>
-      <button id="btn-close-contact" class="icon-btn hover-bg" aria-label="Close modal">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <p class="contact-modal-sub">Report a bug or send us a message. We'll reply to your email.</p>
-    <div class="contact-form">
-      <label for="contact-name" class="contact-label">Your Name</label>
-      <input type="text" id="contact-name" class="input w-full" placeholder="Display name" autocomplete="name">
-
-      <label for="contact-email" class="contact-label">Email</label>
-      <input type="email" id="contact-email" class="input w-full" placeholder="you@email.com" autocomplete="email">
-
-      <label for="contact-message" class="contact-label">Message / Bug Report</label>
-      <textarea id="contact-message" class="input w-full contact-textarea" rows="4" placeholder="Describe your issue or feedback..."></textarea>
-
-      <label for="contact-screenshot" class="contact-label">Screenshot (optional)</label>
-      <label for="contact-screenshot" class="contact-file-label" id="contact-file-label-btn">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <span id="contact-file-name">Click to attach screenshot</span>
-      </label>
-      <input type="file" id="contact-screenshot" accept="image/*" style="display:none;">
-      <img id="contact-preview" src="" alt="Screenshot preview" class="contact-preview hidden">
-
-      <button id="btn-send-contact" class="btn btn-primary w-full mt-4">Send Message</button>
-      <p id="contact-status" class="text-center text-sm mt-3 hidden"></p>
-    </div>
-  </div>
-</div>
-
-<!-- ====== IN-MOVIE SKIPPABLE AD OVERLAY ====== -->
-<!-- ====== IN-MOVIE FULLSCREEN AD OVERLAY ====== -->
-<div id="inmovie-ad" class="inmovie-ad hidden" role="dialog" aria-modal="true" aria-label="Advertisement">
-
-  <!-- Top bar: AD badge + timer + skip button -->
-  <div class="inmovie-top-bar">
-    <div class="inmovie-top-left">
-      <span class="inmovie-ad-badge">AD</span>
-      <span class="inmovie-ad-tagline">Supporting Vaanisethu keeps it free 🙏</span>
-    </div>
-    <div class="inmovie-top-right">
-      <span id="inmovie-ad-timer" class="inmovie-ad-timer-fs">15s</span>
-      <button id="inmovie-skip-btn" class="inmovie-skip-btn hidden" aria-label="Skip Ad">
-        Skip Ad ▶
-      </button>
-    </div>
-  </div>
-
-  <!-- Centered ad content area -->
-  <div class="inmovie-center">
-    <div class="inmovie-ad-label">Advertisement</div>
-    <!-- AdSterra 300×250 (highest revenue standard unit) -->
-    <div id="adsterra-inmovie-banner" class="inmovie-banner-slot"></div>
-    <div class="inmovie-resume-hint" id="inmovie-resume-hint">
-      ⏸ Movie paused · Ad ends in <span id="inmovie-hint-timer">15s</span>
-    </div>
-  </div>
-
-  <!-- Progress bar at bottom -->
-  <div class="inmovie-progress-bar">
-    <div id="inmovie-progress-fill" class="inmovie-progress-fill"></div>
-  </div>
-
-</div>
-
-
-<!-- ====== AD MODAL ====== -->
-<div id="ad-modal" class="ad-modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Watch Ad">
-  <div class="ad-modal-box">
-    <div class="ad-modal-header">
-      <div>
-        <div class="ad-modal-title" id="ad-modal-title">Watch Ad <span id="ad-modal-num">1</span> of <span id="ad-modal-total">2</span></div>
-        <div class="ad-modal-sub">Please watch the full ad to continue</div>
+      <!-- Progress bar -->
+      <div class="ad-progress-bar">
+        <div class="ad-progress-fill" id="ad-progress-fill"></div>
       </div>
-      <div class="ad-timer-badge">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span id="ad-countdown">30</span>s
-      </div>
-    </div>
 
-    <!-- Ad Modal full-screen countdown player — Real 300×250 AdSterra Banner -->
-    <div class="ad-player-area" id="ad-player-area" style="min-height:280px;padding:1rem;flex-direction:column;gap:0.5rem;">
-      <div id="adsterra-modal-banner" style="display:flex;align-items:center;justify-content:center;width:100%;min-height:250px;">
-        <!-- Loaded dynamically when modal opens to avoid wasted impressions -->
-      </div>
+      <p class="ad-disclaimer">🙏 Watching ads supports Vaanisethu and keeps it free for everyone.</p>
     </div>
-
-    <!-- Progress bar -->
-    <div class="ad-progress-bar">
-      <div class="ad-progress-fill" id="ad-progress-fill"></div>
-    </div>
-
-    <p class="ad-disclaimer">🙏 Watching ads supports Vaanisethu and keeps it free for everyone.</p>
   </div>
-</div>
 
   <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js"></script>
-  <script type="module" src="/app.js?v=33"></script>
+  <!-- AdSterra Social Bar — floating ad unit for additional revenue (normal users only) -->
+  <script src="https://millionairelucidlytransmitted.com/82/3a/60/823a60f46b088bcbd52fceb040961ab1.js"></script>
+  <script type="module" src="/app.js?v=40"></script>
 </body>
+
 </html>

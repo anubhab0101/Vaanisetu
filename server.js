@@ -206,14 +206,24 @@ async function startServer() {
                 senderName: message.userName || 'Guest',
                 timestamp: Date.now()
               };
-              // Note: We no longer store messages in `rooms.get(currentRoomId).messages.push(newMsg)`
-              // This ensures new guests do not receive past chat history (Approach B).
-
               connections.get(currentRoomId).forEach(client => {
                 if (client.readyState === WebSocket.OPEN) {
-                  client.send(JSON.stringify({ 
-                    type: "chat", 
-                    message: newMsg
+                  client.send(JSON.stringify({ type: "chat", message: newMsg }));
+                }
+              });
+            }
+            break;
+          }
+
+          // ── Emoji Reaction — broadcast to all room members ──────────────
+          case "reaction": {
+            if (currentRoomId && connections.has(currentRoomId)) {
+              connections.get(currentRoomId).forEach(client => {
+                if (client.readyState === WebSocket.OPEN) {
+                  client.send(JSON.stringify({
+                    type: "reaction",
+                    emoji: message.emoji,
+                    userName: message.userName || 'Someone'
                   }));
                 }
               });
@@ -328,10 +338,9 @@ async function startServer() {
         "https://checkout.razorpay.com https://cdn.razorpay.com " +
         "https://www.gstatic.com https://www.googleapis.com https://apis.google.com " +
         "https://cdn.jsdelivr.net " +
-        // AdSterra ad network + all CDN domains they may use
-        "https://www.profitablecpmratenetwork.com https://*.profitablecpmratenetwork.com " +
+        // AdSterra ad domains (banner + social bar — NOT popunder)
+        "https://millionairelucidlytransmitted.com https://*.millionairelucidlytransmitted.com " +
         "https://www.highperformanceformat.com https://*.highperformanceformat.com " +
-        "https://a.magsrv.com https://*.magsrv.com " +
         "https://*.adsterra.com https://adsterra.com; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "font-src 'self' https://fonts.gstatic.com; " +
@@ -340,8 +349,8 @@ async function startServer() {
       "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com " +
         "https://securetoken.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com " +
         "https://*.firestore.googleapis.com https://api.razorpay.com " +
-        "https://vaanisethu-bot.onrender.com wss: https:; " +
-      // Allow any HTTPS iframe for ad delivery (ad networks use many domains for iframes)
+        "https://vaanisethu-bot.onrender.com wss: " +
+        "https://millionairelucidlytransmitted.com https://*.millionairelucidlytransmitted.com https:; " +
       "frame-src https://checkout.razorpay.com https://api.razorpay.com " +
         "https://accounts.google.com https://*.firebaseapp.com https:; " +
       "worker-src 'self' blob:;"
@@ -1184,7 +1193,7 @@ async function startServer() {
   // Admin: Add a new film
   app.post('/api/admin/add-film', async (req, res) => {
     try {
-      const { adminEmail, title, telegramLink, thumbnailBase64, price, rentalDays } = req.body;
+      const { adminEmail, title, telegramLink, thumbnailBase64, price, rentalDays, adUnlockEnabled } = req.body;
       if (adminEmail !== 'anubhabmohapatra.01@gmail.com') return res.status(403).json({ error: "Unauthorized" });
       if (!title || !telegramLink) return res.status(400).json({ error: "Title and Telegram link required" });
 
@@ -1195,7 +1204,7 @@ async function startServer() {
         price: parseFloat(price) || 20,
         rentalDays: parseInt(rentalDays) || 3,
         isActive: true,
-        adUnlockEnabled: adUnlockEnabled !== false, // default true
+        adUnlockEnabled: adUnlockEnabled !== false, // true = Free with Ads; false = Premium only
         adUnlockHours: 1,
         createdAt: Date.now()
       });
@@ -1253,16 +1262,23 @@ async function startServer() {
   // Public: List active films (no telegram link)
   app.get('/api/films', async (req, res) => {
     try {
-      // No compound query — fetch all and filter in JS to avoid index requirement
       const snap = await adminDb.collection('films').get();
       const films = [];
       snap.forEach(doc => {
         const d = doc.data();
         if (d.isActive) {
-          films.push({ filmId: doc.id, title: d.title, thumbnailBase64: d.thumbnailBase64 || '', price: d.price || 20, rentalDays: d.rentalDays || 3 });
+          films.push({
+            filmId: doc.id,
+            title: d.title,
+            thumbnailBase64: d.thumbnailBase64 || '',
+            price: d.price || 20,
+            rentalDays: d.rentalDays || 3,
+            // ✅ CRITICAL: include adUnlockEnabled so frontend can split into sections
+            adUnlockEnabled: d.adUnlockEnabled !== false,
+            createdAt: d.createdAt || 0
+          });
         }
       });
-      // Sort by createdAt desc in JS
       films.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
       res.json({ success: true, films });
     } catch (err) { console.error(err); res.status(500).json({ error: err.message }); }
@@ -1389,6 +1405,148 @@ async function startServer() {
   });
 
   // ==== END FILM STORE ROUTES ====
+
+  // =====================================================================
+  // V2 FEATURES — RATINGS, WATCH HISTORY, LEADERBOARD, REFERRALS
+  // =====================================================================
+
+  // POST /api/rate-film — Save a 1-5 star rating for a film
+  app.post('/api/rate-film', async (req, res) => {
+    try {
+      const { userId, filmId, filmTitle, rating } = req.body;
+      if (!userId || !filmId || !rating) return res.json({ success: false, error: 'Missing fields' });
+      const r = parseInt(rating);
+      if (r < 1 || r > 5) return res.json({ success: false, error: 'Rating must be 1-5' });
+
+      const ratingRef = db.collection('filmRatings').doc(`${userId}_${filmId}`);
+      await ratingRef.set({ userId, filmId, filmTitle: filmTitle || '', rating: r, createdAt: Date.now() }, { merge: true });
+
+      // Recompute avg
+      const snap = await db.collection('filmRatings').where('filmId', '==', filmId).get();
+      let total = 0, count = 0;
+      snap.forEach(d => { total += d.data().rating; count++; });
+      const avg = count > 0 ? (total / count).toFixed(1) : null;
+
+      // Persist avg on film doc
+      await db.collection('films').doc(filmId).set({ avgRating: avg ? parseFloat(avg) : null, ratingCount: count }, { merge: true });
+      res.json({ success: true, avg, count });
+    } catch (err) { console.error(err); res.status(500).json({ success: false, error: err.message }); }
+  });
+
+  // GET /api/my-film-rating?userId=&filmId= — Get a user's own rating
+  app.get('/api/my-film-rating', async (req, res) => {
+    try {
+      const { userId, filmId } = req.query;
+      if (!userId || !filmId) return res.json({ success: false, rating: null });
+      const doc = await db.collection('filmRatings').doc(`${userId}_${filmId}`).get();
+      res.json({ success: true, rating: doc.exists ? doc.data().rating : null });
+    } catch (err) { res.json({ success: false, rating: null }); }
+  });
+
+  // POST /api/log-watch-history — Called when a film starts playing
+  app.post('/api/log-watch-history', async (req, res) => {
+    try {
+      const { userId, filmId, filmTitle, thumbnailBase64 } = req.body;
+      if (!userId || !filmId) return res.json({ success: false });
+      await db.collection('watchHistory').add({
+        userId, filmId, filmTitle: filmTitle || '', thumbnailBase64: thumbnailBase64 || '',
+        watchedAt: Date.now()
+      });
+      res.json({ success: true });
+    } catch (err) { res.json({ success: false }); }
+  });
+
+  // GET /api/my-watch-history?userId= — Return last 20 entries
+  app.get('/api/my-watch-history', async (req, res) => {
+    try {
+      const { userId } = req.query;
+      if (!userId) return res.json({ success: false, history: [] });
+      const snap = await db.collection('watchHistory')
+        .where('userId', '==', userId)
+        .orderBy('watchedAt', 'desc')
+        .limit(20)
+        .get();
+      const history = [];
+      snap.forEach(d => history.push({ id: d.id, ...d.data() }));
+      res.json({ success: true, history });
+    } catch (err) { res.json({ success: true, history: [] }); }
+  });
+
+  // GET /api/leaderboard — Top 10 users by films watched this month
+  app.get('/api/leaderboard', async (req, res) => {
+    try {
+      const monthStart = new Date();
+      monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+      const snap = await db.collection('watchHistory')
+        .where('watchedAt', '>=', monthStart.getTime())
+        .get();
+      const counts = {};
+      const names = {};
+      snap.forEach(d => {
+        const { userId, filmTitle } = d.data();
+        counts[userId] = (counts[userId] || 0) + 1;
+      });
+      // Get names from users collection
+      const userIds = Object.keys(counts);
+      if (userIds.length > 0) {
+        const userSnap = await db.collection('users').where('uid', 'in', userIds.slice(0, 10)).get();
+        userSnap.forEach(d => { names[d.id] = d.data().displayName || 'User'; });
+      }
+      const board = Object.entries(counts)
+        .map(([uid, count]) => ({ uid, name: names[uid] || 'User', count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+      res.json({ success: true, board });
+    } catch (err) { res.json({ success: true, board: [] }); }
+  });
+
+  // POST /api/apply-referral — Apply referral code on new user signup
+  // Both referrer (owner of roomCode) and referee (new user) get 7-day bonus
+  app.post('/api/apply-referral', async (req, res) => {
+    try {
+      const { newUserId, refCode } = req.body;
+      if (!newUserId || !refCode) return res.json({ success: false, error: 'Missing fields' });
+
+      // Find owner of refCode
+      const snap = await db.collection('users').where('roomCode', '==', refCode.toUpperCase()).get();
+      if (snap.empty) return res.json({ success: false, error: 'Referral code not found' });
+
+      const referrerDoc = snap.docs[0];
+      const referrerId = referrerDoc.id;
+      if (referrerId === newUserId) return res.json({ success: false, error: 'Cannot refer yourself' });
+
+      // Check not already referred
+      const newUserDoc = await db.collection('users').doc(newUserId).get();
+      if (newUserDoc.exists && newUserDoc.data().referredBy) {
+        return res.json({ success: false, error: 'Referral already applied' });
+      }
+
+      const BONUS_DAYS = 7;
+      const bonusMs = BONUS_DAYS * 24 * 60 * 60 * 1000;
+      const now = Date.now();
+
+      // Grant new user bonus (7 days free)
+      const newExpiry = now + bonusMs;
+      await db.collection('users').doc(newUserId).set({
+        activeSubscription: 'referral-bonus',
+        subscriptionExpiry: newExpiry,
+        referredBy: referrerId,
+        referralAppliedAt: now
+      }, { merge: true });
+
+      // Extend referrer's subscription by 7 days
+      const referrerData = referrerDoc.data();
+      const referrerExpiry = (referrerData.subscriptionExpiry && referrerData.subscriptionExpiry > now)
+        ? referrerData.subscriptionExpiry + bonusMs
+        : now + bonusMs;
+      await db.collection('users').doc(referrerId).set({
+        subscriptionExpiry: referrerExpiry,
+        referralCount: (referrerData.referralCount || 0) + 1
+      }, { merge: true });
+
+      res.json({ success: true, bonusDays: BONUS_DAYS });
+    } catch (err) { console.error(err); res.status(500).json({ success: false, error: err.message }); }
+  });
 
   const publicPath = path.join(process.cwd(), 'public');
 
