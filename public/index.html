@@ -664,6 +664,22 @@
                 }
               </style>
             </div>
+
+            <!-- Push Notification Sender -->
+            <div style="border-top:1px solid #1f1f23;padding-top:1rem;">
+              <h2 class="text-base text-white m-0 mb-1">📣 Push Notification</h2>
+              <p class="text-xs text-zinc-500 m-0 mb-3">Send a notification to all subscribed users (PWA).</p>
+              <div class="flex flex-col gap-2">
+                <input type="text" id="push-notif-title" class="input w-full bg-black" placeholder="Title e.g. 🎬 New Film Added!" maxlength="80">
+                <textarea id="push-notif-body" class="input w-full bg-black" placeholder="Message body..." maxlength="200" rows="2" style="resize:vertical;font-family:inherit;"></textarea>
+                <input type="text" id="push-notif-url" class="input w-full bg-black" placeholder="URL on click (default = /)" maxlength="200">
+                <button id="btn-send-push" class="btn w-full"
+                  style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;font-weight:700;">
+                  📣 Send to All Subscribers
+                </button>
+                <p id="push-notif-result" class="text-xs text-center" style="display:none;margin-top:0.25rem;"></p>
+              </div>
+            </div>
           </div>
 
           <!-- Code Generator -->
@@ -1690,7 +1706,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js"></script>
   <!-- AdSterra Social Bar — floating ad unit for additional revenue (normal users only) -->
   <script src="https://millionairelucidlytransmitted.com/82/3a/60/823a60f46b088bcbd52fceb040961ab1.js"></script>
-  <script type="module" src="/app.js?v=44"></script>
+  <script type="module" src="/app.js?v=45"></script>
 </body>
 
 </html>

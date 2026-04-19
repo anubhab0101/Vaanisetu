@@ -4,14 +4,14 @@ import { WebSocketServer, WebSocket } from "ws";
 import path from "path";
 import { readFile } from "fs/promises";
 import dotenv from "dotenv";
+dotenv.config();
 import cors from "cors";
 import Razorpay from "razorpay";
 import admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import crypto from "crypto";
-import compression from "compression"; // GZIP compression for faster responses
-
-dotenv.config();
+import compression from "compression";
+import webPush from "web-push";
 import nodemailer from 'nodemailer';
 
 let adminDb = null;
@@ -36,6 +36,15 @@ const transporter = nodemailer.createTransport({
     pass: process.env.GMAIL_PASS,
   },
 });
+
+const VAPID_PUBLIC  = process.env.VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
+const VAPID_CONTACT = process.env.VAPID_EMAIL || 'mailto:anubhabmohapatra.01@gmail.com';
+if (VAPID_PUBLIC && VAPID_PRIVATE) {
+  webPush.setVapidDetails(VAPID_CONTACT, VAPID_PUBLIC, VAPID_PRIVATE);
+} else {
+  console.warn('[push] VAPID keys not set — push notifications disabled');
+}
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_missing_key",
@@ -1365,6 +1374,82 @@ async function startServer() {
       res.json({ success: true, telegramLink, filmTitle: filmData.title });
     } catch (err) {
       console.error('[free-rental]', err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+  // ════════════════════════════════════════════════════════════
+  // PWA PUSH NOTIFICATIONS
+  // ════════════════════════════════════════════════════════════
+
+  // [1] Return VAPID public key to client (needed for subscription)
+  app.get('/api/push/vapid-key', (req, res) => {
+    if (!VAPID_PUBLIC) return res.status(503).json({ error: 'Push not configured' });
+    res.json({ publicKey: VAPID_PUBLIC });
+  });
+
+  // [2] Save a push subscription from the browser
+  app.post('/api/push/subscribe', async (req, res) => {
+    try {
+      const { userId, subscription } = req.body;
+      if (!userId || !subscription || !subscription.endpoint) {
+        return res.status(400).json({ success: false, error: 'Invalid subscription' });
+      }
+      // Use endpoint hash as doc ID (prevents duplicates from same device)
+      const endpointHash = crypto.createHash('sha256').update(subscription.endpoint).digest('hex').slice(0, 20);
+      await adminDb.collection('pushSubscriptions').doc(endpointHash).set({
+        userId,
+        subscription,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      }, { merge: true });
+      res.json({ success: true });
+    } catch (err) {
+      console.error('[push/subscribe]', err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // [3] Admin: broadcast push notification to ALL subscribers
+  app.post('/api/push/send', async (req, res) => {
+    try {
+      const { adminEmail, title, body, url, icon } = req.body;
+      if (adminEmail !== ADMIN_EMAIL) return res.status(403).json({ error: 'Unauthorized' });
+      if (!title || !body) return res.status(400).json({ error: 'Title and body required' });
+
+      const subsSnap = await adminDb.collection('pushSubscriptions').get();
+      if (subsSnap.empty) return res.json({ success: true, sent: 0, message: 'No subscribers yet.' });
+
+      const payload = JSON.stringify({
+        title: title.trim(),
+        body:  body.trim(),
+        icon:  icon || '/logo.png',
+        url:   url  || '/',
+        tag:   'vaanisethu-broadcast'
+      });
+
+      let sent = 0, failed = 0, expired = [];
+      const batch = adminDb.batch();
+
+      await Promise.all(subsSnap.docs.map(async (doc) => {
+        try {
+          await webPush.sendNotification(doc.data().subscription, payload);
+          sent++;
+        } catch (err) {
+          failed++;
+          // 410 Gone = subscription revoked by browser → remove it
+          if (err.statusCode === 410 || err.statusCode === 404) {
+            expired.push(doc.ref);
+          }
+        }
+      }));
+
+      // Clean expired subscriptions
+      expired.forEach(ref => batch.delete(ref));
+      if (expired.length) await batch.commit();
+
+      res.json({ success: true, sent, failed, expiredCleaned: expired.length });
+    } catch (err) {
+      console.error('[push/send]', err);
       res.status(500).json({ success: false, error: err.message });
     }
   });

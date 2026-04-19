@@ -3959,3 +3959,104 @@ window.logWatchHistory = function(filmId, filmTitle, thumbnailBase64) {
   });
 })();
 
+
+// ════════════════════════════════════════════════════════════════
+// 📱 PWA PUSH NOTIFICATIONS
+// ════════════════════════════════════════════════════════════════
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw     = window.atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+let _swRegistration = null;
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      _swRegistration = await navigator.serviceWorker.register('/sw.js');
+      console.log('[SW] Registered:', _swRegistration.scope);
+    } catch (err) {
+      console.warn('[SW] Registration failed:', err);
+    }
+  });
+}
+
+async function subscribeToPush(userId) {
+  try {
+    if (!('PushManager' in window) || !_swRegistration) return;
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') return;
+    const res = await fetch('/api/push/vapid-key');
+    if (!res.ok) return;
+    const { publicKey } = await res.json();
+    if (!publicKey) return;
+    const subscription = await _swRegistration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey)
+    });
+    await fetch('/api/push/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, subscription })
+    });
+    console.log('[Push] Subscribed');
+  } catch (err) {
+    console.warn('[Push] Subscription failed:', err);
+  }
+}
+
+// Auto-subscribe when dashboard-view becomes visible
+const _dashObserver = new MutationObserver((mutations) => {
+  for (const m of mutations) {
+    if (m.type === 'attributes' && m.attributeName === 'class') {
+      const el = m.target;
+      if (el.id === 'dashboard-view' && !el.classList.contains('hidden')) {
+        if (currentUser) setTimeout(() => subscribeToPush(currentUser.uid), 3500);
+        _dashObserver.disconnect();
+      }
+    }
+  }
+});
+const _dvPush = document.getElementById('dashboard-view');
+if (_dvPush) _dashObserver.observe(_dvPush, { attributes: true });
+
+// Admin: Send push notification button
+document.getElementById('btn-send-push')?.addEventListener('click', async () => {
+  const titleEl  = document.getElementById('push-notif-title');
+  const bodyEl   = document.getElementById('push-notif-body');
+  const urlEl    = document.getElementById('push-notif-url');
+  const resultEl = document.getElementById('push-notif-result');
+  const btn      = document.getElementById('btn-send-push');
+  const title = titleEl?.value.trim();
+  const body  = bodyEl?.value.trim();
+  const url   = urlEl?.value.trim() || '/';
+  if (!title || !body) {
+    resultEl.textContent = 'Title and message are required.';
+    resultEl.style.color = '#f87171'; resultEl.style.display = 'block'; return;
+  }
+  btn.textContent = 'Sending...'; btn.disabled = true;
+  resultEl.style.display = 'none';
+  try {
+    const res = await fetch('/api/push/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminEmail: currentUser.email, title, body, url })
+    });
+    const data = await res.json();
+    if (data.success) {
+      resultEl.textContent = `Sent to ${data.sent} device${data.sent !== 1 ? 's' : ''}${data.failed ? ` (${data.failed} failed)` : ''}.`;
+      resultEl.style.color = '#4ade80';
+      titleEl.value = ''; bodyEl.value = ''; urlEl.value = '';
+    } else {
+      resultEl.textContent = data.error || 'Failed to send.';
+      resultEl.style.color = '#f87171';
+    }
+  } catch(e) {
+    resultEl.textContent = 'Network error. Try again.';
+    resultEl.style.color = '#f87171';
+  }
+  resultEl.style.display = 'block';
+  btn.textContent = 'Send to All Subscribers'; btn.disabled = false;
+});
