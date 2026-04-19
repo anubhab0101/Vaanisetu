@@ -721,6 +721,18 @@ async function claimFreePass() {
 
 async function initiateCheckout(plan, amount) {
     try {
+        // Wait for Razorpay SDK to be ready (it loads deferred — may not be ready on very slow connections)
+        if (!window.Razorpay) {
+            await new Promise((resolve, reject) => {
+                let attempts = 0;
+                const check = setInterval(() => {
+                    attempts++;
+                    if (window.Razorpay) { clearInterval(check); resolve(); }
+                    else if (attempts > 50) { clearInterval(check); reject(new Error('Payment gateway not loaded. Please refresh and try again.')); }
+                }, 100); // checks every 100ms, max 5 seconds
+            });
+        }
+
         const orderRes = await fetch('/api/create-order', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -729,6 +741,7 @@ async function initiateCheckout(plan, amount) {
         const order = await orderRes.json();
         
         if (!order || !order.id) throw new Error("Failed to create order");
+
 
         const options = {
             key: order.keyId,

@@ -77,6 +77,8 @@
   <link rel="dns-prefetch" href="https://api.razorpay.com">
   <link rel="preconnect" href="https://cdn.razorpay.com">
   <link rel="dns-prefetch" href="https://cdn.razorpay.com">
+  <!-- 🚀 Preload Razorpay so checkout.open() fires instantly -->
+  <link rel="preload" href="https://checkout.razorpay.com/v1/checkout.js" as="script" crossorigin>
   <!-- Firebase -->
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="dns-prefetch" href="https://firestore.googleapis.com">
@@ -232,7 +234,8 @@
     }
   </style>
   <link rel="manifest" href="/manifest.json">
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <!-- Razorpay checkout — defer so it doesn't block page render -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js" defer crossorigin></script>
 </head>
 
 <body>
@@ -1672,7 +1675,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js"></script>
   <!-- AdSterra Social Bar — floating ad unit for additional revenue (normal users only) -->
   <script src="https://millionairelucidlytransmitted.com/82/3a/60/823a60f46b088bcbd52fceb040961ab1.js"></script>
-  <script type="module" src="/app.js?v=40"></script>
+  <script type="module" src="/app.js?v=41"></script>
 </body>
 
 </html>
