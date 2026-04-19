@@ -387,19 +387,66 @@ async function startServer() {
                                       .digest('hex');
 
       if (expectedSignature === razorpay_signature) {
-        // Payment is authentic. Log transaction and update user subscription if DB is ready.
         if (adminDb && userId) {
            let durationDays = 0;
            if (plan === 'one-time') durationDays = 1;
            if (plan === 'weekly') durationDays = 7;
            if (plan === 'monthly') durationDays = 30;
 
-           const expiryDate = Date.now() + (durationDays * 24 * 60 * 60 * 1000);
-           
-           // Update User
+           const now = Date.now();
+           let expiryDate = now + (durationDays * 24 * 60 * 60 * 1000);
+
+           // ── Check for pending referral bonus ──────────────────────────
+           let referralBonusApplied = false;
+           let bonusDaysApplied = 0;
+           const userDoc = await adminDb.collection('users').doc(userId).get();
+           const userData = userDoc.exists ? userDoc.data() : {};
+
+           if (userData.pendingReferralBonusDays && !userData.firstPurchaseDone && !userData.referralBonusApplied) {
+             bonusDaysApplied = userData.pendingReferralBonusDays;
+             const bonusMs = bonusDaysApplied * 24 * 60 * 60 * 1000;
+
+             // Extend THIS user's subscription by bonus days
+             expiryDate += bonusMs;
+             referralBonusApplied = true;
+
+             // Extend REFERRER's subscription by same bonus days
+             const referrerId = userData.referredBy;
+             if (referrerId) {
+               const refDoc = await adminDb.collection('users').doc(referrerId).get();
+               if (refDoc.exists) {
+                 const refData = refDoc.data();
+                 const refExpiry = (refData.subscriptionExpiry && refData.subscriptionExpiry > now)
+                   ? refData.subscriptionExpiry + bonusMs
+                   : now + bonusMs;
+                 await adminDb.collection('users').doc(referrerId).update({
+                   subscriptionExpiry: refExpiry,
+                   referralCount: (refData.referralCount || 0) + 1
+                 });
+               }
+             }
+
+             // Anti-abuse: record device fingerprint so same device can't claim again
+             const fp = userData.pendingReferralDeviceFp;
+             if (fp) {
+               await adminDb.collection('referralClaims').add({
+                 userId, referrerId: userData.referredBy || null,
+                 deviceFingerprint: fp, claimedAt: now, bonusDays: bonusDaysApplied
+               });
+             }
+           }
+
+           // Update user subscription
            await adminDb.collection('users').doc(userId).update({
               activeSubscription: plan,
-              subscriptionExpiry: expiryDate
+              subscriptionExpiry: expiryDate,
+              firstPurchaseDone: true,
+              ...(referralBonusApplied ? {
+                referralBonusApplied: true,
+                referralBonusDays: bonusDaysApplied,
+                pendingReferralBonusDays: null,
+                pendingReferralDeviceFp: null
+              } : {})
            });
 
            // Log Payment
@@ -409,6 +456,7 @@ async function startServer() {
               orderId: razorpay_order_id,
               amount: amount,
               plan,
+              referralBonusDays: referralBonusApplied ? bonusDaysApplied : 0,
               timestamp: admin.firestore.FieldValue.serverTimestamp()
            });
         }
@@ -421,6 +469,7 @@ async function startServer() {
       res.status(500).json({ error: err.message });
     }
   });
+
 
   // Contact form submission via nodemailer
   app.post('/api/send-contact', async (req, res) => {
@@ -1500,53 +1549,69 @@ async function startServer() {
     } catch (err) { res.json({ success: true, board: [] }); }
   });
 
-  // POST /api/apply-referral — Apply referral code on new user signup
-  // Both referrer (owner of roomCode) and referee (new user) get 7-day bonus
+  // POST /api/apply-referral — Store a PENDING referral on signup
+  // Bonus is NOT granted immediately — it applies on the user's FIRST PURCHASE.
+  // Anti-abuse: device fingerprint prevents the same device from claiming again,
+  //   even if the user creates a new email account.
   app.post('/api/apply-referral', async (req, res) => {
     try {
-      const { newUserId, refCode } = req.body;
+      const { newUserId, refCode, deviceFingerprint } = req.body;
       if (!newUserId || !refCode) return res.json({ success: false, error: 'Missing fields' });
 
+      const refUpper = refCode.trim().toUpperCase();
+
+      // Anti-abuse — check if this device already claimed a referral bonus before
+      if (deviceFingerprint) {
+        const abuseSn = await db.collection('referralClaims')
+          .where('deviceFingerprint', '==', deviceFingerprint).limit(1).get();
+        if (!abuseSn.empty) {
+          return res.json({ success: false, error: 'This device has already used a referral bonus.' });
+        }
+      }
+
       // Find owner of refCode
-      const snap = await db.collection('users').where('roomCode', '==', refCode.toUpperCase()).get();
-      if (snap.empty) return res.json({ success: false, error: 'Referral code not found' });
+      const snap = await db.collection('users').where('roomCode', '==', refUpper).get();
+      if (snap.empty) return res.json({ success: false, error: 'Referral code not found. Check the code and try again.' });
 
       const referrerDoc = snap.docs[0];
       const referrerId = referrerDoc.id;
-      if (referrerId === newUserId) return res.json({ success: false, error: 'Cannot refer yourself' });
+      if (referrerId === newUserId) return res.json({ success: false, error: 'You cannot refer yourself.' });
 
-      // Check not already referred
+      // Check new user hasn't already used / pended a referral
       const newUserDoc = await db.collection('users').doc(newUserId).get();
-      if (newUserDoc.exists && newUserDoc.data().referredBy) {
-        return res.json({ success: false, error: 'Referral already applied' });
+      const newUserData = newUserDoc.exists ? newUserDoc.data() : {};
+      if (newUserData.referredBy || newUserData.referralBonusApplied) {
+        return res.json({ success: false, error: 'You have already used a referral code.' });
+      }
+      if (newUserData.firstPurchaseDone) {
+        return res.json({ success: false, error: 'Referral code must be entered before your first purchase.' });
       }
 
-      const BONUS_DAYS = 7;
-      const bonusMs = BONUS_DAYS * 24 * 60 * 60 * 1000;
-      const now = Date.now();
-
-      // Grant new user bonus (7 days free)
-      const newExpiry = now + bonusMs;
-      await db.collection('users').doc(newUserId).set({
-        activeSubscription: 'referral-bonus',
-        subscriptionExpiry: newExpiry,
-        referredBy: referrerId,
-        referralAppliedAt: now
-      }, { merge: true });
-
-      // Extend referrer's subscription by 7 days
+      // Determine bonus days based on referrer's subscription status
       const referrerData = referrerDoc.data();
-      const referrerExpiry = (referrerData.subscriptionExpiry && referrerData.subscriptionExpiry > now)
-        ? referrerData.subscriptionExpiry + bonusMs
-        : now + bonusMs;
-      await db.collection('users').doc(referrerId).set({
-        subscriptionExpiry: referrerExpiry,
-        referralCount: (referrerData.referralCount || 0) + 1
+      const now = Date.now();
+      const referrerIsActive = referrerData.subscriptionExpiry && referrerData.subscriptionExpiry > now;
+      const referrerPlan = referrerData.activeSubscription || '';
+      const referrerIsPremium = referrerIsActive &&
+        (referrerPlan === 'weekly' || referrerPlan === 'monthly' || referrerPlan === 'access-code');
+      const bonusDays = referrerIsPremium ? 7 : 3;
+
+      // Store PENDING referral on the new user's doc (bonus applied on first purchase)
+      await db.collection('users').doc(newUserId).set({
+        referredBy: referrerId,
+        referredByCode: refUpper,
+        pendingReferralBonusDays: bonusDays,
+        pendingReferralDeviceFp: deviceFingerprint || null,
+        referralPendingAt: now
       }, { merge: true });
 
-      res.json({ success: true, bonusDays: BONUS_DAYS });
-    } catch (err) { console.error(err); res.status(500).json({ success: false, error: err.message }); }
+      res.json({ success: true, pending: true, bonusDays, referrerIsPremium });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ success: false, error: err.message });
+    }
   });
+
 
   const publicPath = path.join(process.cwd(), 'public');
 

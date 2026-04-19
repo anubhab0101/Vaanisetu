@@ -378,18 +378,40 @@ btnSaveProfile.addEventListener('click', async () => {
             body: JSON.stringify({ userId: auth.currentUser.uid, displayName: name })
         }).catch(() => {});
 
-        // 🎁 Referral code — apply if user entered one
+        // 🎁 Referral code — store pending if user entered one
         const refInput = document.getElementById('setup-ref-input');
         const refCode = refInput ? refInput.value.trim().toUpperCase() : '';
-        if (refCode && refCode.length === 6) {
+        if (refCode && refCode.length >= 4) {
+            const refStatusEl = document.getElementById('ref-status-msg');
             fetch('/api/apply-referral', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ newUserId: auth.currentUser.uid, refCode })
+                body: JSON.stringify({
+                    newUserId: auth.currentUser.uid,
+                    refCode,
+                    deviceFingerprint: _deviceFingerprint || ''
+                })
             }).then(r => r.json()).then(d => {
-                if (d.success) showToast(`🎁 Referral applied! You & your friend both get ${d.bonusDays} days free!`, 'success', 5000);
+                if (d.success) {
+                    const days = d.bonusDays;
+                    const who = d.referrerIsPremium ? 'Premium member' : 'member';
+                    showToast(
+                        `🎁 Code saved! You get +${days} days added to your first subscription. Your friend also gets +${days} days!`,
+                        'success', 6000
+                    );
+                    if (refStatusEl) {
+                        refStatusEl.textContent = `✅ Referral saved — +${days} days bonus on first purchase`;
+                        refStatusEl.style.color = '#4ade80';
+                    }
+                } else {
+                    if (refStatusEl) {
+                        refStatusEl.textContent = `⚠️ ${d.error}`;
+                        refStatusEl.style.color = '#f87171';
+                    }
+                }
             }).catch(() => {});
         }
+
         
         listenToUserDoc();
         initWebSocket(true);

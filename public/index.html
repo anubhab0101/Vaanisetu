@@ -314,14 +314,26 @@
         <label for="setup-name-input" class="sr-only">Your display name</label>
         <input type="text" id="setup-name-input" class="input w-full text-center" placeholder="Your Name"
           autocomplete="nickname">
-        <div style="margin-top:0.75rem;margin-bottom:0.25rem;">
-          <label for="setup-ref-input" class="text-zinc-500 text-xs block mb-1">Have a referral code? (Optional) — gives you both 7 days bonus!</label>
-          <input type="text" id="setup-ref-input" class="input w-full text-center mono uppercase" placeholder="FRIEND'S ROOM CODE"
-            autocomplete="off" maxlength="6">
+
+        <!-- Referral Code Section -->
+        <div style="margin-top:1rem;background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.2);border-radius:12px;padding:0.9rem 1rem;">
+          <div style="display:flex;align-items:center;gap:0.4rem;margin-bottom:0.5rem;justify-content:center;">
+            <span style="font-size:1.1rem;">🎁</span>
+            <span style="font-size:0.75rem;font-weight:800;color:#c084fc;letter-spacing:0.04em;">REFERRAL CODE (Optional)</span>
+          </div>
+          <label for="setup-ref-input" class="text-zinc-400 text-xs block mb-2">
+            Enter a friend's room code → get <strong style="color:#c084fc;">+3 to +7 bonus days</strong> added to your <strong>first subscription</strong>!
+          </label>
+          <input type="text" id="setup-ref-input" class="input w-full text-center mono uppercase"
+            placeholder="FRIEND'S CODE" autocomplete="off" maxlength="8"
+            style="letter-spacing:0.12em;font-size:1rem;font-weight:700;">
+          <p id="ref-status-msg" style="font-size:0.7rem;margin-top:0.4rem;min-height:1rem;color:#71717a;"></p>
         </div>
+
         <button id="btn-save-profile" class="btn btn-primary w-full mt-4">Hop In</button>
       </div>
     </div>
+
 
     <!-- Subscription/Payment View -->
     <div id="payment-view" class="view hidden min-h-screen items-center justify-center fade-in">
@@ -461,7 +473,75 @@
           <p id="free-pass-msg" class="text-xs mt-3 hidden text-center"></p>
         </div>
 
+        <!-- ===== REFERRAL RULE CARD ===== -->
+        <div class="card max-w-md mx-auto mt-4" id="referral-rules-card"
+          style="border:1px solid rgba(168,85,247,0.35);background:linear-gradient(135deg,rgba(46,16,101,0.45),rgba(10,10,15,0.9));">
+          <div class="flex items-center gap-3 mb-3">
+            <div style="background:rgba(168,85,247,0.15);border-radius:50%;padding:0.6rem;flex-shrink:0;">
+              <span style="font-size:1.3rem;">🎁</span>
+            </div>
+            <div>
+              <h4 class="text-white font-bold text-base mb-0">Referral Bonus — How It Works</h4>
+              <p style="color:#c084fc;" class="text-xs mt-0">Invite friends. Both of you get bonus days!</p>
+            </div>
+          </div>
+
+          <!-- Step-by-step rules -->
+          <div style="display:flex;flex-direction:column;gap:0.55rem;margin-bottom:1rem;">
+
+            <div style="display:flex;gap:0.65rem;align-items:flex-start;">
+              <div style="background:rgba(168,85,247,0.2);color:#c084fc;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">1</div>
+              <div>
+                <div style="font-size:0.78rem;font-weight:700;color:#e4e4e7;">Share Your Room Code</div>
+                <div style="font-size:0.7rem;color:#71717a;">Your unique room code (shown on dashboard) is your referral code. Share it with friends before they create their account.</div>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:0.65rem;align-items:flex-start;">
+              <div style="background:rgba(168,85,247,0.2);color:#c084fc;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">2</div>
+              <div>
+                <div style="font-size:0.78rem;font-weight:700;color:#e4e4e7;">Friend Enters Code on Signup</div>
+                <div style="font-size:0.7rem;color:#71717a;">Your friend enters your room code in the "Referral Code" box during their profile setup.</div>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:0.65rem;align-items:flex-start;">
+              <div style="background:rgba(234,179,8,0.2);color:#eab308;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">3</div>
+              <div>
+                <div style="font-size:0.78rem;font-weight:700;color:#e4e4e7;">Bonus Applied on First Purchase</div>
+                <div style="font-size:0.7rem;color:#71717a;">The bonus is <strong style="color:#eab308;">added to their first subscription only</strong> — not given immediately. This ensures fair use.</div>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:0.65rem;align-items:flex-start;">
+              <div style="background:rgba(168,85,247,0.2);color:#c084fc;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">4</div>
+              <div>
+                <div style="font-size:0.78rem;font-weight:700;color:#e4e4e7;">Bonus Days — Tiered by Your Status</div>
+                <div style="font-size:0.7rem;color:#71717a;">
+                  <span style="color:#c084fc;font-weight:700;">You are Premium (Weekly/Monthly)</span> → friend gets <strong style="color:#4ade80;">+7 days</strong> bonus<br>
+                  <span style="color:#71717a;font-weight:700;">You are a regular user</span> → friend gets <strong style="color:#4ade80;">+3 days</strong> bonus<br>
+                  You (the referrer) also get the same number of bonus days!
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:0.65rem;align-items:flex-start;">
+              <div style="background:rgba(239,68,68,0.2);color:#f87171;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">5</div>
+              <div>
+                <div style="font-size:0.78rem;font-weight:700;color:#e4e4e7;">One-Time Only — Anti-Abuse</div>
+                <div style="font-size:0.7rem;color:#71717a;">Each user can only use a referral code <strong style="color:#f87171;">once</strong>. Creating a new email on the same device will not work — we track devices to prevent abuse.</div>
+              </div>
+            </div>
+
+          </div>
+
+          <div style="background:rgba(168,85,247,0.1);border-radius:8px;padding:0.6rem 0.75rem;font-size:0.68rem;color:#a1a1aa;text-align:center;">
+            💡 <strong style="color:#c084fc;">Tip:</strong> You can refer unlimited friends — each successful referral extends your subscription!
+          </div>
+        </div>
+
         <!-- ===== WATCH ADS FOR FREE ACCESS CARD ===== -->
+
         <div id="ad-access-card" class="card max-w-md mx-auto mt-4"
           style="border:1px solid rgba(168,85,247,0.35);background:linear-gradient(135deg,rgba(46,16,101,0.6),rgba(10,10,15,0.9));">
           <div class="flex items-center gap-3 mb-3">
