@@ -2,61 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Vaanisetu Premium</title>
   <meta name="robots" content="noindex, nofollow">
-  <title>Vaanisethu Premium — Ad-Free Experience</title>
-  <meta name="theme-color" content="#0a0a0a">
-  <!-- Inherit all same styles and structure as main app -->
-  <!-- This page is identical to index.html BUT loads without ad scripts -->
-  <!-- app.js detects window._IS_PREMIUM_PAGE and skips all ad injections -->
+  <!-- This file is served dynamically by server.js which:
+       1. Reads index.html
+       2. Removes AdSterra Social Bar script
+       3. Injects window._IS_PREMIUM_PAGE=true before </head>
+       4. Serves the modified HTML
+       So this static file is effectively a fallback only. -->
   <script>window._IS_PREMIUM_PAGE = true;</script>
-
-  <!-- Same preconnects and styles -->
-  <link rel="icon" type="image/png" href="/logo.png">
-  <link rel="preconnect" href="https://checkout.razorpay.com">
-  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/style.css?v=18">
-  <script>if(sessionStorage.getItem('_vns_loaded')){document.documentElement.classList.add('no-splash');}</script>
-  <style>html.no-splash #loading-screen{display:none!important;}</style>
-  <link rel="manifest" href="/manifest.json">
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <meta http-equiv="refresh" content="0; url=/premium.html">
 </head>
 <body>
-<!-- This file loads the FULL Vaanisetu app with NO ad scripts.
-     app.js checks window._IS_PREMIUM_PAGE and skips all ad injection.
-     Premium users are redirected here after login. -->
-<script>
-  // Security: if user is NOT premium after login, redirect back to index
-  // (handled inside app.js after Firebase auth resolves)
-  // This provides a clean ad-free experience for paying subscribers.
-</script>
-
-<!-- ===== ALL CONTENT BELOW IS IDENTICAL TO index.html ===== -->
-<!-- Loaded dynamically by redirecting here from app.js after confirming premium status -->
-<!-- For maintainability, we use the same app.js module which checks _IS_PREMIUM_PAGE -->
-
-
-
-<!-- Redirect to real app with premium flag -->
-<script>
-(function() {
-  fetch('/index.html')
-    .then(r => r.text())
-    .then(html => {
-      // Remove AdSterra Social Bar from premium experience
-      html = html.replace(/<script[^>]*823a60f46b088bcbd52fceb040961ab1[^>]*><\/script>/g, '');
-      html = html.replace(/<script[^>]*Social Bar[^>]*>[^<]*<\/script>/g, '');
-      // ✅ CRITICAL FIX: inject premium flag INSIDE fetched HTML BEFORE </head>
-      // so app.js sees _IS_PREMIUM_PAGE=true when it fires (prevents redirect loop)
-      html = html.replace('</head>', '<script>window._IS_PREMIUM_PAGE=true;</script></head>');
-      document.open();
-      document.write(html);
-      document.close();
-    })
-    .catch(() => {
-      window.location.replace('/');
-    });
-})();
-</script>
+  <p style="color:white;font-family:sans-serif;text-align:center;margin-top:4rem;">
+    Loading premium experience...
+  </p>
 </body>
 </html>

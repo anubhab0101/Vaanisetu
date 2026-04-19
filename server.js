@@ -2,6 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import path from "path";
+import { readFile } from "fs/promises";
 import dotenv from "dotenv";
 import cors from "cors";
 import Razorpay from "razorpay";
@@ -1614,6 +1615,29 @@ async function startServer() {
 
 
   const publicPath = path.join(process.cwd(), 'public');
+
+  // ── Server-side Premium HTML ──────────────────────────────────────────────
+  // Reads index.html, removes AdSterra scripts, injects premium flag, serves it.
+  // This replaces the broken client-side fetch+document.write() approach
+  // (document.write blocks module scripts from executing).
+  app.get('/premium.html', async (req, res) => {
+    try {
+      let html = await readFile(path.join(publicPath, 'index.html'), 'utf-8');
+      // Remove AdSterra Social Bar (not shown to premium users)
+      html = html.replace(/<script[^>]*823a60f46b088bcbd52fceb040961ab1[^>]*><\/script>/g, '');
+      html = html.replace(/<script[^>]*Social[\s\S]*?<\/script>/g, '');
+      // Inject premium flag so app.js skips ads and redirect loops
+      html = html.replace('</head>', '<script>window._IS_PREMIUM_PAGE=true;<\/script></head>');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+      res.send(html);
+    } catch (e) {
+      console.error('[premium.html]', e.message);
+      res.redirect('/');
+    }
+  });
+
 
   // Smart static caching:
   // - versioned assets (app.js?v=X, style.css?v=X) → 1 hour cache (CDN-friendly)
