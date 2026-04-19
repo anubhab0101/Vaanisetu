@@ -2144,7 +2144,7 @@ function buildFilmCard(film) {
           ? `<!-- Free rental button for weekly/monthly/admin -->
              <button class="btn film-free-rental-btn" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}"
                style="background:linear-gradient(135deg,#16a34a,#22c55e);color:white;border:none;margin-bottom:0.35rem;font-size:0.78rem;">
-               🆓 ${isAdminUser ? 'Free (Admin)' : plan === 'weekly' ? '1 Free/Week' : '1 Free/Month'}
+               🆓 ${isAdminUser ? 'Free (Admin)' : '1 Free/Week'}
              </button>
              <button class="btn film-rent-btn btn-outline-sm" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}" data-price="${film.price}" data-days="${film.rentalDays}">
                Rent ${film.rentalDays}d — ₹${film.price}

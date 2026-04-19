@@ -1342,19 +1342,12 @@ async function startServer() {
         }
         // Check if already used this cycle
         const lastUsed = userData.freeRentalUsedAt || 0;
-        if (plan === 'weekly') {
-          // Reset at start of current week (Monday 00:00)
-          const weekStart = new Date(); weekStart.setHours(0,0,0,0);
-          weekStart.setDate(weekStart.getDate() - weekStart.getDay() + (weekStart.getDay() === 0 ? -6 : 1));
-          if (lastUsed >= weekStart.getTime()) {
-            return res.json({ success: false, error: 'You already used your 1 free rental this week.' });
-          }
-        } else if (plan === 'monthly') {
-          // Reset at start of current month
-          const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
-          if (lastUsed >= monthStart.getTime()) {
-            return res.json({ success: false, error: 'You already used your 1 free rental this month.' });
-          }
+        // Both weekly AND monthly → reset every week (Monday 00:00)
+        // Monthly gets same weekly cadence = better value for higher price
+        const weekStart = new Date(); weekStart.setHours(0,0,0,0);
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay() + (weekStart.getDay() === 0 ? -6 : 1));
+        if (lastUsed >= weekStart.getTime()) {
+          return res.json({ success: false, error: 'You already used your 1 free rental this week.' });
         }
       }
 
