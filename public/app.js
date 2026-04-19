@@ -115,21 +115,9 @@ function spaPushState(viewId) {
 
 // On app load, set the initial state so Back doesn't leave the site
 history.replaceState({ spaSite: true, view: 'auth' }, '', '/');
-
-// ── Auto-redirect already-logged-in users ────────────────────────────────────
-// Firebase SDK caches the auth state in IndexedDB. If user was previously
-// logged in, auth.currentUser is available synchronously on page load.
-// Hide authView immediately to avoid flash, then onAuthStateChanged routes them.
-(function checkCachedAuth() {
-    try {
-        // auth is initialized synchronously in Firebase SDK — check the cached user
-        const cachedUser = auth.currentUser;
-        if (cachedUser) {
-            // Hide the auth screen RIGHT NOW (before the async auth state resolves)
-            if (authView) authView.classList.add('hidden');
-        }
-    } catch(_) {}
-})();
+// NOTE: auth-view starts with display:none in HTML.
+// It is only made visible inside onAuthStateChanged when user === null.
+// This eliminates the login screen flash for already-logged-in users.
 
 window.addEventListener('popstate', function(e) {
     if (_spaHandlingPop) return;
@@ -499,7 +487,10 @@ onAuthStateChanged(auth, async (user) => {
         if (ws) { ws.close(); ws = null; currentRoomId = null; }
         roomView.classList.add('hidden'); dashView.classList.add('hidden'); setupProfileView.classList.add('hidden');
         paymentView.classList.add('hidden'); adminView.classList.add('hidden');
-        authView.classList.remove('hidden'); authError.classList.add('hidden');
+        // Reveal auth view — override the default display:none set in HTML
+        authView.style.display = 'flex';
+        authView.classList.remove('hidden');
+        authError.classList.add('hidden');
         authError.classList.remove('bg-green-900', 'text-green-500'); authError.classList.add('bg-red-900', 'text-red-500');
         if(unsubscribeDoc) unsubscribeDoc();
     }

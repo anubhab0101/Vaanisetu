@@ -251,8 +251,8 @@
 
   <main id="app-root" style="display:contents" aria-label="Vaanisethu App">
 
-    <!-- Auth View -->
-    <div id="auth-view" class="view min-h-screen items-center justify-center fade-in">
+    <!-- Auth View — hidden by default; only shown if user is not logged in -->
+    <div id="auth-view" class="view min-h-screen items-center justify-center fade-in" style="display:none;">
       <!-- Animated background orbs -->
       <div class="auth-orb auth-orb-1" aria-hidden="true"></div>
       <div class="auth-orb auth-orb-2" aria-hidden="true"></div>
@@ -1706,7 +1706,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js"></script>
   <!-- AdSterra Social Bar — floating ad unit for additional revenue (normal users only) -->
   <script src="https://millionairelucidlytransmitted.com/82/3a/60/823a60f46b088bcbd52fceb040961ab1.js"></script>
-  <script type="module" src="/app.js?v=45"></script>
+  <script type="module" src="/app.js?v=46"></script>
 </body>
 
 </html>
