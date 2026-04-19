@@ -2481,3 +2481,134 @@ video {
 
 /* Emoji tray toggle */
 #emoji-tray.open { display: flex !important; }
+
+/* =========================================
+   V2 FEATURES — MOBILE MEDIA QUERIES
+   Covers: Emoji Tray, WhatsApp Share,
+   Star Ratings, Leaderboard, Watch History,
+   Film Store Tabs, Referral Card
+   ========================================= */
+
+@media (max-width: 640px) {
+  /* ── Top Bar: prevent overflow with new emoji + WA buttons ── */
+  .top-bar {
+    flex-wrap: nowrap;
+    gap: 0.3rem;
+  }
+  /* Compress icon buttons slightly in room header */
+  .top-bar .icon-btn {
+    width: 2.2rem;
+    height: 2.2rem;
+    padding: 0.4rem;
+    border-radius: 0.6rem;
+  }
+  /* Emoji tray: show fewer emojis on small phones */
+  #emoji-tray {
+    gap: 0.15rem;
+    padding: 0.3rem 0.4rem;
+  }
+  .emoji-btn {
+    font-size: 1.15rem;
+    padding: 0.15rem;
+  }
+
+  /* ── Film Store Tabs: horizontal scroll on small screens ── */
+  .film-store-tabs-bar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+    flex-wrap: nowrap;
+    gap: 0;
+  }
+  .film-store-tabs-bar::-webkit-scrollbar { display: none; }
+  .film-tab-btn {
+    font-size: 0.78rem;
+    padding: 0.6rem 0.85rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ── Star Rating Bar: bigger touch targets ── */
+  .film-star-bar {
+    gap: 0.3rem;
+    margin-top: 0.4rem;
+  }
+  .film-star {
+    font-size: 1rem; /* larger for touch */
+  }
+
+  /* ── Leaderboard rows: no truncation ── */
+  .lb-row {
+    padding: 0.5rem 0.65rem;
+    gap: 0.5rem;
+  }
+  .lb-name {
+    font-size: 0.75rem;
+  }
+  .lb-count {
+    font-size: 0.65rem;
+  }
+
+  /* ── Watch History items: stack-friendly ── */
+  .history-item {
+    gap: 0.6rem;
+    padding: 0.6rem 0.75rem;
+  }
+  .history-thumb {
+    width: 40px;
+    height: 40px;
+  }
+  .history-title {
+    font-size: 0.78rem;
+  }
+
+  /* ── Referral Rule Card: readable on small screens ── */
+  #referral-rules-card {
+    padding: 1rem 0.85rem;
+  }
+
+  /* ── Contact Modal: full-screen on mobile ── */
+  #contact-modal .contact-modal-box {
+    margin: 0;
+    border-radius: 16px 16px 0 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 92dvh;
+    overflow-y: auto;
+  }
+  .contact-form {
+    gap: 0.75rem;
+  }
+}
+
+/* Extra small: hide WhatsApp button if top bar is really tight */
+@media (max-width: 390px) {
+  #btn-whatsapp-share {
+    display: none !important;
+  }
+  /* Show only 5 emojis (hide last 2) at very small widths */
+  #emoji-tray .emoji-btn:nth-child(n+6) {
+    display: none;
+  }
+  /* Host badge: compact */
+  .host-star-badge {
+    font-size: 0.5rem;
+    padding: 0.08rem 0.3rem;
+  }
+  /* Room name: even shorter on tiny phones */
+  .room-info h1 {
+    max-width: 75px;
+    font-size: 0.72rem;
+  }
+}
+
+/* Touch devices: disable hover effects that cause sticky states */
+@media (hover: none) {
+  .film-star:hover { transform: none; }
+  .emoji-btn:hover { transform: none; background: transparent; }
+  .film-card:hover { transform: none; box-shadow: none; }
+}
+
