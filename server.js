@@ -1824,6 +1824,26 @@ async function startServer() {
 
   server.listen(PORT, "0.0.0.0", () => {
     console.log(`Vanilla JS Server running on http://localhost:${PORT}`);
+
+    // ── Render free-tier keep-alive self-ping ──────────────────────────────
+    // Render spins down free services after 15 min of inactivity.
+    // We ping our own public URL every 10 minutes so it never sleeps.
+    // RENDER_EXTERNAL_URL is auto-set by Render (e.g. https://vaanisetu.onrender.com)
+    const selfUrl = process.env.RENDER_EXTERNAL_URL;
+    if (selfUrl) {
+      const PING_INTERVAL = 10 * 60 * 1000; // 10 minutes
+      setInterval(async () => {
+        try {
+          const r = await fetch(`${selfUrl}/ping`, { signal: AbortSignal.timeout(10000) });
+          console.log(`[keep-alive] self-ping → ${r.status}`);
+        } catch (e) {
+          console.warn('[keep-alive] self-ping failed:', e.message);
+        }
+      }, PING_INTERVAL);
+      console.log(`[keep-alive] Self-ping active every 10 min → ${selfUrl}/ping`);
+    } else {
+      console.log('[keep-alive] RENDER_EXTERNAL_URL not set — skipping self-ping (local dev)');
+    }
   });
 }
 
