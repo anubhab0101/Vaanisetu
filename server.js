@@ -43,7 +43,7 @@ const VAPID_CONTACT = process.env.VAPID_EMAIL || 'mailto:anubhabmohapatra.01@gma
 if (VAPID_PUBLIC && VAPID_PRIVATE) {
   webPush.setVapidDetails(VAPID_CONTACT, VAPID_PUBLIC, VAPID_PRIVATE);
 } else {
-  console.warn('[push] VAPID keys not set — push notifications disabled');
+  console.warn('[push] VAPID keys not set \u2014 push notifications disabled');
 }
 
 const razorpay = new Razorpay({
@@ -51,7 +51,7 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET || "missing_secret",
 });
 
-// ✅ Admin always has full access — no payment required ever
+// \u2705 Admin always has full access \u2014 no payment required ever
 const ADMIN_EMAIL = 'anubhabmohapatra.01@gmail.com';
 const isAdmin = (email) => email === ADMIN_EMAIL;
 
@@ -63,7 +63,7 @@ async function startServer() {
 
   const PORT = process.env.PORT || 3000;
 
-  // ── Seed admin as lifetime full-premium on every server start ──────────────
+  // \u2500\u2500 Seed admin as lifetime full-premium on every server start \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   // This ensures admin can always access /premium.html without manual DB entry.
   if (adminDb) {
     try {
@@ -241,7 +241,7 @@ async function startServer() {
             break;
           }
 
-          // ── Emoji Reaction — broadcast to all room members ──────────────
+          // \u2500\u2500 Emoji Reaction \u2014 broadcast to all room members \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
           case "reaction": {
             if (currentRoomId && connections.has(currentRoomId)) {
               connections.get(currentRoomId).forEach(client => {
@@ -333,11 +333,11 @@ async function startServer() {
   });
 
   app.use(cors());
-  app.use(compression()); // ← GZIP compress all text/JSON/HTML/CSS/JS responses
+  app.use(compression()); // \u2190 GZIP compress all text/JSON/HTML/CSS/JS responses
   app.use(express.json({ limit: '10mb' })); // 10mb for base64 poster images
 
   // ================================================================
-  // SECURITY HEADERS — Fixes PageSpeed Insights Best Practices errors
+  // SECURITY HEADERS \u2014 Fixes PageSpeed Insights Best Practices errors
   // ================================================================
   app.use((req, res, next) => {
     // Force HTTPS on production (Render)
@@ -364,7 +364,7 @@ async function startServer() {
         "https://checkout.razorpay.com https://cdn.razorpay.com " +
         "https://www.gstatic.com https://www.googleapis.com https://apis.google.com " +
         "https://cdn.jsdelivr.net " +
-        // AdSterra ad domains (banner + social bar — NOT popunder)
+        // AdSterra ad domains (banner + social bar \u2014 NOT popunder)
         "https://millionairelucidlytransmitted.com https://*.millionairelucidlytransmitted.com " +
         "https://www.highperformanceformat.com https://*.highperformanceformat.com " +
         "https://*.adsterra.com https://adsterra.com; " +
@@ -422,7 +422,7 @@ async function startServer() {
            const now = Date.now();
            let expiryDate = now + (durationDays * 24 * 60 * 60 * 1000);
 
-           // ── Check for pending referral bonus ──────────────────────────
+           // \u2500\u2500 Check for pending referral bonus \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
            let referralBonusApplied = false;
            let bonusDaysApplied = 0;
            const userDoc = await adminDb.collection('users').doc(userId).get();
@@ -497,26 +497,89 @@ async function startServer() {
   });
 
 
-  // Contact form submission via nodemailer
+  // Contact form submission via nodemailer + Firestore fallback
   app.post('/api/send-contact', async (req, res) => {
     try {
       const { name, email, message, screenshotBase64 } = req.body;
-      const mailOptions = {
-        from: process.env.GMAIL_USER,
-        to: ['anubhabmohapatra.01@gmail.com', 'anubhab.01@vaanisethu.online'],
-        subject: `Vaanisethu Contact: ${name || 'Anonymous'}`,
-        text: `Message from ${name || 'Anonymous'} (${email || 'no-reply'}):\n\n${message}`,
+      if (!message || !message.trim()) return res.status(400).json({ error: 'Message is required' });
+
+      // Always save to Firestore first (admin can read from dashboard)
+      const contactData = {
+        name: name || 'Anonymous',
+        email: email || '',
+        message: message.trim(),
+        hasScreenshot: !!(screenshotBase64 && screenshotBase64.length > 100),
+        timestamp: Date.now(),
+        read: false
       };
-      if (screenshotBase64 && screenshotBase64.length < 1_000_000) {
-        mailOptions.attachments = [{ filename: 'screenshot.png', content: screenshotBase64.split("base64,")[1] || screenshotBase64, encoding: 'base64' }];
-      } else if (screenshotBase64) {
-        mailOptions.text += '\n\n[Screenshot attached was too large to send]';
+      const docRef = await adminDb.collection('contactMessages').add(contactData);
+
+      // Try to send email (optional — only works if GMAIL_USER + GMAIL_PASS are set)
+      if (process.env.GMAIL_USER && process.env.GMAIL_PASS) {
+        try {
+          const mailOptions = {
+            from: process.env.GMAIL_USER,
+            to: ['anubhabmohapatra.01@gmail.com', 'anubhab.01@vaanisethu.online'],
+            subject: `Vaanisethu Help Desk: ${name || 'Anonymous'}`,
+            text: `From: ${name || 'Anonymous'} (${email || 'no email'})\n\n${message}`,
+          };
+          if (screenshotBase64 && screenshotBase64.length < 1_000_000) {
+            mailOptions.attachments = [{ filename: 'screenshot.png', content: screenshotBase64.split('base64,')[1] || screenshotBase64, encoding: 'base64' }];
+          }
+          await transporter.sendMail(mailOptions);
+          console.log('[Contact] Email sent + saved to Firestore:', docRef.id);
+        } catch (mailErr) {
+          console.warn('[Contact] Email failed (saved to Firestore):', mailErr.message);
+        }
+      } else {
+        console.log('[Contact] No Gmail credentials — saved to Firestore only:', docRef.id);
       }
-      await transporter.sendMail(mailOptions);
+
       res.json({ success: true });
     } catch (err) {
-      console.error('Contact email error:', err);
+      console.error('Contact form error:', err);
       res.status(500).json({ error: err.message });
+    }
+  });
+
+  // GET /api/unread-messages — count unread contact messages for admin badge
+  app.get('/api/unread-messages', async (req, res) => {
+    try {
+      const snap = await adminDb.collection('contactMessages').where('read', '==', false).get();
+      res.json({ success: true, count: snap.size });
+    } catch (err) { res.json({ success: true, count: 0 }); }
+  });
+
+  // POST /api/admin/messages — fetch all contact messages for admin panel
+  app.post('/api/admin/messages', async (req, res) => {
+    try {
+      const { adminId } = req.body;
+      const adminDoc = await adminDb.collection('users').doc(adminId).get();
+      if (!adminDoc.exists || adminDoc.data().email !== 'anubhabmohapatra.01@gmail.com') return res.status(403).json({ success: false, error: 'Unauthorized' });
+      
+      const snap = await adminDb.collection('contactMessages').orderBy('timestamp', 'desc').limit(50).get();
+      const messages = [];
+      snap.forEach(doc => {
+        messages.push({ id: doc.id, ...doc.data() });
+      });
+      res.json({ success: true, messages });
+    } catch (err) {
+      console.error('Error fetching admin messages:', err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // POST /api/admin/messages/mark-read — mark message as read
+  app.post('/api/admin/messages/mark-read', async (req, res) => {
+    try {
+      const { adminId, msgId } = req.body;
+      const adminDoc = await adminDb.collection('users').doc(adminId).get();
+      if (!adminDoc.exists || adminDoc.data().email !== 'anubhabmohapatra.01@gmail.com') return res.status(403).json({ success: false, error: 'Unauthorized' });
+      
+      await adminDb.collection('contactMessages').doc(msgId).update({ read: true });
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
     }
   });
 
@@ -691,7 +754,7 @@ async function startServer() {
       const hostData = hostDoc.data();
       const hostUid = hostDoc.id;
 
-      // ✅ Admin is always subscribed — look up email via Firebase Auth
+      // \u2705 Admin is always subscribed \u2014 look up email via Firebase Auth
       try {
         const hostAuthRecord = await admin.auth().getUser(hostUid);
         if (isAdmin(hostAuthRecord.email || '')) {
@@ -703,12 +766,12 @@ async function startServer() {
 
       const isValid = hostData.activeSubscription && hostData.subscriptionExpiry > Date.now();
 
-      // ✅ Allow if host is on free pass
+      // \u2705 Allow if host is on free pass
       const isOnFreePass = hostData.freePassActive === true &&
                            hostData.freePassExpiry &&
                            hostData.freePassExpiry > Date.now();
 
-      // ✅ Allow if host is on an ad-pass (watched ads for free access)
+      // \u2705 Allow if host is on an ad-pass (watched ads for free access)
       const isOnAdPass = hostData.adPassActive === true &&
                          hostData.adPassExpiry &&
                          hostData.adPassExpiry > Date.now();
@@ -720,7 +783,7 @@ async function startServer() {
     }
     });
 
-  // Returns host's current ad context for a room — used by guests to set _roomHostAccessType
+  // Returns host's current ad context for a room \u2014 used by guests to set _roomHostAccessType
   app.get('/api/room-ad-context', async (req, res) => {
     try {
       const { roomCode } = req.query;
@@ -746,7 +809,7 @@ async function startServer() {
         if (isPremiumSub) {
           hostAccessType = 'premium'; // paid subscription = premium tier
         } else if (hostData.adPassActive && hostData.adPassExpiry > now) {
-          // Host used ad-pass — but their film access type written by client is more accurate
+          // Host used ad-pass \u2014 but their film access type written by client is more accurate
           hostAccessType = hostData.roomHostAccessType || 'ad-unlock';
         } else if (hostData.freePassActive && hostData.freePassExpiry > now) {
           hostAccessType = hostData.roomHostAccessType || 'generic';
@@ -773,7 +836,7 @@ async function startServer() {
     try {
       const { userId, displayName } = req.body;
       if (!adminDb || !userId) return res.status(400).json({ error: "Missing parameters" });
-      // Idempotent — if already registered, ignore
+      // Idempotent \u2014 if already registered, ignore
       const visitorRef = adminDb.collection('visitors').doc(userId);
       const existing = await visitorRef.get();
       if (!existing.exists) {
@@ -818,7 +881,7 @@ async function startServer() {
     }
   });
 
-  // Get platform config (public) — freeDayActive status
+  // Get platform config (public) \u2014 freeDayActive status
   app.get('/api/platform-config', async (req, res) => {
     try {
       const configRef = adminDb.collection('config').doc('platformSettings');
@@ -853,7 +916,7 @@ async function startServer() {
       const { userId, fingerprint, localKey } = req.body;
       if (!adminDb || !userId) return res.status(400).json({ error: "Missing parameters" });
 
-      // REQUIRE fingerprint — if client couldn't generate one, reject
+      // REQUIRE fingerprint \u2014 if client couldn't generate one, reject
       if (!fingerprint || fingerprint.trim() === '') {
         return res.status(400).json({ 
           success: false, 
@@ -864,7 +927,7 @@ async function startServer() {
       const ip = (req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim();
       const claimsRef = adminDb.collection('freePassClaims');
 
-      // 1. Fingerprint check — same device, different account
+      // 1. Fingerprint check \u2014 same device, different account
       const fpSnap = await claimsRef.where('fingerprint', '==', fingerprint).limit(1).get();
       if (!fpSnap.empty) {
         return res.status(403).json({ 
@@ -873,7 +936,7 @@ async function startServer() {
         });
       }
 
-      // 2. IP check — same network/router, different account (applies everywhere including localhost)
+      // 2. IP check \u2014 same network/router, different account (applies everywhere including localhost)
       if (ip) {
         const ipSnap = await claimsRef.where('ip', '==', ip).limit(1).get();
         if (!ipSnap.empty) {
@@ -884,7 +947,7 @@ async function startServer() {
         }
       }
 
-      // 3. localKey check — localStorage token sent by client (added as extra safety layer)
+      // 3. localKey check \u2014 localStorage token sent by client (added as extra safety layer)
       if (localKey && localKey.trim() !== '') {
         const lkSnap = await claimsRef.where('localKey', '==', localKey).limit(1).get();
         if (!lkSnap.empty) {
@@ -904,7 +967,7 @@ async function startServer() {
         });
       }
 
-      // All checks passed — grant 24hr free pass
+      // All checks passed \u2014 grant 24hr free pass
       const freePassExpiry = Date.now() + (24 * 60 * 60 * 1000);
 
       // Save claim record
@@ -1021,14 +1084,14 @@ async function startServer() {
 
       await batch.commit();
 
-      res.json({ success: true, adPassExpiry, message: '🎉 24-hour free access granted! Enjoy Vaanisethu.' });
+      res.json({ success: true, adPassExpiry, message: '\u{1F389} 24-hour free access granted! Enjoy Vaanisethu.' });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: err.message });
     }
   });
 
-  // Film ad unlock: watch 1 ad → get 4hr access to a specific film
+  // Film ad unlock: watch 1 ad \u2192 get 4hr access to a specific film
   app.post('/api/grant-film-ad-unlock', async (req, res) => {
     try {
       const { userId, filmId, token } = req.body;
@@ -1063,7 +1126,7 @@ async function startServer() {
       // Mark token used
       await adminDb.collection('adTokens').doc(tSnap.docs[0].id).update({ used: true });
 
-      // Create unlock record — use userId+filmId as doc ID so we can overwrite/extend
+      // Create unlock record \u2014 use userId+filmId as doc ID so we can overwrite/extend
       const unlockId = `${userId}_${filmId}`;
       await adminDb.collection('adFilmUnlocks').doc(unlockId).set({
         userId,
@@ -1079,7 +1142,7 @@ async function startServer() {
         expiresAt,
         telegramLink: filmData.telegramLink,
         filmTitle: filmData.title,
-        message: `🎬 Film unlocked for ${unlockHours} hours! Enjoy.`
+        message: `\u{1F3AC} Film unlocked for ${unlockHours} hours! Enjoy.`
       });
     } catch (err) {
       console.error(err);
@@ -1181,7 +1244,7 @@ async function startServer() {
 
   // ==== FREE PASS MANAGEMENT (Admin) ====
 
-  // GET /api/admin/free-pass-users — list all users who ever claimed a free pass
+  // GET /api/admin/free-pass-users \u2014 list all users who ever claimed a free pass
   app.get('/api/admin/free-pass-users', async (req, res) => {
     try {
       const { adminEmail } = req.query;
@@ -1212,7 +1275,7 @@ async function startServer() {
         const data = d.data();
         return {
           uid: d.id,
-          displayName: data.displayName || data.name || '—',
+          displayName: data.displayName || data.name || '\u2014',
           email: data.email || '',
           freePassActive: !!(data.freePassActive && data.freePassExpiry > now),
           freePassExpiry: data.freePassExpiry || 0,
@@ -1227,7 +1290,7 @@ async function startServer() {
     }
   });
 
-  // POST /api/admin/manage-free-pass — extend (+24h) or revoke a user's free pass
+  // POST /api/admin/manage-free-pass \u2014 extend (+24h) or revoke a user's free pass
   app.post('/api/admin/manage-free-pass', async (req, res) => {
     try {
       const { adminEmail, userId, action } = req.body;
@@ -1326,7 +1389,7 @@ async function startServer() {
     } catch (err) { console.error(err); res.status(500).json({ error: err.message }); }
   });
 
-  // ── Free Rental (1/week for Weekly, 1/month for Monthly, unlimited for Admin) ──
+  // \u2500\u2500 Free Rental (1/week for Weekly, 1/month for Monthly, unlimited for Admin) \u2500\u2500
   app.post('/api/use-free-rental', async (req, res) => {
     try {
       const { userId, filmId } = req.body;
@@ -1351,7 +1414,7 @@ async function startServer() {
         }
         // Check if already used this cycle
         const lastUsed = userData.freeRentalUsedAt || 0;
-        // Both weekly AND monthly → reset every week (Monday 00:00)
+        // Both weekly AND monthly \u2192 reset every week (Monday 00:00)
         // Monthly gets same weekly cadence = better value for higher price
         const weekStart = new Date(); weekStart.setHours(0,0,0,0);
         weekStart.setDate(weekStart.getDate() - weekStart.getDay() + (weekStart.getDay() === 0 ? -6 : 1));
@@ -1377,9 +1440,9 @@ async function startServer() {
       res.status(500).json({ success: false, error: err.message });
     }
   });
-  // ════════════════════════════════════════════════════════════
+  // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
   // PWA PUSH NOTIFICATIONS
-  // ════════════════════════════════════════════════════════════
+  // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
   // [1] Return VAPID public key to client (needed for subscription)
   app.get('/api/push/vapid-key', (req, res) => {
@@ -1436,7 +1499,7 @@ async function startServer() {
           sent++;
         } catch (err) {
           failed++;
-          // 410 Gone = subscription revoked by browser → remove it
+          // 410 Gone = subscription revoked by browser \u2192 remove it
           if (err.statusCode === 410 || err.statusCode === 404) {
             expired.push(doc.ref);
           }
@@ -1483,8 +1546,11 @@ async function startServer() {
             thumbnailBase64: d.thumbnailBase64 || '',
             price: d.price || 20,
             rentalDays: d.rentalDays || 3,
-            // ✅ CRITICAL: include adUnlockEnabled so frontend can split into sections
+            // \u2705 CRITICAL: include adUnlockEnabled so frontend can split into sections
             adUnlockEnabled: d.adUnlockEnabled !== false,
+            // Include rating data so film cards can show star ratings
+            avgRating: d.avgRating || 0,
+            ratingCount: d.ratingCount || 0,
             createdAt: d.createdAt || 0
           });
         }
@@ -1504,7 +1570,7 @@ async function startServer() {
       const film = filmSnap.data();
       if (!film.isActive) return res.status(400).json({ error: "Film is not available" });
 
-      // Check for existing active rental — no compound index needed
+      // Check for existing active rental \u2014 no compound index needed
       const now = Date.now();
       const existing = await adminDb.collection('rentals').where('userId', '==', userId).get();
       const hasActive = existing.docs.some(d => d.data().filmId === filmId && d.data().expiresAt > now);
@@ -1595,7 +1661,7 @@ async function startServer() {
     try {
       const { userId } = req.query;
       if (!adminDb || !userId) return res.status(400).json({ error: "Missing parameters" });
-      // Simple single-field query — no composite index needed
+      // Simple single-field query \u2014 no composite index needed
       const snap = await adminDb.collection('rentals').where('userId', '==', userId).get();
       const now = Date.now();
       const rentals = [];
@@ -1617,10 +1683,10 @@ async function startServer() {
   // ==== END FILM STORE ROUTES ====
 
   // =====================================================================
-  // V2 FEATURES — RATINGS, WATCH HISTORY, LEADERBOARD, REFERRALS
+  // V2 FEATURES \u2014 RATINGS, WATCH HISTORY, LEADERBOARD, REFERRALS
   // =====================================================================
 
-  // POST /api/rate-film — Save a 1-5 star rating for a film
+  // POST /api/rate-film \u2014 Save a 1-5 star rating for a film
   app.post('/api/rate-film', async (req, res) => {
     try {
       const { userId, filmId, filmTitle, rating } = req.body;
@@ -1643,7 +1709,7 @@ async function startServer() {
     } catch (err) { console.error(err); res.status(500).json({ success: false, error: err.message }); }
   });
 
-  // GET /api/my-film-rating?userId=&filmId= — Get a user's own rating
+  // GET /api/my-film-rating?userId=&filmId= \u2014 Get a user's own rating
   app.get('/api/my-film-rating', async (req, res) => {
     try {
       const { userId, filmId } = req.query;
@@ -1653,7 +1719,7 @@ async function startServer() {
     } catch (err) { res.json({ success: false, rating: null }); }
   });
 
-  // POST /api/log-watch-history — Called when a film starts playing
+  // POST /api/log-watch-history \u2014 Called when a film starts playing
   app.post('/api/log-watch-history', async (req, res) => {
     try {
       const { userId, filmId, filmTitle, thumbnailBase64 } = req.body;
@@ -1666,7 +1732,7 @@ async function startServer() {
     } catch (err) { res.json({ success: false }); }
   });
 
-  // GET /api/my-watch-history?userId= — Return last 20 entries
+  // GET /api/my-watch-history?userId= \u2014 Return last 20 entries
   app.get('/api/my-watch-history', async (req, res) => {
     try {
       const { userId } = req.query;
@@ -1710,8 +1776,78 @@ async function startServer() {
     } catch (err) { res.json({ success: true, board: [] }); }
   });
 
-  // POST /api/apply-referral — Store a PENDING referral on signup
-  // Bonus is NOT granted immediately — it applies on the user's FIRST PURCHASE.
+  // POST /api/remove-leaderboard-entry — Admin: delete a user's monthly watch history
+  app.post('/api/remove-leaderboard-entry', async (req, res) => {
+    try {
+      const { adminId, targetUserId } = req.body;
+      if (!adminId || !targetUserId) return res.status(400).json({ success: false, error: 'Missing fields' });
+      // Verify requester is admin
+      const adminDoc = await adminDb.collection('users').doc(adminId).get();
+      if (!adminDoc.exists || adminDoc.data().email !== 'anubhabmohapatra.01@gmail.com') {
+        return res.status(403).json({ success: false, error: 'Admin only' });
+      }
+      // Delete all watchHistory docs for this user this month
+      const monthStart = new Date();
+      monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+      const snap = await adminDb.collection('watchHistory')
+        .where('userId', '==', targetUserId)
+        .where('watchedAt', '>=', monthStart.getTime())
+        .get();
+      const batch = adminDb.batch();
+      snap.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+      res.json({ success: true, deleted: snap.size });
+    } catch (err) {
+      console.error('[remove-leaderboard-entry]', err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // POST /api/update-room-name \u2014 Update room name directly from mobile modal
+  app.post('/api/update-room-name', async (req, res) => {
+    try {
+      const { userId, roomName } = req.body;
+      if (!userId || !roomName) return res.status(400).json({ success: false, error: 'Missing fields' });
+      const trimmed = roomName.trim().slice(0, 30);
+      if (!trimmed) return res.status(400).json({ success: false, error: 'Room name cannot be empty' });
+      await adminDb.collection('users').doc(userId).set({ roomName: trimmed }, { merge: true });
+      res.json({ success: true, roomName: trimmed });
+    } catch (err) {
+      console.error('[update-room-name]', err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // GET /api/my-purchases?userId= \u2014 Return user's payment history
+  app.get('/api/my-purchases', async (req, res) => {
+    try {
+      const { userId } = req.query;
+      if (!userId) return res.status(400).json({ success: false, error: 'Missing userId' });
+      const snap = await adminDb.collection('payments')
+        .where('userId', '==', userId)
+        .orderBy('timestamp', 'desc')
+        .limit(20)
+        .get();
+      const purchases = snap.docs.map(d => {
+        const data = d.data();
+        return {
+          id: d.id,
+          plan: data.plan || 'Unknown',
+          amount: data.amount || 0,
+          paymentId: data.paymentId || '',
+          timestamp: data.timestamp?.toMillis?.() || null,
+          referralBonusDays: data.referralBonusDays || 0
+        };
+      });
+      res.json({ success: true, purchases });
+    } catch (err) {
+      console.error('[my-purchases]', err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // POST /api/apply-referral \u2014 Store a PENDING referral on signup
+  // Bonus is NOT granted immediately \u2014 it applies on the user's FIRST PURCHASE.
   // Anti-abuse: device fingerprint prevents the same device from claiming again,
   //   even if the user creates a new email account.
   app.post('/api/apply-referral', async (req, res) => {
@@ -1721,7 +1857,7 @@ async function startServer() {
 
       const refUpper = refCode.trim().toUpperCase();
 
-      // Anti-abuse — check if this device already claimed a referral bonus before
+      // Anti-abuse \u2014 check if this device already claimed a referral bonus before
       if (deviceFingerprint) {
         const abuseSn = await adminDb.collection('referralClaims')
           .where('deviceFingerprint', '==', deviceFingerprint).limit(1).get();
@@ -1776,7 +1912,7 @@ async function startServer() {
 
   const publicPath = path.join(process.cwd(), 'public');
 
-  // ── Server-side Premium HTML ──────────────────────────────────────────────
+  // \u2500\u2500 Server-side Premium HTML \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   // Reads index.html, removes AdSterra scripts, injects premium flag, serves it.
   // This replaces the broken client-side fetch+document.write() approach
   // (document.write blocks module scripts from executing).
@@ -1800,18 +1936,25 @@ async function startServer() {
 
 
   // Smart static caching:
-  // - versioned assets (app.js?v=X, style.css?v=X) → 1 hour cache (CDN-friendly)
-  // - index.html → no-cache so users always get the latest version
+  // - versioned assets (app.js?v=X, style.css?v=X) \u2192 1 hour cache (CDN-friendly)
+  // - index.html \u2192 no-cache so users always get the latest version
   app.use(express.static(publicPath, {
     etag: true,
     lastModified: true,
     setHeaders(res, filePath) {
       const isHtml = filePath.endsWith('.html');
       if (isHtml) {
-        // HTML — always revalidate so users get fresh JS/CSS version references
+        // HTML \u2014 always revalidate so users get fresh JS/CSS version references
         res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      } else if (filePath.endsWith('.js')) {
+        res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      } else if (filePath.endsWith('.css')) {
+        res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+        res.setHeader('Content-Type', 'text/css; charset=utf-8');
       } else {
-        // CSS/JS/images — 1 hour cache (query-string versioning busts cache)
+        // images etc \u2014 1 hour cache
         res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
       }
     }
@@ -1825,7 +1968,7 @@ async function startServer() {
   server.listen(PORT, "0.0.0.0", () => {
     console.log(`Vanilla JS Server running on http://localhost:${PORT}`);
 
-    // ── Render free-tier keep-alive self-ping ──────────────────────────────
+    // \u2500\u2500 Render free-tier keep-alive self-ping \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
     // Render spins down free services after 15 min of inactivity.
     // We ping our own public URL every 10 minutes so it never sleeps.
     // RENDER_EXTERNAL_URL is auto-set by Render (e.g. https://vaanisetu.onrender.com)
@@ -1835,14 +1978,14 @@ async function startServer() {
       setInterval(async () => {
         try {
           const r = await fetch(`${selfUrl}/ping`, { signal: AbortSignal.timeout(10000) });
-          console.log(`[keep-alive] self-ping → ${r.status}`);
+          console.log(`[keep-alive] self-ping \u2192 ${r.status}`);
         } catch (e) {
           console.warn('[keep-alive] self-ping failed:', e.message);
         }
       }, PING_INTERVAL);
-      console.log(`[keep-alive] Self-ping active every 10 min → ${selfUrl}/ping`);
+      console.log(`[keep-alive] Self-ping active every 10 min \u2192 ${selfUrl}/ping`);
     } else {
-      console.log('[keep-alive] RENDER_EXTERNAL_URL not set — skipping self-ping (local dev)');
+      console.log('[keep-alive] RENDER_EXTERNAL_URL not set \u2014 skipping self-ping (local dev)');
     }
   });
 }

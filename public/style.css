@@ -2692,3 +2692,608 @@ video {
   .film-card:hover { transform: none; box-shadow: none; }
 }
 
+
+/* ═══════════════════════════════════════════════════════════════
+   📱 PREMIUM MOBILE UI — v1  (max-width: 640px only)
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+
+  /* ── Dashboard: make room for fixed top + bottom nav ── */
+  #dashboard-view {
+    padding-top: calc(60px + env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    display: block !important;
+    min-height: 100dvh;
+  }
+  /* Each section gets scroll padding */
+  .mob-section {
+    padding-bottom: 0.5rem;
+  }
+
+  /* Hide the global footer on mobile — content moved to Profile tab */
+  #site-footer { display: none !important; }
+  /* Also hide help FAB on mobile — profile has sign out */
+
+  /* ── Hide original top bar user pill on mobile (we have new compact bar) ── */
+  .dash-top-bar { display: none !important; }
+
+  /* ── COMPACT TOP BAR ── */
+  .mob-top-bar {
+    display: flex !important;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 60;
+    padding: max(0.85rem, env(safe-area-inset-top, 0.85rem)) 1rem 0.75rem;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(10,10,10,0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  /* Completely hide the big centered header on mobile — compact top bar replaces it */
+  #dashboard-view .header-center { display: none !important; }
+
+  /* ── WELCOME STRIP ── */
+  .mob-welcome-strip {
+    display: block !important;
+    background: linear-gradient(135deg, #c2410c 0%, #7c3aed 100%);
+    border-radius: 1rem;
+    padding: 0.85rem 1.1rem;
+    margin: 0 0 1rem 0;
+  }
+
+  /* ── BOTTOM NAV ── */
+  .mobile-bottom-nav {
+    display: flex !important;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(10,10,10,0.97);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,255,255,0.07);
+    padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    justify-content: space-around;
+    align-items: center;
+  }
+  .mob-nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    background: none;
+    border: none;
+    color: #71717a;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.4rem 1rem;
+    cursor: pointer;
+    transition: color 0.2s;
+    min-width: 60px;
+  }
+  .mob-nav-btn .mob-nav-icon {
+    font-size: 1.3rem;
+    line-height: 1;
+    transition: transform 0.2s;
+  }
+  .mob-nav-btn.active {
+    color: #f97316;
+  }
+  .mob-nav-btn.active .mob-nav-icon {
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 6px rgba(249,115,22,0.6));
+  }
+
+  /* ── SECTION TABS — hide/show sections via JS ── */
+  .mob-section { display: none !important; }
+  .mob-section.active { display: block !important; }
+
+  /* ── HOME TAB: Room Card glassmorphism ── */
+  .mob-room-card {
+    background: rgba(30,20,10,0.6) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(249,115,22,0.2) !important;
+    border-radius: 1.25rem !important;
+    padding: 1.25rem !important;
+    margin-bottom: 1rem;
+  }
+  .mob-room-code-display {
+    font-size: 2.4rem !important;
+    letter-spacing: 0.25em !important;
+    color: #f97316 !important;
+    text-shadow: 0 0 20px rgba(249,115,22,0.5) !important;
+    font-weight: 900 !important;
+    animation: mobCodePulse 2.5s ease-in-out infinite !important;
+  }
+  @keyframes mobCodePulse {
+    0%, 100% { text-shadow: 0 0 12px rgba(249,115,22,0.4); }
+    50%       { text-shadow: 0 0 28px rgba(249,115,22,0.8); }
+  }
+
+  /* ── FILM CAROUSEL (snap-scroll center focus) ── */
+  .mob-film-carousel-wrap {
+    position: relative;
+    margin: 0 -1rem;
+    padding: 0.5rem 0 1.25rem;
+  }
+  .mob-film-carousel {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scroll-padding: 0 calc(50% - 120px);
+    gap: 0.75rem;
+    padding: 0.5rem calc(50% - 120px);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .mob-film-carousel::-webkit-scrollbar { display: none; }
+  .mob-film-carousel-item {
+    flex: 0 0 240px;
+    scroll-snap-align: center;
+    border-radius: 1.1rem;
+    overflow: hidden;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.35s ease, box-shadow 0.35s ease;
+    transform: scale(0.78);
+    opacity: 0.45;
+    position: relative;
+    background: #18181b;
+    border: 1px solid #27272a;
+    cursor: pointer;
+  }
+  .mob-film-carousel-item.snap-center {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 12px 40px rgba(168,85,247,0.45);
+    border-color: rgba(168,85,247,0.6);
+    z-index: 2;
+  }
+  .mob-carousel-poster {
+    width: 240px;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    display: block;
+  }
+  .mob-carousel-overlay {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 50%, transparent 80%);
+    padding: 2.5rem 0.85rem 0.85rem;
+  }
+  .mob-carousel-title {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 800;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .mob-carousel-rental-info {
+    color: rgba(255,255,255,0.65);
+    font-size: 0.72rem;
+    margin-top: 0.25rem;
+  }
+  .mob-carousel-price {
+    position: absolute;
+    top: 0.6rem; right: 0.6rem;
+    background: rgba(0,0,0,0.8);
+    color: #f97316;
+    font-size: 0.78rem;
+    font-weight: 900;
+    padding: 0.25rem 0.6rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(249,115,22,0.4);
+    backdrop-filter: blur(4px);
+  }
+  .mob-carousel-badge-free {
+    position: absolute;
+    top: 0.6rem; left: 0.6rem;
+    background: rgba(22,163,74,0.9);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 900;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.4rem;
+  }
+
+  /* ── SECTION HEADER ── */
+  .mob-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+  .mob-section-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: white;
+  }
+  .mob-see-all {
+    font-size: 0.78rem;
+    color: #a855f7;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    padding: 0;
+  }
+
+  /* ── PROFILE TAB ── */
+  .mob-profile-avatar-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 0 1rem;
+    gap: 0.5rem;
+  }
+  .mob-profile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #3f3f46;
+    border: 3px solid #f97316;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+  }
+  .mob-profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .mob-profile-change-photo {
+    font-size: 0.72rem;
+    color: #f97316;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .mob-profile-name {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: white;
+  }
+  .mob-profile-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.75rem;
+    border-radius: 9999px;
+    background: rgba(168,85,247,0.15);
+    color: #c084fc;
+    border: 1px solid rgba(168,85,247,0.4);
+  }
+  .mob-settings-section-label {
+    font-size: 0.65rem;
+    color: #52525b;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.75rem 0 0.3rem;
+  }
+  .mob-settings-card {
+    background: #18181b;
+    border: 1px solid #27272a;
+    border-radius: 1rem;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+  }
+  .mob-settings-item {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid #27272a;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .mob-settings-item:last-child { border-bottom: none; }
+  .mob-settings-item:active { background: #27272a; }
+  .mob-settings-icon {
+    font-size: 1.1rem;
+    width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .mob-settings-label {
+    flex: 1;
+    font-size: 0.9rem;
+    color: white;
+    font-weight: 500;
+  }
+  .mob-settings-value {
+    font-size: 0.78rem;
+    color: #71717a;
+  }
+  .mob-settings-arrow {
+    color: #52525b;
+    font-size: 0.8rem;
+  }
+  .mob-settings-item.danger .mob-settings-label { color: #f87171; }
+  .mob-settings-item.danger .mob-settings-icon { filter: hue-rotate(0deg); }
+
+  /* Notification iOS-style toggle */
+  .mob-toggle {
+    position: relative;
+    width: 44px;
+    height: 26px;
+    flex-shrink: 0;
+  }
+  .mob-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .mob-toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: #3f3f46;
+    border-radius: 13px;
+    cursor: pointer;
+    transition: background 0.25s;
+  }
+  .mob-toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 20px; height: 20px;
+    left: 3px; top: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.25s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  }
+  .mob-toggle input:checked + .mob-toggle-slider { background: #f97316; }
+  .mob-toggle input:checked + .mob-toggle-slider::before { transform: translateX(18px); }
+
+  /* ── Hide desktop-only elements on mobile ── */
+  #dashboard-view .card-grid { padding: 0; }
+  .mob-hidden { display: none !important; }
+}
+
+/* ── Desktop: hide mobile-only elements ───────────────────── */
+@media (min-width: 641px) {
+  .mob-top-bar        { display: none !important; }
+  .mobile-bottom-nav  { display: none !important; }
+  .mob-welcome-strip  { display: none !important; }
+  /* On desktop all mob-sections stay visible (normal flow) */
+  .mob-section        { display: block !important; }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   💳 PAYMENT VIEW — MOBILE REDESIGN  (max-width: 640px only)
+   ════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+
+  /* Payment view mobile padding — DO NOT set display here, JS controls it via .hidden */
+  #payment-view:not(.hidden) {
+    padding-top: 1rem !important;
+    padding-bottom: calc(90px + env(safe-area-inset-bottom,0px)) !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    overflow-y: auto;
+    min-height: 100dvh;
+  }
+  #payment-view .header-center { padding: 0 1rem; }
+
+  /* Hide "How It Works" on mobile — wastes space */
+  #payment-view .how-it-works { display: none !important; }
+
+  /* Compact heading */
+  #payment-view h1.gradient-text {
+    font-size: 1.5rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+  #payment-view .subtitle {
+    font-size: 0.8rem !important;
+    margin-bottom: 1.25rem !important;
+  }
+
+  /* Plan cards grid → single column full-width */
+  #payment-view .card-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    padding: 0 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* Base plan card */
+  #payment-view .card.premium-card {
+    border-radius: 1.25rem !important;
+    padding: 1.25rem !important;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Plan card inner layout — price left, features right */
+  .mob-plan-inner {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+  .mob-plan-left { flex: 0 0 auto; min-width: 100px; }
+  .mob-plan-right { flex: 1; }
+  .mob-plan-name {
+    font-size: 1rem !important;
+    font-weight: 900 !important;
+    color: white !important;
+    margin: 0 0 0.2rem !important;
+  }
+  .mob-plan-price {
+    font-size: 1.75rem !important;
+    font-weight: 900 !important;
+    color: #f97316 !important;
+    line-height: 1 !important;
+    margin-bottom: 0.15rem !important;
+  }
+  .mob-plan-price.purple { color: #c084fc !important; }
+  .mob-plan-price-unit {
+    font-size: 0.72rem;
+    color: #71717a;
+    font-weight: 500;
+  }
+  .mob-plan-sub {
+    font-size: 0.72rem;
+    color: #71717a;
+    margin-top: 0.2rem;
+  }
+  .mob-plan-features {
+    list-style: none;
+    padding: 0; margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .mob-plan-features li {
+    font-size: 0.75rem;
+    color: #a1a1aa;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .mob-plan-features li::before { content: "✓"; color: #22c55e; font-weight: 900; font-size: 0.7rem; }
+  .mob-plan-features li.warn::before { content: "📺"; }
+  .mob-plan-features li.warn { color: #c084fc; }
+
+  /* POPULAR badge */
+  .mob-plan-badge {
+    position: absolute;
+    top: 0; right: 0;
+    background: linear-gradient(135deg, #d97706, #f59e0b);
+    color: #1c1000;
+    font-size: 0.6rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    padding: 0.3rem 0.75rem;
+    border-radius: 0 1.25rem 0 0.75rem;
+  }
+  .mob-plan-badge.purple-badge {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: white;
+  }
+
+  /* Featured (weekly) card */
+  #payment-view .card.premium-card.border-orange {
+    border: 2px solid transparent !important;
+    background-clip: padding-box !important;
+    box-shadow: 0 0 0 2px rgba(249,115,22,0.6), 0 8px 32px rgba(249,115,22,0.2) !important;
+  }
+
+  /* Monthly card highlight */
+  #payment-view .mob-monthly-card {
+    box-shadow: 0 0 0 2px rgba(168,85,247,0.5), 0 8px 24px rgba(168,85,247,0.15) !important;
+  }
+
+  /* Select buttons */
+  #payment-view .card.premium-card .btn {
+    border-radius: 0.85rem !important;
+    min-height: 46px !important;
+    font-size: 0.9rem !important;
+  }
+  #btn-pay-weekly {
+    background: linear-gradient(135deg, #ea580c, #c2410c) !important;
+    box-shadow: 0 4px 16px rgba(249,115,22,0.4) !important;
+  }
+  #btn-pay-monthly {
+    background: linear-gradient(135deg, #7c3aed, #a855f7) !important;
+    color: white !important;
+    box-shadow: 0 4px 16px rgba(168,85,247,0.35) !important;
+  }
+
+  /* Access code + guest join → compact on mobile */
+  #payment-view .card.max-w-md {
+    margin: 0 1rem 0.75rem !important;
+    border-radius: 1rem !important;
+    padding: 1rem !important;
+  }
+
+  /* Security badge row */
+  .mob-pay-security {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.75rem 0 0.5rem;
+    font-size: 0.72rem;
+    color: #52525b;
+  }
+}
+
+/* ── Payment page: desktop shows mob-desktop-only, mobile hides it ── */
+@media (max-width: 640px) {
+  .mob-desktop-only { display: none !important; }
+  .mob-plan-inner    { display: flex !important; }
+  .mob-plan-badge    { display: block !important; }
+  .mob-pay-security  { display: flex !important; }
+}
+@media (min-width: 641px) {
+  .mob-plan-inner   { display: none !important; }
+  .mob-plan-badge   { display: none !important; }
+  .mob-pay-security { display: none !important; }
+  .mob-desktop-only { display: block !important; }
+}
+
+/* ════════════════════════════════════════════════════════
+   🖥️  DESKTOP FIX — Hide mobile-only tab sections
+   Only mob-sec-home (which has the real card-grid) stays.
+   Films / Friends / Profile tabs are mobile-only.
+   ════════════════════════════════════════════════════════ */
+@media (min-width: 641px) {
+  #mob-sec-films   { display: none !important; }
+  #mob-sec-friends { display: none !important; }
+  #mob-sec-profile { display: none !important; }
+  #mob-sec-home    { display: block !important; }
+
+  /* Remove welcome strip on desktop */
+  .mob-welcome-strip { display: none !important; }
+
+  /* Profile avatar image must not be position:absolute on desktop */
+  #mob-profile-avatar-img { position: static !important; inset: auto !important; }
+
+  /* Plan card inner layout — desktop shows original content */
+  .mob-plan-inner   { display: none !important; }
+  .mob-plan-badge   { display: none !important; }
+  .mob-pay-security { display: none !important; }
+  .mob-desktop-only { display: block !important; }
+}
+
+/* ════════════════════════════════════════════════════════
+   🐛 BUG FIX — payment-view must not show on mobile
+   when dashboard-view is active. Also fix card-grid
+   overflow on mobile (leaderboard, manual join etc.)
+   ════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+
+  /* Hide leaderboard + manual join card on mobile Home tab
+     (they clutter the compact layout) */
+  /* Leaderboard now visible on mobile */
+
+  /* Keep only the first column (Room card + manual join) visible */
+  /* Allowed flex on all children */
+
+  /* Manual join inside first col - hide on mobile (room code already visible) */
+  #mob-sec-home #btn-join,
+  #mob-sec-home .card.fade-up:has(#join-key-input) {
+    display: none !important;
+  }
+}
+
+/* ════════════════════════════════════════════════
+   🔒 DEFINITIVE VIEW ISOLATION FIX
+   .hidden MUST always win — no view can override it
+   ════════════════════════════════════════════════ */
+#payment-view.hidden,
+#dashboard-view.hidden,
+#room-view.hidden,
+#setup-profile-view.hidden,
+#auth-view.hidden {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  opacity: 0 !important;
+}

@@ -224,7 +224,7 @@
   <link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin>
   <link rel="dns-prefetch" href="https://checkout.razorpay.com">
 
-  <link rel="stylesheet" href="/style.css?v=19">
+  <link rel="stylesheet" href="/style.css?v=30">
 
   <!-- Skip loading screen on back-navigation (runs before render) -->
   <script>if (sessionStorage.getItem('_vns_loaded')) { document.documentElement.classList.add('no-splash'); }</script>
@@ -374,7 +374,24 @@
 
           <!-- One Time -->
           <div class="card premium-card" style="display:flex;flex-direction:column;justify-content:space-between;">
-            <div>
+            <div class="mob-plan-inner">
+              <div class="mob-plan-left">
+                <p class="mob-plan-name">24-Hour Pass</p>
+                <div class="mob-plan-price">₹50</div>
+                <div class="mob-plan-price-unit">one time</div>
+                <div class="mob-plan-sub">Try it out</div>
+              </div>
+              <div class="mob-plan-right">
+                <ul class="mob-plan-features">
+                  <li>Full Access 24 Hours</li>
+                  <li>HD Sync with Friends</li>
+                  <li>Rent Films at listed price</li>
+                  <li class="warn">Short in-movie ads play</li>
+                </ul>
+              </div>
+            </div>
+            <!-- Desktop fallback content (hidden on mobile via .mob-plan-inner) -->
+            <div class="mob-desktop-only">
               <h3 class="text-white text-xl font-bold mb-2">24-Hour Pass</h3>
               <p class="text-zinc-400 text-sm mb-4">Full access for 1 day.</p>
               <div class="text-3xl text-orange font-bold mb-6">₹50</div>
@@ -392,13 +409,28 @@
           <!-- Weekly -->
           <div class="card premium-card border-orange"
             style="display:flex;flex-direction:column;justify-content:space-between; box-shadow: 0 0 20px rgba(249, 115, 22, 0.15);">
-            <div>
-              <div class="text-xs uppercase bg-orange text-white inline-block px-2 py-1 rounded font-bold mb-2">Popular
+            <span class="mob-plan-badge">POPULAR</span>
+            <div class="mob-plan-inner">
+              <div class="mob-plan-left">
+                <p class="mob-plan-name">Weekly Pass</p>
+                <div class="mob-plan-price">₹150</div>
+                <div class="mob-plan-price-unit">/week</div>
+                <div class="mob-plan-sub">Weekend binge</div>
               </div>
+              <div class="mob-plan-right">
+                <ul class="mob-plan-features">
+                  <li>Full Access 7 Days</li>
+                  <li>Unlimited Friends</li>
+                  <li>1 Free Rental/week</li>
+                  <li>Zero Ads 🚫</li>
+                </ul>
+              </div>
+            </div>
+            <div class="mob-desktop-only">
+              <div class="text-xs uppercase bg-orange text-white inline-block px-2 py-1 rounded font-bold mb-2">Popular</div>
               <h3 class="text-white text-xl font-bold mb-2">Weekly Pass</h3>
               <p class="text-zinc-400 text-sm mb-4">Best for weekend binges.</p>
-              <div class="text-3xl text-orange font-bold mb-6">₹150 <span
-                  class="text-sm font-normal text-zinc-500">/week</span></div>
+              <div class="text-3xl text-orange font-bold mb-6">₹150 <span class="text-sm font-normal text-zinc-500">/week</span></div>
               <ul class="text-zinc-300 text-sm mb-6 space-y-2">
                 <li>✓ Full Access for 7 Days</li>
                 <li>✓ Invite Unlimited Friends</li>
@@ -411,12 +443,29 @@
           </div>
 
           <!-- Monthly -->
-          <div class="card premium-card" style="display:flex;flex-direction:column;justify-content:space-between;">
-            <div>
+          <div class="card premium-card mob-monthly-card" style="display:flex;flex-direction:column;justify-content:space-between;">
+            <span class="mob-plan-badge purple-badge">BEST VALUE</span>
+            <div class="mob-plan-inner">
+              <div class="mob-plan-left">
+                <p class="mob-plan-name">Monthly Pass</p>
+                <div class="mob-plan-price purple">₹400</div>
+                <div class="mob-plan-price-unit">/month</div>
+                <div class="mob-plan-sub">For cinephiles</div>
+              </div>
+              <div class="mob-plan-right">
+                <ul class="mob-plan-features">
+                  <li>Full Access 30 Days</li>
+                  <li>Unlimited Friends</li>
+                  <li>1 Free Rental/week</li>
+                  <li>Zero Ads 🚫</li>
+                  <li>Early Access Films ⭐</li>
+                </ul>
+              </div>
+            </div>
+            <div class="mob-desktop-only">
               <h3 class="text-white text-xl font-bold mb-2">Monthly Pass</h3>
               <p class="text-zinc-400 text-sm mb-4">For the true cinephiles.</p>
-              <div class="text-3xl text-orange font-bold mb-6">₹400 <span
-                  class="text-sm font-normal text-zinc-500">/month</span></div>
+              <div class="text-3xl text-orange font-bold mb-6">₹400 <span class="text-sm font-normal text-zinc-500">/month</span></div>
               <ul class="text-zinc-300 text-sm mb-6 space-y-2">
                 <li>✓ 30 Days of Access</li>
                 <li>✓ Invite Unlimited Friends</li>
@@ -428,6 +477,11 @@
             </div>
             <button class="btn btn-outline hover-bg w-full" id="btn-pay-monthly">Select Monthly</button>
           </div>
+        </div>
+
+        <!-- Mobile: Security badge -->
+        <div class="mob-pay-security">
+          🔒 Secure Payment via Razorpay
         </div>
 
         <div class="card max-w-md mx-auto">
@@ -709,7 +763,7 @@
           </div>
 
           <!-- Purchase Ledger -->
-          <div
+          <div id="admin-user-section"
             class="card col-span-1 lg:col-span-2 border border-zinc-800 bg-zinc-900/30 flex flex-col h-full overflow-hidden"
             style="padding: 0; align-items: stretch; text-align: left;">
             <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
@@ -828,7 +882,7 @@
         </div>
 
         <!-- Film Store Manager (Admin) -->
-        <div class="mt-8">
+        <div class="mt-8" id="admin-film-section">
           <div class="card col-span-1 lg:col-span-3 border border-zinc-800 bg-zinc-900/30"
             style="padding:0;align-items:stretch;text-align:left;">
             <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
@@ -1026,6 +1080,65 @@
             </div>
           </div>
         </div>
+        <!-- Help Desk Messages (Admin) -->
+        <div class="mt-8" id="admin-messages-section">
+          <div class="card col-span-1 lg:col-span-3 border border-zinc-800 bg-zinc-900/30"
+            style="padding:0;align-items:stretch;text-align:left;">
+            <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
+              <h2 class="text-lg text-white m-0 font-bold tracking-tight flex items-center gap-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                  <path d="M22 6l-10 7L2 6" />
+                </svg>
+                Help Desk Messages
+              </h2>
+              <button onclick="if(window.loadHelpDeskMessages) window.loadHelpDeskMessages()" class="icon-btn hover-bg bg-black shadow-inner border border-zinc-800"
+                style="width:32px;height:32px" title="Refresh">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <path d="M3 2v6h6" />
+                </svg>
+              </button>
+            </div>
+            <div class="p-6">
+              <div id="admin-helpdesk-list" class="flex flex-col gap-3">
+                <p style="color:#52525b;font-size:0.875rem;font-style:italic;">Click refresh above to load messages.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Leaderboard Manager (Admin) -->
+        <div class="mt-8" id="admin-leaderboard-section">
+          <div class="card col-span-1 lg:col-span-3 border border-zinc-800 bg-zinc-900/30"
+            style="padding:0;align-items:stretch;text-align:left;">
+            <div class="px-6 py-5 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
+              <h2 class="text-lg text-white m-0 font-bold tracking-tight flex items-center gap-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2">
+                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                  <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                  <path d="M4 22h16"></path>
+                  <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                  <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                  <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+                </svg>
+                Leaderboard Manager
+              </h2>
+              <button onclick="if(window.loadAdminLeaderboard) window.loadAdminLeaderboard()" class="icon-btn hover-bg bg-black shadow-inner border border-zinc-800"
+                style="width:32px;height:32px" title="Refresh">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <path d="M3 2v6h6" />
+                </svg>
+              </button>
+            </div>
+            <div class="p-6">
+              <div id="admin-leaderboard-list" class="flex flex-col gap-3" style="max-height:400px;overflow-y:auto;">
+                <p style="color:#52525b;font-size:0.875rem;font-style:italic;">Click refresh above to load entries.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
 
       </div>
     </div>
@@ -1033,7 +1146,21 @@
     <!-- Dashboard View -->
     <div id="dashboard-view" class="view hidden min-h-screen items-center justify-center fade-in relative">
 
-      <!-- Top Dashboard Header with Profile info -->
+      <!-- ═══ MOBILE COMPACT TOP BAR (hidden on desktop via CSS) ═══ -->
+      <div class="mob-top-bar">
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <img src="/logo.png" alt="" style="width:28px;height:28px;border-radius:7px;object-fit:cover;">
+          <span style="font-weight:900;color:white;font-size:1rem;letter-spacing:-0.02em;">Vaanisethu</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <div style="background:#18181b;border:1px solid #27272a;border-radius:9999px;padding:0.3rem 0.7rem;display:flex;align-items:center;gap:0.4rem;">
+            <span style="width:7px;height:7px;border-radius:50%;background:#f97316;flex-shrink:0;"></span>
+            <span id="mob-username-display" style="font-size:0.78rem;font-weight:700;color:#e4e4e7;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Dashboard Header with Profile info (desktop) -->
       <div class="dash-top-bar">
         <div class="dash-user-pill">
           <span id="dashboard-user-name" class="dash-user-name"></span>
@@ -1057,6 +1184,18 @@
           <input type="text" id="username-input" class="input max-w-xs text-center" placeholder="Guest" value="Guest">
         </div>
       </div>
+
+      <!-- ═══ MOBILE: Home + Films + Friends + Profile sections ═══ -->
+      <!-- On desktop: all sections always visible. On mobile: tabs control visibility -->
+
+      <!-- ── HOME TAB SECTION ── -->
+      <div id="mob-sec-home" class="mob-section active">
+
+        <!-- Welcome strip (mobile only) -->
+        <div class="mob-welcome-strip">
+          <p style="font-weight:800;color:white;font-size:0.95rem;margin:0 0 0.1rem;">Welcome back, <span id="mob-welcome-name">there</span> 👋</p>
+          <p style="font-size:0.75rem;color:rgba(255,255,255,0.75);margin:0;">Ready to watch together?</p>
+        </div>
 
       <div class="card-grid max-w-4xl mt-4 gap-8">
 
@@ -1152,6 +1291,225 @@
         </div>
 
       </div>
+      <!-- END card-grid -->
+      </div><!-- END mob-sec-home -->
+
+      <!-- ── FILMS TAB SECTION (mobile carousel shown here; desktop sees film-store-modal) ── -->
+      <div id="mob-sec-films" class="mob-section" style="padding-top:0.5rem;">
+        <div class="mob-section-header">
+          <span class="mob-section-title">🎬 Films</span>
+          <button class="mob-see-all" onclick="openFilmStoreModal()">See All →</button>
+        </div>
+        <div class="mob-film-carousel-wrap">
+          <div class="mob-film-carousel" id="mob-film-carousel">
+            <!-- Injected by app.js -->
+            <div style="color:#52525b;font-size:0.85rem;padding:2rem;text-align:center;width:100%;">Loading films...</div>
+          </div>
+        </div>
+      </div><!-- END mob-sec-films -->
+
+      <!-- ── FRIENDS TAB SECTION ── -->
+      <div id="mob-sec-friends" class="mob-section" style="padding-top:0.5rem;">
+        <!-- friends card is already inside card-grid in mob-sec-home for desktop -->
+        <!-- On mobile we clone/show a compact friends section here -->
+        <div class="mob-section-header">
+          <span class="mob-section-title">👥 Friends</span>
+          <button id="mob-btn-add-friend" class="mob-see-all">+ Add</button>
+        </div>
+        <div style="background:#18181b;border:1px solid #27272a;border-radius:1rem;overflow:hidden;">
+          <div id="mob-friends-list" style="padding:0.5rem 0.75rem;display:flex;flex-direction:column;gap:0.25rem;min-height:80px;">
+            <p style="color:#52525b;font-size:0.82rem;text-align:center;padding:1.5rem 0;" id="mob-empty-friends">No friends yet — add one!</p>
+          </div>
+        </div>
+      </div><!-- END mob-sec-friends -->
+
+      <!-- ── PROFILE TAB SECTION ── -->
+      <div id="mob-sec-profile" class="mob-section" style="padding-top:0.25rem;padding-bottom:1rem;">
+
+        <!-- Avatar + Name -->
+        <div class="mob-profile-avatar-wrap">
+          <label for="mob-profile-pic-input" class="mob-profile-avatar" id="mob-profile-avatar">
+            <span id="mob-profile-avatar-letter">?</span>
+            <img id="mob-profile-avatar-img" src="" alt="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;">
+          </label>
+          <input type="file" id="mob-profile-pic-input" accept="image/*" hidden>
+          <button class="mob-profile-change-photo" onclick="document.getElementById('mob-profile-pic-input').click()">✏️ Change Photo</button>
+          <p class="mob-profile-name" id="mob-profile-name-display">Loading...</p>
+          <span class="mob-profile-badge" id="mob-profile-badge">Free</span>
+        </div>
+
+        <!-- ACCOUNT Section -->
+        <p class="mob-settings-section-label">Account</p>
+        <div class="mob-settings-card">
+          <div class="mob-settings-item" id="mob-setting-notifications">
+            <span class="mob-settings-icon">🔔</span>
+            <span class="mob-settings-label">Notifications</span>
+            <label class="mob-toggle">
+              <input type="checkbox" id="mob-notif-toggle" checked>
+              <span class="mob-toggle-slider"></span>
+            </label>
+          </div>
+          <div class="mob-settings-item" id="mob-setting-roomname" onclick="openMobRoomNameModal()">
+            <span class="mob-settings-icon">🏠</span>
+            <span class="mob-settings-label">Room Name</span>
+            <span class="mob-settings-value" id="mob-room-name-val">Loading...</span>
+            <span class="mob-settings-arrow">›</span>
+          </div>
+          <div class="mob-settings-item" id="mob-setting-referral">
+            <span class="mob-settings-icon">📋</span>
+            <span class="mob-settings-label">Referral Code</span>
+            <span class="mob-settings-value" id="mob-referral-code-val" style="font-family:monospace;color:#f97316;"></span>
+            <span class="mob-settings-arrow">⎘</span>
+          </div>
+        </div>
+
+        <!-- HISTORY Section -->
+        <p class="mob-settings-section-label">History</p>
+        <div class="mob-settings-card">
+          <div class="mob-settings-item" onclick="openMobWatchHistory()">
+            <span class="mob-settings-icon">🎬</span>
+            <span class="mob-settings-label">Watch History</span>
+            <span class="mob-settings-arrow">›</span>
+          </div>
+          <div class="mob-settings-item" onclick="openMobPurchaseHistory()">
+            <span class="mob-settings-icon">🛍️</span>
+            <span class="mob-settings-label">Purchase History</span>
+            <span class="mob-settings-arrow">›</span>
+          </div>
+        </div>
+
+        <!-- SUBSCRIPTION Section -->
+        <p class="mob-settings-section-label">Subscription</p>
+        <div class="mob-settings-card">
+          <div class="mob-settings-item" onclick="document.getElementById('btn-upgrade')?.click()">
+            <span class="mob-settings-icon">💳</span>
+            <span class="mob-settings-label">Subscription</span>
+            <span class="mob-settings-value" id="mob-sub-status">Free</span>
+            <span class="mob-settings-arrow">›</span>
+          </div>
+        </div>
+
+        <!-- ADMIN Section — only shown to admin via JS -->
+        <div id="mob-admin-section" style="display:none;">
+          <p class="mob-settings-section-label" style="color:#a855f7;">Admin</p>
+          <div class="mob-settings-card" style="border-color:rgba(168,85,247,0.3);">
+            <div class="mob-settings-item" onclick="openMobAdminPanel('films')">
+              <span class="mob-settings-icon">🎬</span>
+              <span class="mob-settings-label">Film Management</span>
+              <span class="mob-settings-arrow">›</span>
+            </div>
+            <div class="mob-settings-item" onclick="openMobAdminPanel('users')">
+              <span class="mob-settings-icon">👥</span>
+              <span class="mob-settings-label">User Management</span>
+              <span class="mob-settings-arrow">›</span>
+            </div>
+            <div class="mob-settings-item" onclick="openMobAdminPanel('messages')">
+              <span class="mob-settings-icon">📩</span>
+              <span class="mob-settings-label" id="mob-admin-msg-label">Help Desk Messages</span>
+              <span class="mob-settings-arrow">›</span>
+            </div>
+            <div class="mob-settings-item" onclick="openMobAdminPanel('leaderboard')">
+              <span class="mob-settings-icon">🏆</span>
+              <span class="mob-settings-label">Leaderboard Manage</span>
+              <span class="mob-settings-arrow">›</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- DANGER Section -->
+        <p class="mob-settings-section-label">Account</p>
+        <div class="mob-settings-card">
+          <div class="mob-settings-item danger" id="mob-btn-signout">
+            <span class="mob-settings-icon">🚪</span>
+            <span class="mob-settings-label">Sign Out</span>
+          </div>
+        </div>
+
+        <!-- ABOUT Box (replaces footer on mobile) -->
+        <p class="mob-settings-section-label">About</p>
+        <div style="background:#18181b;border:1px solid #27272a;border-radius:1rem;padding:1rem;text-align:center;margin-bottom:0.5rem;">
+          <div style="display:flex;align-items:center;justify-content:center;gap:0.4rem;margin-bottom:0.4rem;">
+            <span style="font-size:1rem;">🔥</span>
+            <span style="font-weight:900;color:#f97316;font-size:1.1rem;" id="mob-page-views">–</span>
+            <span style="font-size:0.75rem;color:#71717a;font-weight:600;">Page Views</span>
+          </div>
+          <p style="font-size:0.75rem;color:#52525b;margin:0 0 0.6rem;">Vaanisethu — Watch Together</p>
+          <div style="display:flex;justify-content:center;gap:1rem;">
+            <a href="/terms.html" style="font-size:0.7rem;color:#71717a;text-decoration:none;">Terms</a>
+            <a href="/privacy.html" style="font-size:0.7rem;color:#71717a;text-decoration:none;">Privacy</a>
+          </div>
+          <p style="font-size:0.65rem;color:#3f3f46;margin:0.5rem 0 0;">© 2025 Vaanisethu. All rights reserved.</p>
+        </div>
+
+      </div><!-- END mob-sec-profile -->
+
+      <!-- ══════════════════════════════════════════════════
+           MOBILE BOTTOM SHEETS (shared across tabs)
+           ══════════════════════════════════════════════════ -->
+
+      <!-- Watch History Bottom Sheet -->
+      <div id="mob-watch-history-sheet" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);" onclick="if(event.target===this)closeMobSheet('mob-watch-history-sheet')">
+        <div style="position:absolute;bottom:0;left:0;right:0;background:#0f0f12;border-radius:1.5rem 1.5rem 0 0;max-height:80vh;overflow-y:auto;padding:1.25rem 1rem 5rem;">
+          <div style="width:40px;height:4px;background:#3f3f46;border-radius:2px;margin:0 auto 1rem;"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+            <h3 style="color:white;font-size:1rem;font-weight:800;margin:0;">📺 Watch History</h3>
+            <button onclick="closeMobSheet('mob-watch-history-sheet')" style="background:none;border:none;color:#71717a;font-size:1.25rem;cursor:pointer;">✕</button>
+          </div>
+          <div id="mob-watch-history-list" style="display:flex;flex-direction:column;gap:0.6rem;">
+            <p style="color:#52525b;text-align:center;padding:2rem 0;">Loading...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Purchase History Bottom Sheet -->
+      <div id="mob-purchase-history-sheet" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);" onclick="if(event.target===this)closeMobSheet('mob-purchase-history-sheet')">
+        <div style="position:absolute;bottom:0;left:0;right:0;background:#0f0f12;border-radius:1.5rem 1.5rem 0 0;max-height:80vh;overflow-y:auto;padding:1.25rem 1rem 5rem;">
+          <div style="width:40px;height:4px;background:#3f3f46;border-radius:2px;margin:0 auto 1rem;"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+            <h3 style="color:white;font-size:1rem;font-weight:800;margin:0;">💳 Purchase History</h3>
+            <button onclick="closeMobSheet('mob-purchase-history-sheet')" style="background:none;border:none;color:#71717a;font-size:1.25rem;cursor:pointer;">✕</button>
+          </div>
+          <div id="mob-purchase-history-list" style="display:flex;flex-direction:column;gap:0.6rem;">
+            <p style="color:#52525b;text-align:center;padding:2rem 0;">Loading...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Room Name Edit Modal -->
+      <div id="mob-room-name-modal" style="display:none;position:fixed;inset:0;z-index:9001;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);align-items:center;justify-content:center;" onclick="if(event.target===this)closeMobSheet('mob-room-name-modal')">
+        <div style="background:#18181b;border:1px solid #3f3f46;border-radius:1.25rem;padding:1.5rem;margin:1rem;width:100%;max-width:360px;">
+          <h3 style="color:white;font-size:1rem;font-weight:800;margin:0 0 0.5rem;">🏠 Set Room Name</h3>
+          <p style="color:#71717a;font-size:0.78rem;margin:0 0 1rem;">This name shows when friends join your room.</p>
+          <input id="mob-room-name-input" type="text" maxlength="30" placeholder="My Cozy Room"
+            style="width:100%;background:#0f0f12;border:1.5px solid #3f3f46;border-radius:0.75rem;padding:0.75rem 1rem;color:white;font-size:0.95rem;outline:none;box-sizing:border-box;margin-bottom:1rem;">
+          <div style="display:flex;gap:0.75rem;">
+            <button onclick="closeMobSheet('mob-room-name-modal')" style="flex:1;padding:0.7rem;background:#27272a;border:none;border-radius:0.75rem;color:#a1a1aa;font-weight:700;cursor:pointer;">Cancel</button>
+            <button id="mob-room-name-save-btn" style="flex:2;padding:0.7rem;background:linear-gradient(135deg,#ea580c,#c2410c);border:none;border-radius:0.75rem;color:white;font-weight:800;cursor:pointer;">Save</button>
+          </div>
+          <p id="mob-room-name-msg" style="font-size:0.72rem;color:#71717a;text-align:center;margin:0.5rem 0 0;min-height:1rem;"></p>
+        </div>
+      </div>
+
+      <!-- ═══ FIXED MOBILE BOTTOM NAV ═══ -->
+      <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Main Navigation">
+        <button class="mob-nav-btn active" data-tab="home" id="mob-nav-home">
+          <span class="mob-nav-icon">🏠</span>
+          <span>Home</span>
+        </button>
+        <button class="mob-nav-btn" data-tab="films" id="mob-nav-films">
+          <span class="mob-nav-icon">🎬</span>
+          <span>Films</span>
+        </button>
+        <button class="mob-nav-btn" data-tab="friends" id="mob-nav-friends">
+          <span class="mob-nav-icon">👥</span>
+          <span>Friends</span>
+        </button>
+        <button class="mob-nav-btn" data-tab="profile" id="mob-nav-profile">
+          <span class="mob-nav-icon">👤</span>
+          <span>Profile</span>
+        </button>
+      </nav>
+
     </div>
 
     <!-- Room View -->
@@ -1706,7 +2064,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js"></script>
   <!-- AdSterra Social Bar — floating ad unit for additional revenue (normal users only) -->
   <script src="https://millionairelucidlytransmitted.com/82/3a/60/823a60f46b088bcbd52fceb040961ab1.js"></script>
-  <script type="module" src="/app.js?v=46"></script>
+  <script type="module" src="/app.js?v=64"></script>
 </body>
 
 </html>

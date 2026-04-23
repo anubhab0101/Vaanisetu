@@ -50,9 +50,9 @@ let _fpReady = false; // true once FingerprintJS has resolved
 // =====================================================================
 // AD CONTEXT GLOBALS
 // _currentPlayingFilmAdEnabled: whether the CURRENT film has ads enabled
-//   - Paid rental → false (ads off)
-//   - Ad-unlocked → true (ads on, host watched ad)
-//   - Generic URL → true (default)
+//   - Paid rental \u2192 false (ads off)
+//   - Ad-unlocked \u2192 true (ads on, host watched ad)
+//   - Generic URL \u2192 true (default)
 // _roomHostAccessType: read from room Firestore doc by guests
 //   - 'premium' | 'rental' | 'ad-unlock' | 'generic'
 // =====================================================================
@@ -102,7 +102,7 @@ const paymentView = document.getElementById('payment-view');
 const adminView = document.getElementById('admin-view');
 
 // ================================================================
-// SPA NAVIGATION — History API
+// SPA NAVIGATION \u2014 History API
 // Browser Back/Forward navigates between app views, not URLs
 // ================================================================
 let _currentSpaView = 'auth';
@@ -125,7 +125,7 @@ window.addEventListener('popstate', function(e) {
     try {
         const state = e.state;
 
-        // 1. Film Store Modal open — close it on Back
+        // 1. Film Store Modal open \u2014 close it on Back
         const filmModal = document.getElementById('film-store-modal');
         if (filmModal && filmModal.style.display !== 'none') {
             filmModal.style.display = 'none';
@@ -136,7 +136,7 @@ window.addEventListener('popstate', function(e) {
         }
 
         if (!state || !state.spaSite || state.view === 'auth' || state.view === 'init') {
-            // Trying to go before the SPA started — block and stay
+            // Trying to go before the SPA started \u2014 block and stay
             history.pushState({ spaSite: true, view: _currentSpaView }, '', '/');
             _spaHandlingPop = false;
             return;
@@ -144,7 +144,7 @@ window.addEventListener('popstate', function(e) {
 
         const targetView = state.view;
 
-        // 2. Back from admin → show dashboard
+        // 2. Back from admin \u2192 show dashboard
         if (_currentSpaView === 'admin') {
             _currentSpaView = targetView;
             adminView.classList.add('hidden');
@@ -153,7 +153,7 @@ window.addEventListener('popstate', function(e) {
             return;
         }
 
-        // 3. Back from room → leave room gracefully
+        // 3. Back from room \u2192 leave room gracefully
         if (_currentSpaView === 'room') {
             _currentSpaView = targetView;
             leaveRoom();
@@ -161,7 +161,7 @@ window.addEventListener('popstate', function(e) {
             return;
         }
 
-        // 4. Back on dashboard/payment → stay (block leaving SPA)
+        // 4. Back on dashboard/payment \u2192 stay (block leaving SPA)
         if (_currentSpaView === 'dashboard' || _currentSpaView === 'payment') {
             history.pushState({ spaSite: true, view: _currentSpaView }, '', '/');
             _spaHandlingPop = false;
@@ -381,7 +381,7 @@ btnSaveProfile.addEventListener('click', async () => {
             body: JSON.stringify({ userId: auth.currentUser.uid, displayName: name })
         }).catch(() => {});
 
-        // 🎁 Referral code — store pending if user entered one
+        // \u{1F381} Referral code \u2014 store pending if user entered one
         const refInput = document.getElementById('setup-ref-input');
         const refCode = refInput ? refInput.value.trim().toUpperCase() : '';
         if (refCode && refCode.length >= 4) {
@@ -399,16 +399,16 @@ btnSaveProfile.addEventListener('click', async () => {
                     const days = d.bonusDays;
                     const who = d.referrerIsPremium ? 'Premium member' : 'member';
                     showToast(
-                        `🎁 Code saved! You get +${days} days added to your first subscription. Your friend also gets +${days} days!`,
+                        `\u{1F381} Code saved! You get +${days} days added to your first subscription. Your friend also gets +${days} days!`,
                         'success', 6000
                     );
                     if (refStatusEl) {
-                        refStatusEl.textContent = `✅ Referral saved — +${days} days bonus on first purchase`;
+                        refStatusEl.textContent = `\u2705 Referral saved \u2014 +${days} days bonus on first purchase`;
                         refStatusEl.style.color = '#4ade80';
                     }
                 } else {
                     if (refStatusEl) {
-                        refStatusEl.textContent = `⚠️ ${d.error}`;
+                        refStatusEl.textContent = `\u26A0\uFE0F ${d.error}`;
                         refStatusEl.style.color = '#f87171';
                     }
                 }
@@ -429,7 +429,7 @@ onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
         sessionUserId = user.uid;
-        // ⚠️ DO NOT hide authView here — wait until we know which view to show
+        // \u26A0\uFE0F DO NOT hide authView here \u2014 wait until we know which view to show
         // authView will be hidden inside the branches below to prevent black screen
         
         initWebSocket(true); // Sign into Presence Layer
@@ -456,16 +456,39 @@ onAuthStateChanged(auth, async (user) => {
                 currentUserDoc = userSnap.data();
                 sessionUserName = currentUserDoc.displayName;
                 if(dashboardUserName) dashboardUserName.textContent = `Hi, ${currentUserDoc.displayName}`;
+                if (currentUserDoc.roomName) {
+                    const roomNameDisplay = document.getElementById('room-name-display');
+                    if (roomNameDisplay) roomNameDisplay.textContent = currentUserDoc.roomName;
+                }
+                // Sync mobile UI username + plan \u2014 use raw displayName NOT the "Hi, X" version
+                const _cleanName = currentUserDoc.displayName || 'You';
+                window._mobCleanName = _cleanName; // stored for profile tab
+                const mobName = document.getElementById('mob-username-display');
+                const mobWelcome = document.getElementById('mob-welcome-name');
+                if (mobName) mobName.textContent = _cleanName;
+                if (mobWelcome) mobWelcome.textContent = _cleanName;
+                window._mobUserPlan = currentUserDoc.activeSubscription || 'free';
+                document.dispatchEvent(new CustomEvent('vaanisethu:userdata-loaded', { detail: currentUserDoc }));
                 authView.classList.add('hidden'); // hide auth only now
                 setupProfileView.classList.add('hidden');
                 
                 if (user.email === 'anubhabmohapatra.01@gmail.com') {
                     btnAdminDash.classList.remove('hidden');
+                    // Show mobile admin section
+                    const mobAdminSec = document.getElementById('mob-admin-section');
+                    if (mobAdminSec) mobAdminSec.style.display = 'block';
+                    // Check unread help desk messages
+                    fetch('/api/unread-messages').then(r => r.json()).then(d => {
+                      const lbl = document.getElementById('mob-admin-msg-label');
+                      if (lbl && d.count > 0) lbl.textContent = 'Help Desk Messages (' + d.count + ' new)';
+                    }).catch(() => {});
                 } else {
                     btnAdminDash.classList.add('hidden');
+                    const mobAdminSec = document.getElementById('mob-admin-section');
+                    if (mobAdminSec) mobAdminSec.style.display = 'none';
                 }
 
-                // Register visitor for ALL users (server deduplicates by userId — no double count)
+                // Register visitor for ALL users (server deduplicates by userId \u2014 no double count)
                 fetch('/api/register-visitor', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -487,7 +510,7 @@ onAuthStateChanged(auth, async (user) => {
         if (ws) { ws.close(); ws = null; currentRoomId = null; }
         roomView.classList.add('hidden'); dashView.classList.add('hidden'); setupProfileView.classList.add('hidden');
         paymentView.classList.add('hidden'); adminView.classList.add('hidden');
-        // Reveal auth view — override the default display:none set in HTML
+        // Reveal auth view \u2014 override the default display:none set in HTML
         authView.style.display = 'flex';
         authView.classList.remove('hidden');
         authError.classList.add('hidden');
@@ -570,7 +593,7 @@ function checkAccessAndRoute() {
     }
 
     if (!hasValidAccess()) {
-        // 🔧 FIX: IMMEDIATELY show payment view (no black screen)
+        // \u{1F527} FIX: IMMEDIATELY show payment view (no black screen)
         dashView.classList.add('hidden');
         roomView.classList.add('hidden');
         paymentView.classList.remove('hidden');
@@ -581,7 +604,7 @@ function checkAccessAndRoute() {
         // THEN check if admin turned Free Day ON (async, updates if needed)
         getPlatformConfig().then(config => {
             if (config && config.freeDayActive) {
-                // Free Day active — override payment wall
+                // Free Day active \u2014 override payment wall
                 paymentView.classList.add('hidden');
                 if (!currentRoomId) {
                     dashView.classList.remove('hidden');
@@ -600,9 +623,9 @@ function checkAccessAndRoute() {
             if (!_spaHandlingPop) spaPushState('dashboard');
         }
 
-        // ── Premium page routing ──────────────────────────────────────────────
-        // ONLY weekly/monthly/access-code users → /premium.html (zero ads)
-        // 1-day (₹50) users → stay on index.html (reduced 3 in-movie ad breaks)
+        // \u2500\u2500 Premium page routing \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+        // ONLY weekly/monthly/access-code users \u2192 /premium.html (zero ads)
+        // 1-day (\u20B950) users \u2192 stay on index.html (reduced 3 in-movie ad breaks)
         const onPremiumPage = window.location.pathname.includes('premium.html') ||
                               window._IS_PREMIUM_PAGE === true;
         const isActuallyFullPremium = isFullPremiumUser(); // weekly/monthly only
@@ -727,7 +750,7 @@ async function claimFreePass() {
 
 async function initiateCheckout(plan, amount) {
     try {
-        // Wait for Razorpay SDK to be ready (it loads deferred — may not be ready on very slow connections)
+        // Wait for Razorpay SDK to be ready (it loads deferred \u2014 may not be ready on very slow connections)
         if (!window.Razorpay) {
             await new Promise((resolve, reject) => {
                 let attempts = 0;
@@ -1005,7 +1028,7 @@ async function loadAdminLedger() {
                  <td style="padding: 0.85rem 1.5rem; white-space:nowrap;">${timeStr}</td>
                  <td style="padding: 0.85rem 1.5rem; font-family:monospace; font-size:0.7rem; color:#52525b; white-space:nowrap; max-width:160px; overflow:hidden; text-overflow:ellipsis;">${p.userId}</td>
                  <td style="padding: 0.85rem 1.5rem; white-space:nowrap;"><span class="tier-badge ${tierClass}">${p.plan}</span></td>
-                 <td style="padding: 0.85rem 1.5rem; color:#4ade80; font-weight:800; white-space:nowrap;">&#8377;${p.amount}</td>
+                 <td style="padding: 0.85rem 1.5rem; color:#4ade80; font-weight:800; white-space:nowrap;">\u20B9${p.amount}</td>
                  <td style="padding: 0.85rem 1.5rem; font-family:monospace; font-size:0.68rem; color:#52525b; white-space:nowrap;">${p.orderId}</td>
                  <td style="padding: 0.85rem 1.5rem; text-align:right; white-space:nowrap;">
                      ${actionsHTML}
@@ -1156,11 +1179,11 @@ async function loadRentalLedger() {
                     <div style="font-family:monospace;font-size:0.62rem;color:#52525b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px;">${r.userId}</div>
                 </td>
                 <td style="padding:0.85rem 1.5rem;">
-                    <div style="font-weight:700;color:#c084fc;font-size:0.82rem;">🎦 ${r.filmTitle}</div>
+                    <div style="font-weight:700;color:#c084fc;font-size:0.82rem;">\u{1F3A6} ${r.filmTitle}</div>
                     <div style="font-size:0.65rem;color:#71717a;">${r.rentalDays} day rental</div>
                 </td>
-                <td style="padding:0.85rem 1.5rem;color:#4ade80;font-weight:800;white-space:nowrap;">&#8377;${r.amount}</td>
-                <td style="padding:0.85rem 1.5rem;font-family:monospace;font-size:0.65rem;color:#52525b;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis;" title="${r.paymentId}">${r.paymentId || '—'}</td>
+                <td style="padding:0.85rem 1.5rem;color:#4ade80;font-weight:800;white-space:nowrap;">\u20B9${r.amount}</td>
+                <td style="padding:0.85rem 1.5rem;font-family:monospace;font-size:0.65rem;color:#52525b;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis;" title="${r.paymentId}">${r.paymentId || '\u2014'}</td>
                 <td style="padding:0.85rem 1.5rem;white-space:nowrap;">
                     <span style="background:rgba(168,85,247,0.1);color:#c084fc;border:1px solid rgba(168,85,247,0.25);border-radius:9999px;font-size:0.6rem;font-weight:800;padding:0.15rem 0.5rem;">${r.rentalDays}d</span>
                 </td>
@@ -1330,7 +1353,7 @@ async function renderFriends(friendIds) {
              if (fSnap.exists()) {
                  const freshCode = fSnap.data().roomCode;
                  if (freshCode !== friend.roomCode) {
-                     div.querySelector('.friend-code').innerHTML = `<span class="text-red-500 font-bold">Invalid</span> (Tap Reload ⟳)`;
+                     div.querySelector('.friend-code').innerHTML = `<span class="text-red-500 font-bold">Invalid</span> (Tap Reload \u27F3)`;
                      joinBtn.textContent = 'Join';
                      joinBtn.disabled = false;
                      return;
@@ -1438,14 +1461,14 @@ function showRoom(roomId, url = null, file = null) {
   if (emojiCont) emojiCont.style.display = 'flex';
   if (waBtn)     waBtn.style.display = 'flex';
 
-  // ⭐ Host badge in room name — only for full premium (weekly/monthly)
+  // \u2B50 Host badge in room name \u2014 only for full premium (weekly/monthly)
   const iAmOwner = currentUserDoc && currentUserDoc.roomCode === roomId;
   if (iAmOwner && isFullPremiumUser()) {
     const nameEl = document.getElementById('room-name-display');
     if (nameEl && !nameEl.querySelector('.host-star-badge')) {
       const badge = document.createElement('span');
       badge.className = 'host-star-badge';
-      badge.textContent = '⭐ Premium Host';
+      badge.textContent = '\u2B50 Premium Host';
       nameEl.appendChild(badge);
     }
   }
@@ -1804,7 +1827,7 @@ function initWebSocket(isPresenceOnly = false) {
            // Guest: re-fetch host's ad context when new video arrives
            const iAmOwner = currentUserDoc && currentUserDoc.roomCode === currentRoomId;
            if (!iAmOwner && currentRoomId) fetchRoomAdContext(currentRoomId);
-           // Video chal raha hai — chat FAB sabko dikhao
+           // Video chal raha hai \u2014 chat FAB sabko dikhao
            if (btnChatFab) btnChatFab.style.display = 'flex';
            const fabContainer = document.getElementById('chat-fab-container');
            if (fabContainer) fabContainer.style.display = 'flex';
@@ -1852,7 +1875,7 @@ function initWebSocket(isPresenceOnly = false) {
 
     if (data.type === "room-updated") roomNameDisplay.textContent = data.name;
 
-    // ── Emoji Reaction received ────────────────────────────────────────
+    // \u2500\u2500 Emoji Reaction received \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
     if (data.type === "reaction") {
       spawnFloatingEmoji(data.emoji, data.userName);
     }
@@ -1914,15 +1937,15 @@ function initWebSocket(isPresenceOnly = false) {
 setInterval(() => { fetch('/ping').catch(() => {}); }, 2 * 60 * 1000);
 
 // ================================================================
-// ==== FILM STORE — SHARED STATE ====
+// ==== FILM STORE \u2014 SHARED STATE ====
 // ================================================================
 let filmStoreData = [];
 
 // ================================================================
-// ==== FILM STORE — UTILITY FUNCTIONS ====
+// ==== FILM STORE \u2014 UTILITY FUNCTIONS ====
 // ================================================================
 
-// Compress image to max 600px wide, JPEG quality 0.75 → returns base64
+// Compress image to max 600px wide, JPEG quality 0.75 \u2192 returns base64
 function compressImageToBase64(file) {
   return new Promise((resolve, reject) => {
     const maxSize = 600;
@@ -1957,7 +1980,7 @@ function formatTimeRemaining(expiresAt) {
 }
 
 // ================================================================
-// ==== FILM STORE — USER MODAL ====
+// ==== FILM STORE \u2014 USER MODAL ====
 // ================================================================
 
 window.switchFilmTab = function(tab) {
@@ -2002,16 +2025,16 @@ async function loadFilmStore() {
     window._allFilms = data.films;
     grid.innerHTML = '';
 
-    // ── PREMIUM PAGE: show ALL films in ONE section, rent-only ──────────
+    // \u2500\u2500 PREMIUM PAGE: show ALL films in ONE section, rent-only \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
     if (window._IS_PREMIUM_PAGE) {
       const sec = document.createElement('div');
       sec.className = 'film-section';
       sec.innerHTML = `
         <div class="film-section-header">
-          <span class="film-section-icon">🎬</span>
+          <span class="film-section-icon">\u{1F3AC}</span>
           <div>
             <div class="film-section-title">Rent a Film</div>
-            <div class="film-section-sub">Premium members enjoy 100% ad-free viewing — rent any film below</div>
+            <div class="film-section-sub">Premium members enjoy 100% ad-free viewing \u2014 rent any film below</div>
           </div>
         </div>
         <div class="film-section-grid" id="premium-all-films-grid"></div>
@@ -2022,7 +2045,7 @@ async function loadFilmStore() {
       return;
     }
 
-    // ── NORMAL PAGE: split into Free-with-Ads + Premium sections ────────
+    // \u2500\u2500 NORMAL PAGE: split into Free-with-Ads + Premium sections \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
     const adFilms      = data.films.filter(f => f.adUnlockEnabled !== false);
     const premiumFilms = data.films.filter(f => f.adUnlockEnabled === false);
 
@@ -2032,10 +2055,10 @@ async function loadFilmStore() {
       sec1.className = 'film-section';
       sec1.innerHTML = `
         <div class="film-section-header">
-          <span class="film-section-icon">📺</span>
+          <span class="film-section-icon">\u{1F4FA}</span>
           <div>
             <div class="film-section-title">Free with Ads</div>
-            <div class="film-section-sub">Watch 1 ad for 1hr free access — or rent for full access</div>
+            <div class="film-section-sub">Watch 1 ad for 1hr free access \u2014 or rent for full access</div>
           </div>
         </div>
         <div class="film-section-grid" id="ad-films-grid"></div>
@@ -2051,10 +2074,10 @@ async function loadFilmStore() {
       sec2.className = 'film-section';
       sec2.innerHTML = `
         <div class="film-section-header">
-          <span class="film-section-icon">🎬</span>
+          <span class="film-section-icon">\u{1F3AC}</span>
           <div>
             <div class="film-section-title">Premium Films</div>
-            <div class="film-section-sub">Exclusive titles — rent with payment, no ads ever</div>
+            <div class="film-section-sub">Exclusive titles \u2014 rent with payment, no ads ever</div>
           </div>
         </div>
         <div class="film-section-grid" id="premium-films-grid"></div>
@@ -2080,18 +2103,18 @@ function buildFilmCard(film) {
   const fullPremium   = isFullPremiumUser();
   const isAdminUser   = currentUser && currentUser.email === 'anubhabmohapatra.01@gmail.com';
 
-  // ── Early Access logic ────────────────────────────────────────
+  // \u2500\u2500 Early Access logic \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const earlyUntil = film.earlyAccessUntil || 0;
   const isEarlyAccess = earlyUntil > Date.now(); // still in early access window
   const isLockedByEarlyAccess = isEarlyAccess && !fullPremium && !isAdminUser;
 
-  // ── Free Rental eligibility ────────────────────────────────────
+  // \u2500\u2500 Free Rental eligibility \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const plan = currentUserDoc?.activeSubscription || '';
   const hasFreeRental = isAdminUser ||
     (plan === 'weekly' && currentUserDoc?.subscriptionExpiry > Date.now()) ||
     (plan === 'monthly' && currentUserDoc?.subscriptionExpiry > Date.now());
 
-  // ── Trailer link helper ───────────────────────────────────────
+  // \u2500\u2500 Trailer link helper \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const trailerLink = film.trailerLink || '';
   const isYouTube = trailerLink && (trailerLink.includes('youtu.be') || trailerLink.includes('youtube.com'));
   // Convert YouTube URL to embed URL
@@ -2105,40 +2128,40 @@ function buildFilmCard(film) {
     <div class="film-card-poster" style="position:relative;">
       ${film.thumbnailBase64
         ? `<img src="${film.thumbnailBase64}" alt="${film.title}" style="width:100%;height:100%;object-fit:cover;">`
-        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1c1c1e;color:#52525b;font-size:2rem;">🎬</div>`}
+        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1c1c1e;color:#52525b;font-size:2rem;">\u{1F3AC}</div>`}
       ${isAdUnlocked ? '<div class="film-ad-unlock-badge">AD UNLOCKED</div>' : ''}
       ${!adUnlockEnabled ? '<div class="film-premium-badge">PREMIUM</div>' : ''}
-      ${isEarlyAccess && (fullPremium || isAdminUser) ? '<div class="film-early-badge">⭐ EARLY ACCESS</div>' : ''}
-      ${isLockedByEarlyAccess ? `<div class="film-early-lock-overlay"><div class="film-early-lock-inner"><span style="font-size:1.6rem;">🔒</span><span style="font-size:0.72rem;font-weight:700;color:#e4e4e7;margin-top:0.25rem;">Early Access</span><span style="font-size:0.6rem;color:#a1a1aa;text-align:center;">Available ${new Date(earlyUntil).toLocaleDateString()}</span></div></div>` : ''}
+      ${isEarlyAccess && (fullPremium || isAdminUser) ? '<div class="film-early-badge">\u2B50 EARLY ACCESS</div>' : ''}
+      ${isLockedByEarlyAccess ? `<div class="film-early-lock-overlay"><div class="film-early-lock-inner"><span style="font-size:1.6rem;">\u{1F512}</span><span style="font-size:0.72rem;font-weight:700;color:#e4e4e7;margin-top:0.25rem;">Early Access</span><span style="font-size:0.6rem;color:#a1a1aa;text-align:center;">Available ${new Date(earlyUntil).toLocaleDateString()}</span></div></div>` : ''}
       ${trailerEmbed ? `<div class="film-trailer-overlay" data-trailer="${trailerEmbed}" data-is-yt="${isYouTube}">
         ${isYouTube
           ? `<iframe class="film-trailer-frame" src="" data-src="${trailerEmbed}" allow="autoplay" frameborder="0" allowfullscreen style="width:100%;height:100%;position:absolute;inset:0;display:none;"></iframe>`
           : `<video class="film-trailer-video" muted loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;" src="${trailerEmbed}"></video>`
         }
-        <div class="film-trailer-play-hint">▶ Trailer</div>
+        <div class="film-trailer-play-hint">\u25B6 Trailer</div>
       </div>` : ''}
     </div>
     <div class="film-card-body">
       <h3 class="film-card-title">${film.title}</h3>
 
       <div class="film-card-meta">
-        <span class="film-card-price">₹${film.price}</span>
+        <span class="film-card-price">\u20B9${film.price}</span>
         <span class="film-card-days">${film.rentalDays} day${film.rentalDays > 1 ? 's' : ''}</span>
       </div>
 
       ${isLockedByEarlyAccess
-        ? `<!-- Locked — early access not yet available for this tier -->
+        ? `<!-- Locked \u2014 early access not yet available for this tier -->
            <button class="btn film-rent-btn" disabled style="opacity:0.45;cursor:not-allowed;">
-             🔒 Available ${new Date(earlyUntil).toLocaleDateString()}
+             \u{1F512} Available ${new Date(earlyUntil).toLocaleDateString()}
            </button>`
         : hasFreeRental
           ? `<!-- Free rental button for weekly/monthly/admin -->
              <button class="btn film-free-rental-btn" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}"
                style="background:linear-gradient(135deg,#16a34a,#22c55e);color:white;border:none;margin-bottom:0.35rem;font-size:0.78rem;">
-               🆓 ${isAdminUser ? 'Free (Admin)' : '1 Free/Week'}
+               \u{1F193} ${isAdminUser ? 'Free (Admin)' : '1 Free/Week'}
              </button>
              <button class="btn film-rent-btn btn-outline-sm" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}" data-price="${film.price}" data-days="${film.rentalDays}">
-               Rent ${film.rentalDays}d — ₹${film.price}
+               Rent ${film.rentalDays}d \u2014 \u20B9${film.price}
              </button>`
           : isAdUnlocked
             ? `<!-- Already unlocked via ad -->
@@ -2146,21 +2169,21 @@ function buildFilmCard(film) {
                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                  ${formatTimeRemaining(adUnlock.expiresAt)}
                </div>
-               <button class="btn film-play-btn" data-link="${adUnlock.telegramLink || ''}" style="background:linear-gradient(135deg,#6d28d9,#a855f7);border:none;margin-bottom:0.3rem;">▶ Watch Now (Ad Unlocked)</button>
+               <button class="btn film-play-btn" data-link="${adUnlock.telegramLink || ''}" style="background:linear-gradient(135deg,#6d28d9,#a855f7);border:none;margin-bottom:0.3rem;">\u25B6 Watch Now (Ad Unlocked)</button>
                <button class="btn film-rent-btn btn-outline-sm" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}" data-price="${film.price}" data-days="${film.rentalDays}">
-                 Rent ${film.rentalDays}d — ₹${film.price}
+                 Rent ${film.rentalDays}d \u2014 \u20B9${film.price}
                </button>`
             : adUnlockEnabled && !premium
               ? `<!-- Ad film: show both Watch Ad (primary) + Rent (secondary) -->
                  <button class="film-ad-btn film-ad-btn-primary" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}">
-                   📺 Watch Ad — Free 1hr
+                   \u{1F4FA} Watch Ad \u2014 Free 1hr
                  </button>
                  <button class="btn film-rent-btn btn-outline-sm" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}" data-price="${film.price}" data-days="${film.rentalDays}">
-                   Rent ${film.rentalDays}d — ₹${film.price}
+                   Rent ${film.rentalDays}d \u2014 \u20B9${film.price}
                  </button>`
               : `<!-- Premium film OR premium user: only rent -->
                  <button class="btn film-rent-btn" data-filmid="${film.filmId}" data-title="${film.title.replace(/"/g, '&quot;')}" data-price="${film.price}" data-days="${film.rentalDays}">
-                   Rent ${film.rentalDays}d — ₹${film.price}
+                   Rent ${film.rentalDays}d \u2014 \u20B9${film.price}
                  </button>`
       }
     </div>
@@ -2187,7 +2210,7 @@ function buildFilmCard(film) {
     adUnlockBtn.addEventListener('click', () => startFilmAdUnlock(film.filmId, film.title, adUnlockBtn));
   }
 
-  // ── Free Rental button ────────────────────────────────────────
+  // \u2500\u2500 Free Rental button \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const freeRentalBtn = card.querySelector('.film-free-rental-btn');
   if (freeRentalBtn) {
     freeRentalBtn.addEventListener('click', async () => {
@@ -2218,7 +2241,7 @@ function buildFilmCard(film) {
     });
   }
 
-  // ── Trailer preview hover ────────────────────────────────────────
+  // \u2500\u2500 Trailer preview hover \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   const trailerOverlay = card.querySelector('.film-trailer-overlay');
   const posterEl = card.querySelector('.film-card-poster');
   if (trailerOverlay && posterEl) {
@@ -2258,7 +2281,7 @@ function buildFilmCard(film) {
     });
   }
 
-  // ── Star Rating Bar ─────────────────────────────────────────
+  // \u2500\u2500 Star Rating Bar \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   if (window.buildStarBar) {
     const cardBody = card.querySelector('.film-card-body');
     if (cardBody) cardBody.appendChild(window.buildStarBar(film.filmId, film.title, film.avgRating, film.ratingCount));
@@ -2300,7 +2323,7 @@ async function initiateFilmRental(filmId, filmTitle, price, rentalDays) {
         });
         const vData = await verifyRes.json();
         if (vData.success) {
-          showCustomAlert('🎬 Rental Activated!', `"${filmTitle}" is now available for ${rentalDays} days. Go to My Rentals to watch!`);
+          showCustomAlert('\u{1F3AC} Rental Activated!', `"${filmTitle}" is now available for ${rentalDays} days. Go to My Rentals to watch!`);
           switchFilmTab('rentals');
         } else {
           showCustomAlert('Error', 'Payment verification failed. Contact support.');
@@ -2346,7 +2369,7 @@ async function loadMyRentals() {
       header.className = 'col-span-full';
       header.innerHTML = `<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;margin-top:0.5rem;">
         <span style="background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3);color:#c084fc;font-size:0.65rem;font-weight:900;padding:0.2rem 0.5rem;border-radius:0.35rem;letter-spacing:0.06em;">AD UNLOCKED</span>
-        <span style="font-size:0.75rem;color:#71717a;">Free access — watch before time runs out!</span>
+        <span style="font-size:0.75rem;color:#71717a;">Free access \u2014 watch before time runs out!</span>
       </div>`;
       grid.appendChild(header);
       activeAdUnlocks.forEach(u => grid.appendChild(buildAdUnlockCard(u, false)));
@@ -2385,7 +2408,7 @@ function buildAdUnlockCard(unlock, expired) {
   const timeLeft = expired ? 'Expired' : formatTimeRemaining(unlock.expiresAt);
   card.innerHTML = `
     <div class="film-card-poster">
-      <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1c1c1e;color:#52525b;font-size:2rem;">🎬</div>
+      <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1c1c1e;color:#52525b;font-size:2rem;">\u{1F3AC}</div>
       <div class="film-ad-unlock-badge" style="${expired ? 'background:#3f3f46;border-color:#52525b;color:#71717a;' : ''}">AD${expired ? ' EXPIRED' : ' UNLOCKED'}</div>
     </div>
     <div class="film-card-body">
@@ -2395,7 +2418,7 @@ function buildAdUnlockCard(unlock, expired) {
         ${timeLeft}
       </div>
       ${!expired
-        ? `<button class="btn film-play-btn" style="background:linear-gradient(135deg,#6d28d9,#a855f7);border:none;">▶ Watch Now</button>`
+        ? `<button class="btn film-play-btn" style="background:linear-gradient(135deg,#6d28d9,#a855f7);border:none;">\u25B6 Watch Now</button>`
         : `<button class="btn film-play-btn disabled" disabled style="opacity:0.4;">Access Expired</button>`
       }
     </div>
@@ -2419,7 +2442,7 @@ function buildRentalCard(rental) {
     <div class="film-card-poster">
       ${rental.thumbnailBase64
         ? `<img src="${rental.thumbnailBase64}" alt="${rental.filmTitle}" style="width:100%;height:100%;object-fit:cover;">`
-        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1c1c1e;color:#52525b;font-size:2rem;">🎬</div>`}
+        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1c1c1e;color:#52525b;font-size:2rem;">\u{1F3AC}</div>`}
       ${rental.isExpired ? '<div class="film-expired-badge">EXPIRED</div>' : ''}
     </div>
     <div class="film-card-body">
@@ -2429,7 +2452,7 @@ function buildRentalCard(rental) {
         ${timeLeft}
       </div>
       ${!rental.isExpired
-        ? `<button class="btn film-play-btn" data-link="${rental.telegramLink || ''}" data-title="${rental.filmTitle.replace(/"/g, '&quot;')}">▶ Play Now</button>`
+        ? `<button class="btn film-play-btn" data-link="${rental.telegramLink || ''}" data-title="${rental.filmTitle.replace(/"/g, '&quot;')}">\u25B6 Play Now</button>`
         : `<button class="btn film-play-btn disabled" disabled>Access Expired</button>`}
     </div>
   `;
@@ -2444,7 +2467,7 @@ function buildRentalCard(rental) {
   return card;
 }
 
-// accessType: 'rental' | 'ad-unlock' | 'generic' — broadcast to Firestore room doc for guests
+// accessType: 'rental' | 'ad-unlock' | 'generic' \u2014 broadcast to Firestore room doc for guests
 function playRentedFilm(link, title, accessType = 'generic') {
   if (!link) { showCustomAlert('Error', 'Stream link not available.'); return; }
   // Close the store modal
@@ -2452,7 +2475,7 @@ function playRentedFilm(link, title, accessType = 'generic') {
 
   // Broadcast host access type to room doc so guests can read it
   if (currentUser) {
-    // Write to Firestore host's user doc — guests who snapshot this will update their _roomHostAccessType
+    // Write to Firestore host's user doc \u2014 guests who snapshot this will update their _roomHostAccessType
     updateDoc(doc(db, 'users', currentUser.uid), {
       roomHostAccessType: accessType,
       roomFilmAdEnabled: window._currentPlayingFilmAdEnabled
@@ -2465,7 +2488,7 @@ function playRentedFilm(link, title, accessType = 'generic') {
 }
 
 // ================================================================
-// ==== FILM STORE — ADMIN FUNCTIONS ====
+// ==== FILM STORE \u2014 ADMIN FUNCTIONS ====
 // ================================================================
 
 let adminFilmThumbBase64 = '';
@@ -2481,7 +2504,7 @@ document.getElementById('film-form-thumb')?.addEventListener('change', async (e)
     adminFilmThumbBase64 = await compressImageToBase64(file);
     preview.src = adminFilmThumbBase64;
     preview.style.display = 'block';
-    labelText.textContent = '✓ Poster ready — click to change';
+    labelText.textContent = '\u2713 Poster ready \u2014 click to change';
   } catch (err) {
     labelText.textContent = 'Error reading image. Try again.';
     adminFilmThumbBase64 = '';
@@ -2529,7 +2552,7 @@ async function addFilmToStore() {
     });
     const data = await res.json();
     if (data.success) {
-      msgEl.textContent = '✓ Film added successfully!';
+      msgEl.textContent = '\u2713 Film added successfully!';
       msgEl.style.color = '#22c55e'; msgEl.style.display = 'block';
       resetFilmForm();
       loadAdminFilms();
@@ -2565,7 +2588,7 @@ async function saveEditFilm(filmId) {
     const res = await fetch('/api/admin/update-film', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const data = await res.json();
     if (data.success) {
-      msgEl.textContent = '✓ Film updated!'; msgEl.style.color = '#22c55e'; msgEl.style.display = 'block';
+      msgEl.textContent = '\u2713 Film updated!'; msgEl.style.color = '#22c55e'; msgEl.style.display = 'block';
       resetFilmForm(); loadAdminFilms();
       const storeModal = document.getElementById('film-store-modal');
       if (storeModal && storeModal.style.display !== 'none') loadFilmStore();
@@ -2621,7 +2644,7 @@ function startEditFilm(film) {
   if (film.thumbnailBase64) {
     const preview = document.getElementById('film-thumb-preview');
     preview.src = film.thumbnailBase64; preview.style.display = 'block';
-    document.getElementById('film-thumb-label-text').textContent = '✓ Existing poster — click to change';
+    document.getElementById('film-thumb-label-text').textContent = '\u2713 Existing poster \u2014 click to change';
     adminFilmThumbBase64 = film.thumbnailBase64;
   }
   document.getElementById('film-form-heading').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2658,16 +2681,16 @@ window.loadAdminFilms = async function() {
       row.className = 'admin-film-row';
       row.innerHTML = `
         <div class="admin-film-row-thumb">
-          ${film.thumbnailBase64 ? `<img src="${film.thumbnailBase64}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#27272a;border-radius:8px;font-size:1.25rem;">🎬</div>'}
+          ${film.thumbnailBase64 ? `<img src="${film.thumbnailBase64}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#27272a;border-radius:8px;font-size:1.25rem;">\u{1F3AC}</div>'}
         </div>
         <div class="admin-film-row-info">
           <div class="admin-film-row-title">${film.title}</div>
-          <div class="admin-film-row-meta">₹${film.price} · ${film.rentalDays} day${film.rentalDays > 1 ? 's' : ''} · <span style="color:${film.isActive ? '#22c55e' : '#ef4444'}">${film.isActive ? 'Active' : 'Hidden'}</span> · <span style="background:${film.adUnlockEnabled !== false ? 'rgba(168,85,247,0.15)' : 'rgba(234,179,8,0.15)'};color:${film.adUnlockEnabled !== false ? '#c084fc' : '#eab308'};border:1px solid ${film.adUnlockEnabled !== false ? 'rgba(168,85,247,0.4)' : 'rgba(234,179,8,0.4)'};border-radius:4px;padding:0 5px;font-size:0.65rem;font-weight:800;">${film.adUnlockEnabled !== false ? '📺 FREE WITH ADS' : '🎬 PREMIUM ONLY'}</span></div>
-          <div class="admin-film-row-link" title="${film.telegramLink || ''}">${(film.telegramLink || '').substring(0, 50)}${(film.telegramLink || '').length > 50 ? '…' : ''}</div>
+          <div class="admin-film-row-meta">\u20B9${film.price} \u00B7 ${film.rentalDays} day${film.rentalDays > 1 ? 's' : ''} \u00B7 <span style="color:${film.isActive ? '#22c55e' : '#ef4444'}">${film.isActive ? 'Active' : 'Hidden'}</span> \u00B7 <span style="background:${film.adUnlockEnabled !== false ? 'rgba(168,85,247,0.15)' : 'rgba(234,179,8,0.15)'};color:${film.adUnlockEnabled !== false ? '#c084fc' : '#eab308'};border:1px solid ${film.adUnlockEnabled !== false ? 'rgba(168,85,247,0.4)' : 'rgba(234,179,8,0.4)'};border-radius:4px;padding:0 5px;font-size:0.65rem;font-weight:800;">${film.adUnlockEnabled !== false ? '\u{1F4FA} FREE WITH ADS' : '\u{1F3AC} PREMIUM ONLY'}</span></div>
+          <div class="admin-film-row-link" title="${film.telegramLink || ''}">${(film.telegramLink || '').substring(0, 50)}${(film.telegramLink || '').length > 50 ? '\u2026' : ''}</div>
         </div>
         <div class="admin-film-row-actions">
           <button class="btn-edit-film btn btn-secondary" style="padding:0.4rem 0.75rem;font-size:0.75rem;min-height:auto;width:auto;">Edit</button>
-          <button class="btn-toggle-ad-film btn" style="padding:0.4rem 0.75rem;font-size:0.7rem;font-weight:800;min-height:auto;width:auto;background:${film.adUnlockEnabled !== false ? 'rgba(168,85,247,0.15)' : 'rgba(234,179,8,0.12)'};color:${film.adUnlockEnabled !== false ? '#c084fc' : '#eab308'};border:1px solid ${film.adUnlockEnabled !== false ? 'rgba(168,85,247,0.4)' : 'rgba(234,179,8,0.4)'};">${film.adUnlockEnabled !== false ? '📺 Free → 🎬 Make Premium' : '🎬 Premium → 📺 Make Free'}</button>
+          <button class="btn-toggle-ad-film btn" style="padding:0.4rem 0.75rem;font-size:0.7rem;font-weight:800;min-height:auto;width:auto;background:${film.adUnlockEnabled !== false ? 'rgba(168,85,247,0.15)' : 'rgba(234,179,8,0.12)'};color:${film.adUnlockEnabled !== false ? '#c084fc' : '#eab308'};border:1px solid ${film.adUnlockEnabled !== false ? 'rgba(168,85,247,0.4)' : 'rgba(234,179,8,0.4)'};">${film.adUnlockEnabled !== false ? '\u{1F4FA} Free \u2192 \u{1F3AC} Make Premium' : '\u{1F3AC} Premium \u2192 \u{1F4FA} Make Free'}</button>
           <button class="btn-toggle-film btn btn-outline" style="padding:0.4rem 0.75rem;font-size:0.75rem;min-height:auto;width:auto;">${film.isActive ? 'Hide' : 'Show'}</button>
           <button class="btn-delete-film btn" style="padding:0.4rem 0.75rem;font-size:0.75rem;min-height:auto;width:auto;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid #ef4444;">Delete</button>
         </div>
@@ -2700,8 +2723,8 @@ window.loadAdminFilms = async function() {
 };
 
 // =====================================================================
-// WINDOW EXPORTS — expose functions used by HTML onclick="" attributes
-// (required because app.js is type="module" — module scope ≠ global scope)
+// WINDOW EXPORTS \u2014 expose functions used by HTML onclick="" attributes
+// (required because app.js is type="module" \u2014 module scope \u2260 global scope)
 // =====================================================================
 window.loadRentalLedger  = loadRentalLedger;
 window.loadCodeUsers     = loadCodeUsers;
@@ -2723,16 +2746,16 @@ window.loadFreePassUsers = async function() {
         tbody.innerHTML = '';
         data.users.forEach(u => {
             const active = u.freePassActive;
-            const expiry = u.freePassExpiry ? new Date(u.freePassExpiry).toLocaleString('en-IN') : '—';
-            const claimedAt = u.freePassGrantedAt ? new Date(u.freePassGrantedAt).toLocaleString('en-IN') : '—';
+            const expiry = u.freePassExpiry ? new Date(u.freePassExpiry).toLocaleString('en-IN') : '\u2014';
+            const claimedAt = u.freePassGrantedAt ? new Date(u.freePassGrantedAt).toLocaleString('en-IN') : '\u2014';
             const tr = document.createElement('tr');
             tr.className = 'hover:bg-zinc-900/40 transition-colors';
             tr.innerHTML = `
-              <td class="px-6 py-3 font-medium text-white">${u.displayName || '—'}</td>
-              <td class="px-6 py-3 text-zinc-400 text-xs" title="${u.uid}">${u.email || u.uid.substring(0, 12) + '…'}</td>
+              <td class="px-6 py-3 font-medium text-white">${u.displayName || '\u2014'}</td>
+              <td class="px-6 py-3 text-zinc-400 text-xs" title="${u.uid}">${u.email || u.uid.substring(0, 12) + '\u2026'}</td>
               <td class="px-6 py-3">
                 <span class="badge-pill ${active ? 'badge-success' : 'status-badge-expired'}">
-                  ${active ? '✓ Active' : '✗ Expired'}
+                  ${active ? '\u2713 Active' : '\u2717 Expired'}
                 </span>
               </td>
               <td class="px-6 py-3 text-xs text-zinc-400">${expiry}</td>
@@ -2783,7 +2806,7 @@ window.loadVisitorStats = async function() {
             el.textContent = 'Error';
         }
     } catch(e) {
-        el.textContent = '—';
+        el.textContent = '\u2014';
     } finally {
         if (spinner) spinner.style.display = 'none';
     }
@@ -2798,7 +2821,7 @@ window.loadFreeDayStatus = async function() {
         const res = await fetch('/api/platform-config');
         const data = await res.json();
         toggle.checked = data.freeDayActive === true;
-        if (label) label.textContent = data.freeDayActive ? '🟢 Free Day: ON (all users have free access)' : '🔴 Free Day: OFF (normal access rules apply)';
+        if (label) label.textContent = data.freeDayActive ? '\u{1F7E2} Free Day: ON (all users have free access)' : '\u{1F534} Free Day: OFF (normal access rules apply)';
     } catch(e) {
         if (label) label.textContent = 'Error loading status';
     }
@@ -2820,8 +2843,8 @@ window.toggleFreeDay = async function() {
             // Reset platform config cache so next checkAccessAndRoute picks up new state
             _platformConfig = null;
             if (label) label.textContent = newState 
-                ? '🟢 Free Day: ON (all users have free access)' 
-                : '🔴 Free Day: OFF (normal access rules apply)';
+                ? '\u{1F7E2} Free Day: ON (all users have free access)' 
+                : '\u{1F534} Free Day: OFF (normal access rules apply)';
         } else {
             toggle.checked = !newState; // Revert
             alert('Error: ' + data.error);
@@ -2833,7 +2856,7 @@ window.toggleFreeDay = async function() {
 };
 
 // =====================================================================
-// LOADING SCREEN — hide once Firebase auth has resolved (either way)
+// LOADING SCREEN \u2014 hide once Firebase auth has resolved (either way)
 // =====================================================================
 let _authResolved = false;
 function hideLoadingScreen() {
@@ -2852,7 +2875,7 @@ onAuthStateChanged(auth, () => hideLoadingScreen());
 setTimeout(hideLoadingScreen, 1500);
 
 // =====================================================================
-// PUBLIC PAGE-VIEW COUNTER — animated roll-up (Footer)
+// PUBLIC PAGE-VIEW COUNTER \u2014 animated roll-up (Footer)
 // =====================================================================
 function animateCounter(el, target, duration) {
     const start = performance.now();
@@ -2876,7 +2899,7 @@ async function fetchPublicPageViews() {
     } catch(e) { /* non-critical */ }
 }
 
-// Fetch immediately — no auth required
+// Fetch immediately \u2014 no auth required
 fetchPublicPageViews();
 
 // =====================================================================
@@ -2918,7 +2941,7 @@ fetchPublicPageViews();
         imgInput.addEventListener('change', () => {
             const file = imgInput.files[0];
             if (!file) return;
-            if (fileNameEl) fileNameEl.textContent = file.name.length > 28 ? file.name.substring(0,25)+'…' : file.name;
+            if (fileNameEl) fileNameEl.textContent = file.name.length > 28 ? file.name.substring(0,25)+'\u2026' : file.name;
             const reader = new FileReader();
             reader.onload = (e) => {
                 if (imgPreview) { imgPreview.src = e.target.result; imgPreview.classList.remove('hidden'); }
@@ -2943,7 +2966,7 @@ fetchPublicPageViews();
                 return;
             }
 
-            btnSend.textContent = 'Sending…';
+            btnSend.textContent = 'Sending\u2026';
             btnSend.disabled = true;
             if (statusEl) statusEl.classList.add('hidden');
 
@@ -2966,7 +2989,7 @@ fetchPublicPageViews();
                 const data = await res.json();
                 if (data.success) {
                     if (statusEl) {
-                        statusEl.textContent = "✓ Message sent! We'll reply within 24 hours.";
+                        statusEl.textContent = "\u2713 Message sent! We'll reply within 24 hours.";
                         statusEl.className = 'text-center text-sm mt-3 text-green-400';
                         statusEl.classList.remove('hidden');
                     }
@@ -2981,7 +3004,7 @@ fetchPublicPageViews();
                 }
             } catch(err) {
                 if (statusEl) {
-                    statusEl.textContent = '✕ Failed to send. Check your connection and try again.';
+                    statusEl.textContent = '\u2715 Failed to send. Check your connection and try again.';
                     statusEl.className = 'text-center text-sm mt-3 text-red-400';
                     statusEl.classList.remove('hidden');
                 }
@@ -2994,7 +3017,7 @@ fetchPublicPageViews();
 })();
 
 // =====================================================================
-// FREE PASS BUTTON — wire up event (card is injected by checkAccessAndRoute)
+// FREE PASS BUTTON \u2014 wire up event (card is injected by checkAccessAndRoute)
 // =====================================================================
 document.addEventListener('click', (e) => {
     if (e.target && e.target.id === 'btn-claim-free-pass') claimFreePass();
@@ -3003,7 +3026,7 @@ document.addEventListener('click', (e) => {
 // =====================================================================
 // TOAST NOTIFICATION SYSTEM
 // =====================================================================
-const _toastIcons = { success: '✓', error: '✕', info: 'ℹ', warn: '⚠' };
+const _toastIcons = { success: '\u2713', error: '\u2715', info: '\u2139', warn: '\u26A0' };
 
 function showToast(message, type = 'info', duration = 3500) {
     // Get or create container
@@ -3046,7 +3069,7 @@ window.showToast = showToast;
 // AD MONETIZATION SYSTEM
 // =====================================================================
 
-// ---- Premium user guard — NO ADS for paid subscribers ----
+// ---- Premium user guard \u2014 NO ADS for paid subscribers ----
 // Returns true if the current user has an active paid subscription or is admin.
 // Premium users bypass ALL ad experiences.
 function isPremiumUser() {
@@ -3054,9 +3077,9 @@ function isPremiumUser() {
     // Admin is always premium
     if (currentUser.email === 'anubhabmohapatra.01@gmail.com') return true;
     if (!currentUserDoc) return false;
-    // ★ TIER STRATEGY:
-    // one-time (1-day, ₹50) → premium=true BUT sees reduced 3 in-movie ad breaks (stays on index.html)
-    // weekly / monthly / access-code / extended → fully premium, zero ads, redirected to premium.html
+    // \u2605 TIER STRATEGY:
+    // one-time (1-day, \u20B950) \u2192 premium=true BUT sees reduced 3 in-movie ad breaks (stays on index.html)
+    // weekly / monthly / access-code / extended \u2192 fully premium, zero ads, redirected to premium.html
     const premiumPlans = ['one-time', 'weekly', 'monthly', 'access-code', 'extended_by_admin'];
     return premiumPlans.includes(currentUserDoc.activeSubscription) &&
            currentUserDoc.subscriptionExpiry > Date.now();
@@ -3092,13 +3115,13 @@ function showAdModal(adNum, totalAds, durationSecs = 30) {
         if (countdown) countdown.textContent = durationSecs;
         if (fillEl)  { fillEl.style.transition = 'none'; fillEl.style.width = '0%'; }
 
-        // Inject AdSterra 300×250 banner with a clean fallback behind it
+        // Inject AdSterra 300\u00C3\u2014250 banner with a clean fallback behind it
         if (bannerDiv) {
             bannerDiv.innerHTML = '';
             bannerDiv.style.position = 'relative';
             bannerDiv.style.minHeight = '250px';
 
-            // Fallback — always visible; hidden only if real ad loads
+            // Fallback \u2014 always visible; hidden only if real ad loads
             const fallback = document.createElement('div');
             fallback.id = 'ad-modal-fallback';
             fallback.style.cssText = `
@@ -3109,7 +3132,7 @@ function showAdModal(adNum, totalAds, durationSecs = 30) {
                 font-family:inherit;text-align:center;padding:2rem;z-index:1;
             `;
             fallback.innerHTML = `
-                <div style="font-size:3rem;line-height:1;">📺</div>
+                <div style="font-size:3rem;line-height:1;">\u{1F4FA}</div>
                 <div style="color:#e4e4e7;font-size:1rem;font-weight:700;">Supporting Vaanisethu</div>
                 <div style="color:#71717a;font-size:0.78rem;line-height:1.6;max-width:240px;">
                     Ads keep Vaanisethu free for everyone.<br>
@@ -3131,7 +3154,7 @@ function showAdModal(adNum, totalAds, durationSecs = 30) {
             const s = document.createElement('script');
             s.src = 'https://millionairelucidlytransmitted.com/466c31e87748ad9ff1e88a1b7cd5a34c/invoke.js';
             s.async = true;
-            // When real ad loads and has content — hide the fallback
+            // When real ad loads and has content \u2014 hide the fallback
             s.onload = () => {
                 setTimeout(() => {
                     const iframe = adWrap.querySelector('iframe');
@@ -3141,14 +3164,14 @@ function showAdModal(adNum, totalAds, durationSecs = 30) {
                 }, 1500);
             };
             s.onerror = () => {
-                // Ad blocked — show a clear fallback so user knows to wait
+                // Ad blocked \u2014 show a clear fallback so user knows to wait
                 fallback.querySelector('div:last-child').style.color = '#71717a';
             };
             adWrap.appendChild(s);
             bannerDiv.appendChild(adWrap);
         }
 
-        // Use style.display directly — avoids hidden/flex class conflict on mobile
+        // Use style.display directly \u2014 avoids hidden/flex class conflict on mobile
         modal.style.display = 'flex';
         modal.classList.remove('hidden');
 
@@ -3188,7 +3211,7 @@ function showAdModal(adNum, totalAds, durationSecs = 30) {
     });
 }
 
-// ---- Site-Access Ad Flow (Payment Page: Watch 4 Ads → 24hr pass) ----
+// ---- Site-Access Ad Flow (Payment Page: Watch 4 Ads \u2192 24hr pass) ----
 async function startAdFlow() {
     if (!currentUser) {
         showToast('Please sign in first.', 'error');
@@ -3198,7 +3221,7 @@ async function startAdFlow() {
     const btn   = document.getElementById('btn-start-ad-flow');
     const msgEl = document.getElementById('ad-pass-msg');
 
-    // Step indicator IDs: ad-step-1 … ad-step-4 = ads, ad-step-5 = Access
+    // Step indicator IDs: ad-step-1 \u2026 ad-step-4 = ads, ad-step-5 = Access
     const stepEls = [1, 2, 3, 4, 5].map(i => document.getElementById(`ad-step-${i}`));
 
     if (btn) { btn.disabled = true; btn.textContent = 'Starting ads...'; }
@@ -3230,7 +3253,7 @@ async function startAdFlow() {
             if (i < TOTAL_ADS) showToast(`Ad ${i} done! ${TOTAL_ADS - i} more to go.`, 'info', 2000);
         }
 
-        // All 4 ads done — request access grant
+        // All 4 ads done \u2014 request access grant
         if (stepEls[4]) stepEls[4].className = 'ad-step-indicator ad-step-active';
         if (btn) btn.textContent = 'Granting access...';
 
@@ -3245,12 +3268,12 @@ async function startAdFlow() {
 
         if (stepEls[4]) stepEls[4].className = 'ad-step-indicator ad-step-done';
         if (msgEl) {
-            msgEl.textContent = '🎉 24-hour access granted! Redirecting...';
+            msgEl.textContent = '\u{1F389} 24-hour access granted! Redirecting...';
             msgEl.className = 'text-xs mt-3 text-center text-green-400';
             msgEl.classList.remove('hidden');
         }
 
-        showToast('🎉 24-hour free access granted!', 'success', 4000);
+        showToast('\u{1F389} 24-hour free access granted!', 'success', 4000);
 
         // Wait for Firestore onSnapshot to update currentUserDoc, then route
         setTimeout(() => {
@@ -3271,13 +3294,13 @@ async function startAdFlow() {
     } catch (err) {
         showToast('Ad flow error: ' + err.message, 'error');
         if (msgEl) {
-            msgEl.textContent = '✕ ' + err.message;
+            msgEl.textContent = '\u2715 ' + err.message;
             msgEl.className = 'text-xs mt-3 text-center text-red-400';
             msgEl.classList.remove('hidden');
         }
         // Reset all steps
         stepEls.forEach(el => { if (el) el.className = 'ad-step-indicator ad-step-pending'; });
-        if (btn) { btn.disabled = false; btn.textContent = '📺 Watch 4 Ads & Get Free 24hr Access'; }
+        if (btn) { btn.disabled = false; btn.textContent = '\u{1F4FA} Watch 4 Ads & Get Free 24hr Access'; }
     }
 }
 
@@ -3293,12 +3316,12 @@ async function startFilmAdUnlock(filmId, filmTitle, adBtn) {
         return;
     }
 
-    // ✅ Pre-check: verify this film still has ad unlock enabled BEFORE showing the ad
+    // \u2705 Pre-check: verify this film still has ad unlock enabled BEFORE showing the ad
     // (Admin may have turned it off after the page loaded)
     const cachedFilm = window._allFilms && window._allFilms.find(f => f.filmId === filmId);
     if (cachedFilm && cachedFilm.adUnlockEnabled === false) {
-        showToast('❌ Ad unlock is not available for this film.', 'error');
-        if (adBtn) { adBtn.disabled = false; adBtn.textContent = '📺 Watch 1 Ad — Free 1hr Access'; }
+        showToast('\u274C Ad unlock is not available for this film.', 'error');
+        if (adBtn) { adBtn.disabled = false; adBtn.textContent = '\u{1F4FA} Watch 1 Ad \u2014 Free 1hr Access'; }
         return;
     }
 
@@ -3308,8 +3331,8 @@ async function startFilmAdUnlock(filmId, filmTitle, adBtn) {
         if (freshFilms.success) {
             const freshFilm = (freshFilms.films || []).find(f => f.filmId === filmId);
             if (freshFilm && freshFilm.adUnlockEnabled === false) {
-                showToast('❌ Ad unlock is not available for this film.', 'error');
-                if (adBtn) { adBtn.disabled = false; adBtn.textContent = '📺 Watch 1 Ad — Free 1hr Access'; }
+                showToast('\u274C Ad unlock is not available for this film.', 'error');
+                if (adBtn) { adBtn.disabled = false; adBtn.textContent = '\u{1F4FA} Watch 1 Ad \u2014 Free 1hr Access'; }
                 // Also refresh the film store so the button disappears
                 loadFilmStore();
                 return;
@@ -3317,13 +3340,13 @@ async function startFilmAdUnlock(filmId, filmTitle, adBtn) {
         }
     } catch (_) { /* continue even if fresh check fails */ }
 
-    if (adBtn) { adBtn.disabled = true; adBtn.textContent = '⏳ Watch Ad...'; }
+    if (adBtn) { adBtn.disabled = true; adBtn.textContent = '\u23F3 Watch Ad...'; }
 
     try {
-        // Show the ad modal — 30s countdown
+        // Show the ad modal \u2014 30s countdown
         await showAdModal(1, 1, 30);
 
-        if (adBtn) adBtn.textContent = '⏳ Verifying...';
+        if (adBtn) adBtn.textContent = '\u23F3 Verifying...';
 
         // Get verification token
         const r = await fetch('/api/verify-ad-completion', {
@@ -3343,17 +3366,17 @@ async function startFilmAdUnlock(filmId, filmTitle, adBtn) {
         const dUnlock = await rUnlock.json();
         if (!dUnlock.success) throw new Error(dUnlock.error || 'Unlock failed');
 
-        showToast(`🎬 "${filmTitle}" unlocked for 1 hour!`, 'success', 4000);
+        showToast(`\u{1F3AC} "${filmTitle}" unlocked for 1 hour!`, 'success', 4000);
         // Reload film store to show the unlocked state
         loadFilmStore();
 
     } catch (err) {
         showToast('Film unlock failed: ' + err.message, 'error');
-        if (adBtn) { adBtn.disabled = false; adBtn.textContent = '📺 Watch 1 Ad — Free 1hr Access'; }
+        if (adBtn) { adBtn.disabled = false; adBtn.textContent = '\u{1F4FA} Watch 1 Ad \u2014 Free 1hr Access'; }
     }
 }
 
-// Fetch user's ad-unlocked films (returns a Map of filmId → unlock data)
+// Fetch user's ad-unlocked films (returns a Map of filmId \u2192 unlock data)
 async function fetchMyAdUnlocks() {
     if (!currentUser) return new Map();
     try {
@@ -3389,7 +3412,7 @@ window.startFilmAdUnlock = startFilmAdUnlock;
 // =====================================================================
 
 const _INMOVIE_AD_BREAK_SECS_FULL    = [5*60, 14*60, 24*60, 35*60, 48*60, 62*60, 78*60]; // 7 breaks (free/ad-pass users)
-const _INMOVIE_AD_BREAK_SECS_REDUCED = [20*60, 50*60, 85*60]; // 3 breaks (1-day ₹50 plan)
+const _INMOVIE_AD_BREAK_SECS_REDUCED = [20*60, 50*60, 85*60]; // 3 breaks (1-day \u20B950 plan)
 const _INMOVIE_AD_BREAK_SECS = _INMOVIE_AD_BREAK_SECS_FULL; // base (overridden per session below)
 const _INMOVIE_SKIP_AFTER_SECS = 5;
 const _INMOVIE_AD_DURATION_SECS = 20;
@@ -3399,7 +3422,7 @@ let _inmovieAdTick      = null;
 let _inmovieVideoListener = null;
 
 function startInMovieAdWatch() {
-    if (isFullPremiumUser()) return; // 🎖️ Full premium (weekly/monthly) — zero ads
+    if (isFullPremiumUser()) return; // \u{1F396}\uFE0F Full premium (weekly/monthly) \u2014 zero ads
     if (_inmovieVideoListener) return; // already running
 
     // Determine ad break schedule based on subscription tier
@@ -3463,11 +3486,11 @@ function stopInMovieAdWatch() {
 // 2. Is the current film's adUnlockEnabled on?
 // 3. What access type did the host use to unlock this film?
 function shouldShowInMovieAds() {
-    if (isFullPremiumUser()) return false;                         // Full premium (weekly/monthly) → never
-    if (window._currentPlayingFilmAdEnabled === false) return false; // Film has ads OFF → never
+    if (isFullPremiumUser()) return false;                         // Full premium (weekly/monthly) \u2192 never
+    if (window._currentPlayingFilmAdEnabled === false) return false; // Film has ads OFF \u2192 never
     const hat = window._roomHostAccessType || 'generic';
-    if (hat === 'premium' || hat === 'rental') return false;       // Host premium/paid rental → no ads
-    return true; // host watched ad ('ad-unlock'), 1-day plan, or generic URL → ads on
+    if (hat === 'premium' || hat === 'rental') return false;       // Host premium/paid rental \u2192 no ads
+    return true; // host watched ad ('ad-unlock'), 1-day plan, or generic URL \u2192 ads on
 }
 
 function showInMovieAd() {
@@ -3483,7 +3506,7 @@ function showInMovieAd() {
     let remaining  = _INMOVIE_AD_DURATION_SECS;
     let skipEnabled = false;
 
-    // ⏸ PAUSE the video so ad gets full attention
+    // \u23F8 PAUSE the video so ad gets full attention
     const video = document.getElementById('main-video');
     if (video && !video.paused) video.pause();
 
@@ -3496,12 +3519,12 @@ function showInMovieAd() {
     const hintTimer = document.getElementById('inmovie-hint-timer');
     if (hintTimer) hintTimer.textContent = `${remaining}s`;
 
-    // Inject AdSterra 300×250 + handle blocked/failed gracefully
+    // Inject AdSterra 300\u00C3\u2014250 + handle blocked/failed gracefully
     const inmovieSlot = document.getElementById('adsterra-inmovie-banner');
     if (inmovieSlot) {
         inmovieSlot.innerHTML = '';
 
-        // Fallback UI — shown if ad script fails / is blocked
+        // Fallback UI \u2014 shown if ad script fails / is blocked
         const fallback = document.createElement('div');
         fallback.id = 'inmovie-ad-fallback';
         fallback.style.cssText = `
@@ -3510,12 +3533,12 @@ function showInMovieAd() {
             color:#71717a; font-size:0.8rem;
         `;
         fallback.innerHTML = `
-            <div style="font-size:2.5rem;">🎬</div>
+            <div style="font-size:2.5rem;">\u{1F3AC}</div>
             <div style="font-weight:700;color:#a1a1aa;font-size:0.9rem;">Vaanisethu</div>
             <div style="font-size:0.72rem;color:#52525b;line-height:1.4;">
                 Watch movies together with friends.<br>Support us to keep it free!
             </div>
-            <div style="font-size:0.65rem;color:#3f3f46;margin-top:0.5rem;">Ad loading…</div>
+            <div style="font-size:0.65rem;color:#3f3f46;margin-top:0.5rem;">Ad loading\u2026</div>
         `;
         inmovieSlot.appendChild(fallback);
 
@@ -3545,7 +3568,7 @@ function showInMovieAd() {
         s.src = 'https://millionairelucidlytransmitted.com/466c31e87748ad9ff1e88a1b7cd5a34c/invoke.js';
         s.async = true;
         s.onerror = () => {
-            // Script couldn't load at all (blocked by browser/CSP) → show fallback
+            // Script couldn't load at all (blocked by browser/CSP) \u2192 show fallback
             fallback.style.display = 'flex';
             fallback.querySelector('div:last-child').textContent = 'Please whitelist vaanisethu.online to support us!';
         };
@@ -3573,7 +3596,7 @@ function showInMovieAd() {
     // ---- Start countdown tick ----
     function startTick() {
         _inmovieAdTick = setInterval(() => {
-            if (document.hidden) return; // page not visible — skip decrement
+            if (document.hidden) return; // page not visible \u2014 skip decrement
             remaining--;
             if (timerEl) timerEl.textContent = `${remaining}s`;
             // Keep the hint timer in sync too
@@ -3598,7 +3621,7 @@ function showInMovieAd() {
     // ---- Page Visibility: pause/resume ----
     function onVisibilityChange() {
         if (document.hidden) {
-            // Tab hidden / app backgrounded → pause progress bar animation
+            // Tab hidden / app backgrounded \u2192 pause progress bar animation
             if (fillEl) {
                 const computedW = window.getComputedStyle(fillEl).width;
                 const parentW   = fillEl.parentElement ? window.getComputedStyle(fillEl.parentElement).width : '1px';
@@ -3608,7 +3631,7 @@ function showInMovieAd() {
             }
             // The setInterval itself still fires but skips decrement (document.hidden check above)
         } else {
-            // Tab visible again → resume progress bar animation for remaining time
+            // Tab visible again \u2192 resume progress bar animation for remaining time
             if (fillEl && remaining > 0) {
                 fillEl.style.transition = `width ${remaining}s linear`;
                 fillEl.style.width = '100%';
@@ -3649,7 +3672,7 @@ function dismissInMovieAd() {
     // Clear ad iframe to stop any audio
     const slot = document.getElementById('adsterra-inmovie-banner');
     if (slot) slot.innerHTML = '';
-    // ▶ RESUME video after ad
+    // \u25B6 RESUME video after ad
     const video = document.getElementById('main-video');
     if (video && video.paused && video.src) {
         video.play().catch(() => {});
@@ -3739,7 +3762,7 @@ window.stopInMovieAdWatch  = stopInMovieAdWatch;
 // V2 FEATURES
 // =====================================================================
 
-// ---- 💬 Emoji Reactions ----
+// ---- \u{1F4AC} Emoji Reactions ----
 function spawnFloatingEmoji(emoji, userName) {
   const el = document.createElement('div');
   el.className = 'emoji-float';
@@ -3797,19 +3820,19 @@ function spawnFloatingEmoji(emoji, userName) {
   });
 })();
 
-// ---- 🌐 WhatsApp Room Share ----
+// ---- \u{1F310} WhatsApp Room Share ----
 (function() {
   const btn = document.getElementById('btn-whatsapp-share');
   if (!btn) return;
   btn.addEventListener('click', () => {
     if (!currentRoomId) return;
     const link = `${window.location.origin}/?join=${currentRoomId}`;
-    const text = `🎬 Join me on Vaanisethu to watch a movie together!\n\nRoom Code: *${currentRoomId}*\nJoin link: ${link}`;
+    const text = `\u{1F3AC} Join me on Vaanisethu to watch a movie together!\n\nRoom Code: *${currentRoomId}*\nJoin link: ${link}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   });
 })();
 
-// ---- 📊 Watch History ----
+// ---- \u{1F4CA} Watch History ----
 async function loadWatchHistory() {
   const list = document.getElementById('history-list');
   if (!list || !currentUser) return;
@@ -3828,7 +3851,7 @@ async function loadWatchHistory() {
       const div = document.createElement('div');
       div.className = 'history-item';
       div.innerHTML = `
-        ${item.thumbnailBase64 ? `<img class="history-thumb" src="${item.thumbnailBase64}" alt="">` : '<div class="history-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🎬</div>'}
+        ${item.thumbnailBase64 ? `<img class="history-thumb" src="${item.thumbnailBase64}" alt="">` : '<div class="history-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;">\u{1F3AC}</div>'}
         <div class="history-info">
           <div class="history-title">${item.filmTitle || 'Unknown Film'}</div>
           <div class="history-date">Watched on ${dateStr}</div>
@@ -3840,7 +3863,7 @@ async function loadWatchHistory() {
   }
 }
 
-// ---- 🏆 Leaderboard ----
+// ---- Leaderboard ----
 async function loadLeaderboard() {
   const el = document.getElementById('leaderboard-list');
   if (!el) return;
@@ -3851,15 +3874,19 @@ async function loadLeaderboard() {
       el.innerHTML = '<p style="color:#52525b;font-size:0.8rem;text-align:center;padding:1rem;">No data yet. Watch films to earn your spot!</p>';
       return;
     }
-    const medals = ['🥇','🥈','🥉'];
+    const medals = ['\u{1F947}','\u{1F948}','\u{1F949}'];
+    // Check if current user is admin
+    const isAdminUser = currentUser && (currentUser.email === 'anubhabbhuyan01@gmail.com' || currentUserDoc?.isAdmin);
     el.innerHTML = '';
     data.board.forEach((entry, i) => {
       const row = document.createElement('div');
       row.className = 'lb-row';
+      row.style.cssText = 'display:flex;align-items:center;gap:0.5rem;transition:opacity 0.3s,transform 0.3s;';
       row.innerHTML = `
-        <div class="lb-rank">${medals[i] || (i + 1)}</div>
-        <div class="lb-name">${entry.name}</div>
-        <div class="lb-count">${entry.count} film${entry.count !== 1 ? 's' : ''}</div>`;
+        <div class="lb-rank" style="min-width:2rem;">${medals[i] || (i + 1)}</div>
+        <div class="lb-name" style="flex:1;">${entry.name}</div>
+        <div class="lb-count">${entry.count} film${entry.count !== 1 ? 's' : ''}</div>
+        ${isAdminUser ? `<button onclick="removeLbEntry(this,'${entry.uid}')" title="Remove from leaderboard" style="background:none;border:none;cursor:pointer;color:#71717a;font-size:1.1rem;padding:0.1rem 0.3rem;border-radius:0.3rem;line-height:1;transition:color 0.2s,background 0.2s;" onmouseover="this.style.color='#ef4444';this.style.background='rgba(239,68,68,0.1)'" onmouseout="this.style.color='#71717a';this.style.background='none'">\u00D7</button>` : ''}`;
       el.appendChild(row);
     });
   } catch(e) {
@@ -3867,7 +3894,34 @@ async function loadLeaderboard() {
   }
 }
 
-// ── Leaderboard: load whenever dashboard becomes visible ──────────
+window.removeLbEntry = async function(btn, targetUserId) {
+  if (!currentUser) return;
+  if (!confirm('Remove this user from the leaderboard this month?')) return;
+  btn.disabled = true;
+  btn.textContent = '...';
+  try {
+    const res = await fetch('/api/remove-leaderboard-entry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminId: currentUser.uid, targetUserId })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed');
+    // Animate row out
+    const row = btn.closest('.lb-row');
+    if (row) {
+      row.style.opacity = '0';
+      row.style.transform = 'translateX(20px)';
+      setTimeout(() => { row.remove(); showToast('\u2713 Removed from leaderboard', 'success', 2000); }, 300);
+    }
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '\u00D7';
+    showToast('Failed: ' + e.message, 'error', 3000);
+  }
+};
+
+// \u2500\u2500 Leaderboard: load whenever dashboard becomes visible \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 {
   const _dashEl = document.getElementById('dashboard-view');
   if (_dashEl) {
@@ -3878,7 +3932,7 @@ async function loadLeaderboard() {
 }
 
 
-// ---- ⭐ Film Star Ratings ----
+// ---- \u2B50 Film Star Ratings ----
 window.rateFilm = async function(filmId, filmTitle, rating, starBar) {
   if (!currentUser) return;
   // Update stars visually immediately
@@ -3893,8 +3947,8 @@ window.rateFilm = async function(filmId, filmTitle, rating, starBar) {
     const data = await res.json();
     if (data.success) {
       const avgEl = starBar.querySelector('.film-avg-rating');
-      if (avgEl) avgEl.textContent = `★ ${data.avg} (${data.count})`;
-      showToast(`⭐ You rated this ${rating}/5`, 'success', 2000);
+      if (avgEl) avgEl.textContent = `\u2605 ${data.avg} (${data.count})`;
+      showToast(`\u2B50 You rated this ${rating}/5`, 'success', 2000);
     }
   } catch(e) { /* silent */ }
 };
@@ -3906,19 +3960,19 @@ window.buildStarBar = function(filmId, filmTitle, avgRating, ratingCount) {
   for (let i = 1; i <= 5; i++) {
     const s = document.createElement('span');
     s.className = 'film-star' + (i <= Math.round(avgRating || 0) ? ' lit' : '');
-    s.textContent = '★';
+    s.textContent = '\u2605';
     s.title = `Rate ${i} star${i > 1 ? 's' : ''}`;
     s.onclick = () => window.rateFilm(filmId, filmTitle, i, bar);
     bar.appendChild(s);
   }
   const avg = document.createElement('span');
   avg.className = 'film-avg-rating';
-  avg.textContent = avgRating ? `★ ${Number(avgRating).toFixed(1)} (${ratingCount || 0})` : 'No ratings yet';
+  avg.textContent = avgRating ? `\u2605 ${Number(avgRating).toFixed(1)} (${ratingCount || 0})` : 'No ratings yet';
   bar.appendChild(avg);
   return bar;
 };
 
-// ---- 📋 Log Watch History when a film starts playing ----
+// ---- \u{1F4CB} Log Watch History when a film starts playing ----
 window.logWatchHistory = function(filmId, filmTitle, thumbnailBase64) {
   if (!currentUser || !filmId) return;
   fetch('/api/log-watch-history', {
@@ -3928,7 +3982,7 @@ window.logWatchHistory = function(filmId, filmTitle, thumbnailBase64) {
   }).catch(() => {});
 };
 
-// ---- 📧 Priority Support Badge in contact form ----
+// ---- \u{1F4E7} Priority Support Badge in contact form ----
 (function() {
   const helpFab = document.getElementById('help-fab');
   if (!helpFab) return;
@@ -3943,7 +3997,7 @@ window.logWatchHistory = function(filmId, filmTitle, thumbnailBase64) {
         const badge = document.createElement('div');
         badge.id = 'premium-support-badge';
         badge.style.cssText = 'background:rgba(234,179,8,0.15);color:#eab308;border:1px solid rgba(234,179,8,0.4);border-radius:8px;padding:0.4rem 0.75rem;font-size:0.75rem;font-weight:800;margin-bottom:0.75rem;text-align:center;';
-        badge.innerHTML = '⭐ Premium Member — Priority Support';
+        badge.innerHTML = '\u2B50 Premium Member \u2014 Priority Support';
         subjectEl.prepend(badge);
       }
     }
@@ -3951,9 +4005,9 @@ window.logWatchHistory = function(filmId, filmTitle, thumbnailBase64) {
 })();
 
 
-// ════════════════════════════════════════════════════════════════
-// 📱 PWA PUSH NOTIFICATIONS
-// ════════════════════════════════════════════════════════════════
+// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+// \u{1F4F1} PWA PUSH NOTIFICATIONS
+// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -4051,3 +4105,541 @@ document.getElementById('btn-send-push')?.addEventListener('click', async () => 
   resultEl.style.display = 'block';
   btn.textContent = 'Send to All Subscribers'; btn.disabled = false;
 });
+
+// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+// \u{1F4F1} MOBILE UI \u2014 Bottom Nav, Film Carousel, Profile Tab
+// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+
+(function initMobileUI() {
+
+  // Only run on mobile widths
+  function isMobile() { return window.matchMedia('(max-width: 640px)').matches; }
+
+  // \u2500\u2500 Tab switching \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  const SECTIONS = ['home','films','friends','profile'];
+  function switchTab(tab) {
+    if (!isMobile()) return;
+    SECTIONS.forEach(s => {
+      const sec = document.getElementById('mob-sec-' + s);
+      const btn = document.querySelector('.mob-nav-btn[data-tab="' + s + '"]');
+      if (sec) sec.classList.toggle('active', s === tab);
+      if (btn) btn.classList.toggle('active', s === tab);
+    });
+    if (tab === 'films') buildMobCarousel();
+    if (tab === 'friends') syncMobFriends();
+    if (tab === 'profile') syncMobProfile();
+  }
+
+  document.querySelectorAll('.mob-nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  // "Add friend" button in friends tab \u2192 triggers existing modal
+  document.getElementById('mob-btn-add-friend')?.addEventListener('click', () => {
+    document.getElementById('btn-open-add-friend')?.click();
+  });
+
+  // Sign Out in profile tab
+  document.getElementById('mob-btn-signout')?.addEventListener('click', () => {
+    document.getElementById('btn-logout')?.click();
+  });
+
+  // \u2500\u2500 Mobile top bar username \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  function updateMobUsername(rawName) {
+    // Strip "Hi, " prefix that dashboard-user-name always has
+    const name = (rawName || '').replace(/^Hi,\s*/i, '').trim() || window._mobCleanName || 'You';
+    const el = document.getElementById('mob-username-display');
+    const wn = document.getElementById('mob-welcome-name');
+    if (el) el.textContent = name;
+    if (wn) wn.textContent = name;
+  }
+
+  // Observer: when dashboard-user-name changes, sync to mobile bar
+  const dashName = document.getElementById('dashboard-user-name');
+  if (dashName) {
+    const obs = new MutationObserver(() => updateMobUsername(dashName.textContent));
+    obs.observe(dashName, { childList: true, characterData: true, subtree: true });
+  }
+
+  // \u2500\u2500 Profile tab sync \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  function syncMobProfile() {
+    // Name \u2014 use clean name stored at login time, not the "Hi, X" version
+    const cleanName = window._mobCleanName || document.getElementById('mob-username-display')?.textContent || 'User';
+    const profileName = document.getElementById('mob-profile-name-display');
+    if (profileName) profileName.textContent = cleanName;
+
+    // Avatar letter
+    const letter = document.getElementById('mob-profile-avatar-letter');
+    if (letter && !document.getElementById('mob-profile-avatar-img')?.src) {
+      letter.textContent = cleanName[0].toUpperCase();
+    }
+
+    // Referral code = room code
+    const roomCode = document.getElementById('my-room-code')?.textContent || '';
+    const refEl = document.getElementById('mob-referral-code-val');
+    if (refEl) refEl.textContent = roomCode;
+
+    // Subscription status
+    const plan = window._mobUserPlan || 'free';
+    const subEl = document.getElementById('mob-sub-status');
+    if (subEl) {
+      const labels = { 'monthly': '\u2705 Monthly Active', 'weekly': '\u2705 Weekly Active', 'one-time': '\u2705 24Hr Active', 'ad-pass': 'Ad Pass', 'free': 'Free' };
+      subEl.textContent = labels[plan] || plan;
+    }
+
+    // Badge
+    const badge = document.getElementById('mob-profile-badge');
+    if (badge) {
+      if (plan === 'monthly') { badge.textContent = '\u{1F49C} Monthly Premium'; badge.style.background = 'rgba(168,85,247,0.15)'; badge.style.color = '#c084fc'; badge.style.borderColor = 'rgba(168,85,247,0.4)'; }
+      else if (plan === 'weekly') { badge.textContent = '\u{1F7E0} Weekly Premium'; badge.style.background = 'rgba(249,115,22,0.15)'; badge.style.color = '#f97316'; badge.style.borderColor = 'rgba(249,115,22,0.4)'; }
+      else if (plan === 'one-time') { badge.textContent = '\u23F1 24-Hour Pass'; badge.style.background = 'rgba(234,179,8,0.15)'; badge.style.color = '#eab308'; badge.style.borderColor = 'rgba(234,179,8,0.4)'; }
+      else { badge.textContent = 'Free Plan'; badge.style.background = ''; badge.style.color = ''; badge.style.borderColor = ''; }
+    }
+
+    // Room name
+    const rn = document.getElementById('mob-room-name-val');
+    const roomNameDisplay = document.getElementById('room-name-display');
+    if (rn) rn.textContent = roomNameDisplay?.textContent || 'My Room';
+
+    // Page views \u2014 sync from existing public-visitor-count
+    const pv = document.getElementById('public-visitor-count')?.textContent;
+    const mobPv = document.getElementById('mob-page-views');
+    if (mobPv && pv) mobPv.textContent = pv;
+  }
+
+  // Referral code tap \u2192 copy
+  document.getElementById('mob-setting-referral')?.addEventListener('click', () => {
+    const code = document.getElementById('mob-referral-code-val')?.textContent;
+    if (code) {
+      navigator.clipboard.writeText(code).then(() => {
+        const el = document.getElementById('mob-referral-code-val');
+        if (el) { const old = el.textContent; el.textContent = 'Copied!'; setTimeout(() => el.textContent = old, 1500); }
+      }).catch(() => {});
+    }
+  });
+
+  // Room name tap -> openMobRoomNameModal() (handled by onclick in HTML)
+  // Old prompt() handler removed \u2014 custom modal used instead
+
+
+  // Profile picture change
+  document.getElementById('mob-profile-pic-input')?.addEventListener('change', function() {
+    const file = this.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = document.getElementById('mob-profile-avatar-img');
+      const letter = document.getElementById('mob-profile-avatar-letter');
+      if (img) { img.src = e.target.result; img.style.display = 'block'; }
+      if (letter) letter.style.display = 'none';
+      // Save to localStorage for persistence
+      try { localStorage.setItem('_vns_profile_pic', e.target.result); } catch(_) {}
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Restore saved profile pic \u2014 MOBILE ONLY
+  if (window.matchMedia('(max-width: 640px)').matches) {
+    const savedPic = localStorage.getItem('_vns_profile_pic');
+    if (savedPic) {
+      const img = document.getElementById('mob-profile-avatar-img');
+      const letter = document.getElementById('mob-profile-avatar-letter');
+      // Constrain: must stay inside the avatar circle, not go fullscreen
+      if (img) {
+        img.src = savedPic;
+        img.style.cssText = 'display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;';
+      }
+      if (letter) letter.style.display = 'none';
+    }
+  }
+
+  // Notification toggle \u2192 manage push subscription
+  document.getElementById('mob-notif-toggle')?.addEventListener('change', async function() {
+    if (this.checked && currentUser) {
+      await subscribeToPush(currentUser.uid);
+    }
+  });
+
+  // \u2500\u2500 Film Carousel (snap-scroll center focus) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  let _carouselBuilt = false;
+  async function buildMobCarousel() {
+    if (_carouselBuilt) return;
+    const carousel = document.getElementById('mob-film-carousel');
+    if (!carousel) return;
+
+    if (!currentUser) {
+      carousel.innerHTML = '<p style="color:#52525b;padding:2rem;text-align:center;">Sign in to see films</p>';
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/films');
+      if (!res.ok) throw new Error('Server error ' + res.status);
+      const data = await res.json();
+
+      // API returns { success: true, films: [...] } NOT a plain array
+      const films = Array.isArray(data) ? data : (data.films || []);
+
+      if (!films.length) {
+        carousel.innerHTML = '<p style="color:#52525b;padding:2rem;text-align:center;">No films yet. Check back soon!</p>';
+        return;
+      }
+
+      carousel.innerHTML = '';
+      films.forEach((film, i) => {
+        const item = document.createElement('div');
+        item.className = 'mob-film-carousel-item' + (i === 0 ? ' snap-center' : '');
+        item.dataset.filmid = film.filmId || film.id || '';
+
+        // thumbnailBase64 is already a full data:image/...;base64,... string (same as film store uses)
+        const poster = film.thumbnailBase64 || film.posterUrl || '';
+        const price = film.rentalPrice != null ? film.rentalPrice : (film.price != null ? film.price : 20);
+        const title = film.title || film.name || 'Untitled';
+        const days  = film.rentalDays || 3;
+
+        const posterEl = poster
+          ? '<img class="mob-carousel-poster" src="' + poster + '" alt="' + title.replace(/"/g, '') + '" loading="lazy">'
+          : '<div class="mob-carousel-poster" style="background:linear-gradient(135deg,#1a0a2e,#0f172a);display:flex;align-items:center;justify-content:center;font-size:2.5rem;">\u{1F3A5}</div>';
+
+        item.innerHTML =
+          posterEl +
+          '<div class="mob-carousel-overlay">' +
+            '<div class="mob-carousel-title">' + title + '</div>' +
+            '<div style="font-size:0.7rem;color:rgba(255,255,255,0.6);">' + days + ' day rental \u00B7 \u20B9' + price + '</div>' +
+          '</div>';
+
+        // Tap -> open film store modal using the actual function
+        item.addEventListener('click', () => {
+          if (typeof openFilmStoreModal === 'function') {
+            openFilmStoreModal();
+          } else {
+            const m = document.getElementById('film-store-modal');
+            if (m) m.style.display = 'block';
+          }
+        });
+
+        carousel.appendChild(item);
+      });
+
+      _carouselBuilt = true;
+      initCarouselSnap(carousel);
+
+    } catch(e) {
+      console.error('[MobCarousel]', e);
+      carousel.innerHTML = '<p style="color:#52525b;padding:2rem;text-align:center;cursor:pointer;">Could not load films. Tap to retry.</p>';
+      carousel.onclick = () => { _carouselBuilt = false; carousel.onclick = null; buildMobCarousel(); };
+    }
+  }
+
+  function initCarouselSnap(carousel) {
+    const items = carousel.querySelectorAll('.mob-film-carousel-item');
+    if (!items.length) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        entry.target.classList.toggle('snap-center', entry.isIntersecting && entry.intersectionRatio > 0.6);
+      });
+    }, {
+      root: carousel,
+      threshold: 0.6
+    });
+
+    items.forEach(item => observer.observe(item));
+  }
+
+  // \u2500\u2500 Friends Tab Sync \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  function syncMobFriends() {
+    const mainList = document.getElementById('friends-list');
+    const mobList = document.getElementById('mob-friends-list');
+    const mobEmpty = document.getElementById('mob-empty-friends');
+    if (!mainList || !mobList) return;
+
+    const items = mainList.querySelectorAll('.friend-item');
+    if (!items.length) {
+      if (mobEmpty) mobEmpty.style.display = 'block';
+      return;
+    }
+    if (mobEmpty) mobEmpty.style.display = 'none';
+    mobList.innerHTML = '';
+    items.forEach(item => {
+      const clone = item.cloneNode(true);
+      mobList.appendChild(clone);
+    });
+  }
+
+  // \u2500\u2500 Auto-init after dashboard loads \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  const dvObs = new MutationObserver(() => {
+    const dv = document.getElementById('dashboard-view');
+    if (dv && !dv.classList.contains('hidden') && isMobile()) {
+      switchTab('home');
+      syncMobProfile();
+      dvObs.disconnect();
+    }
+  });
+  const dv = document.getElementById('dashboard-view');
+  if (dv) dvObs.observe(dv, { attributes: true, attributeFilter: ['class'] });
+
+  // Hook into onAuthStateChanged to store plan for profile tab
+  const _origOnAuth = window._mobOnAuthHooked;
+  if (!_origOnAuth) {
+    window._mobOnAuthHooked = true;
+    document.addEventListener('vaanisethu:userdata-loaded', (e) => {
+      if (e.detail) window._mobUserPlan = e.detail.activeSubscription || 'free';
+    });
+  }
+
+
+  // \u2500\u2500 Mobile Bottom Sheet helpers \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+
+  function closeMobSheet(id) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  }
+
+  async function openMobWatchHistory() {
+    const sheet = document.getElementById('mob-watch-history-sheet');
+    const list  = document.getElementById('mob-watch-history-list');
+    if (!sheet || !list) return;
+    sheet.style.display = 'block';
+    list.innerHTML = '<p style="color:#52525b;text-align:center;padding:2rem 0;">Loading...</p>';
+    try {
+      const uid = currentUser?.uid;
+      if (!uid) { list.innerHTML = '<p style="color:#ef4444;text-align:center;padding:1rem;">Sign in required.</p>'; return; }
+      const res  = await fetch(`/api/my-watch-history?userId=${uid}`);
+      const data = await res.json();
+      const items = data.history || data.films || [];
+      if (!items.length) { list.innerHTML = '<p style="color:#52525b;text-align:center;padding:2rem 0;">No watch history yet \u{1F3AC}</p>'; return; }
+      list.innerHTML = items.map(h => {
+        const dateStr = h.watchedAt ? new Date(h.watchedAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : '-';
+        return `<div style="background:#1c1c1f;border-radius:0.75rem;padding:0.75rem 1rem;display:flex;align-items:center;gap:0.75rem;"><span style="font-size:1.5rem;">\u{1F3AC}</span><div style="flex:1;"><div style="color:white;font-weight:700;font-size:0.85rem;">${h.filmTitle || h.title || 'Unknown Film'}</div><div style="color:#71717a;font-size:0.72rem;">${dateStr}</div></div></div>`;
+      }).join('');
+    } catch(e) { list.innerHTML = '<p style="color:#ef4444;text-align:center;padding:1rem;">Could not load history.</p>'; }
+  }
+
+  async function openMobPurchaseHistory() {
+    const sheet = document.getElementById('mob-purchase-history-sheet');
+    const list  = document.getElementById('mob-purchase-history-list');
+    if (!sheet || !list) return;
+    sheet.style.display = 'block';
+    list.innerHTML = '<p style="color:#52525b;text-align:center;padding:2rem 0;">Loading...</p>';
+    try {
+      const uid = currentUser?.uid;
+      if (!uid) { list.innerHTML = '<p style="color:#ef4444;text-align:center;padding:1rem;">Sign in required.</p>'; return; }
+      const res  = await fetch(`/api/my-purchases?userId=${uid}`);
+      const data = await res.json();
+      const items = data.purchases || [];
+      if (!items.length) { list.innerHTML = '<p style="color:#52525b;text-align:center;padding:2rem 0;">No purchases yet \u{1F4B3}</p>'; return; }
+      const planLabels = { 'one-time':'24-Hour Pass', 'weekly':'Weekly Pass', 'monthly':'Monthly Pass', 'access-code':'Access Code' };
+      list.innerHTML = items.map(p => {
+        const dateStr = p.timestamp ? new Date(p.timestamp).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : '-';
+        const amtStr  = p.amount ? `\u20B9${(p.amount/100).toFixed(0)}` : '-';
+        const planStr = planLabels[p.plan] || p.plan || 'Unknown';
+        return `<div style="background:#1c1c1f;border-radius:0.75rem;padding:0.75rem 1rem;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:white;font-weight:700;font-size:0.85rem;">${planStr}</span><span style="color:#f97316;font-weight:800;font-size:0.9rem;">${amtStr}</span></div><div style="color:#71717a;font-size:0.72rem;margin-top:0.2rem;">${dateStr}${p.referralBonusDays ? ` - +${p.referralBonusDays} bonus days applied` : ''}</div></div>`;
+      }).join('');
+    } catch(e) { list.innerHTML = '<p style="color:#ef4444;text-align:center;padding:1rem;">Could not load purchases.</p>'; }
+  }
+
+  function openMobRoomNameModal() {
+    const modal = document.getElementById('mob-room-name-modal');
+    const input = document.getElementById('mob-room-name-input');
+    const msg   = document.getElementById('mob-room-name-msg');
+    if (!modal || !input) return;
+    const current = document.getElementById('mob-room-name-val')?.textContent || '';
+    if (current && current !== 'Loading...') input.value = current;
+    if (msg) msg.textContent = '';
+    modal.style.display = 'flex';
+    setTimeout(() => input.focus(), 100);
+  }
+
+  document.getElementById('mob-room-name-save-btn')?.addEventListener('click', async () => {
+    const input = document.getElementById('mob-room-name-input');
+    const msg   = document.getElementById('mob-room-name-msg');
+    const name  = input?.value?.trim();
+    if (!name) { if (msg) { msg.textContent = 'Please enter a name.'; msg.style.color = '#ef4444'; } return; }
+    if (name.length > 30) { if (msg) { msg.textContent = 'Max 30 characters.'; msg.style.color = '#ef4444'; } return; }
+    if (!currentUser) { if (msg) { msg.textContent = 'Not signed in.'; msg.style.color = '#ef4444'; } return; }
+    if (msg) { msg.textContent = 'Saving...'; msg.style.color = '#71717a'; }
+    try {
+      // Use server API to update room name
+      const res = await fetch('/api/update-room-name', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.uid, roomName: name })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Failed');
+      // Update display
+      const displayEl = document.getElementById('mob-room-name-val');
+      if (displayEl) displayEl.textContent = name;
+      if (msg) { msg.textContent = '\u2714 Saved!'; msg.style.color = '#22c55e'; }
+      setTimeout(() => closeMobSheet('mob-room-name-modal'), 900);
+    } catch(e) {
+      console.error('[RoomName]', e);
+      if (msg) { msg.textContent = 'Save failed: ' + e.message; msg.style.color = '#ef4444'; }
+    }
+  });
+
+  window.closeMobSheet          = closeMobSheet;
+  window.openMobWatchHistory    = openMobWatchHistory;
+  window.openMobPurchaseHistory = openMobPurchaseHistory;
+  window.openMobRoomNameModal   = openMobRoomNameModal;
+    window.openMobAdminPanel = function(section) {
+    const adminView   = document.getElementById('admin-view');
+    const dashView    = document.getElementById('dashboard-view');
+    const roomView    = document.getElementById('room-view');
+    const paymentView = document.getElementById('payment-view');
+    if (!adminView || !dashView) return;
+
+
+
+    if (dashView)    dashView.classList.add('hidden');
+    if (roomView)    roomView.classList.add('hidden');
+    if (paymentView) paymentView.classList.add('hidden');
+    adminView.classList.remove('hidden');
+
+    if (typeof loadAdminLedger    === 'function') loadAdminLedger();
+    if (typeof loadCodeUsers      === 'function') loadCodeUsers();
+    if (typeof loadRentalLedger   === 'function') loadRentalLedger();
+    if (typeof loadVisitorStats   === 'function') loadVisitorStats();
+    if (typeof loadFreeDayStatus  === 'function') loadFreeDayStatus();
+    if (typeof loadHelpDeskMessages === 'function') loadHelpDeskMessages();
+    if (typeof loadAdminLeaderboard === 'function') loadAdminLeaderboard();
+
+    setTimeout(() => {
+      const sectionMap = {
+        films:    'admin-film-section',
+        users:    'admin-user-section',
+        messages: 'admin-messages-section',
+        leaderboard: 'admin-leaderboard-section'
+      };
+      const targetId = sectionMap[section];
+      if (targetId) {
+        const el = document.getElementById(targetId);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 300);
+  };
+
+})();
+
+// ---- Admin Help Desk Messages ----
+window.loadHelpDeskMessages = async function() {
+  if (!currentUser) return;
+  const list = document.getElementById('admin-helpdesk-list');
+  if (!list) return;
+  list.innerHTML = '<p style="color:#71717a;font-size:0.875rem;">Loading messages...</p>';
+  try {
+    const res = await fetch('/api/admin/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminId: currentUser.uid })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    if (data.messages.length === 0) {
+      list.innerHTML = '<p style="color:#71717a;font-size:0.875rem;font-style:italic;">No messages found.</p>';
+      return;
+    }
+    list.innerHTML = '';
+    data.messages.forEach(msg => {
+      const div = document.createElement('div');
+      div.className = 'p-4 rounded border border-zinc-800 ' + (msg.read ? 'bg-zinc-900/40' : 'bg-zinc-800/80');
+      div.innerHTML = `
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;align-items:center;">
+          <div>
+            <span style="font-weight:bold;color:white;font-size:0.9rem;">${msg.name}</span>
+            <span style="color:#a1a1aa;font-size:0.75rem;margin-left:0.5rem;">${msg.email}</span>
+          </div>
+          <span style="color:#71717a;font-size:0.7rem;">${new Date(msg.timestamp).toLocaleString()}</span>
+        </div>
+        <p style="color:#d4d4d8;font-size:0.85rem;margin:0 0 0.5rem 0;white-space:pre-wrap;">${msg.message}</p>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+          ${msg.hasScreenshot ? '<span style="font-size:0.7rem;color:#f472b6;border:1px solid #f472b6;padding:2px 6px;border-radius:4px;">Has Screenshot (Check Email)</span>' : ''}
+          ${!msg.read ? '<button onclick="markMsgRead(\'' + msg.id + '\', this)" class="btn btn-outline" style="font-size:0.7rem;padding:0.2rem 0.5rem;margin-left:auto;">Mark Read</button>' : '<span style="color:#22c55e;font-size:0.7rem;margin-left:auto;">\\u2713 Read</span>'}
+        </div>
+      `;
+      list.appendChild(div);
+    });
+  } catch(e) {
+    list.innerHTML = '<p style="color:#ef4444;font-size:0.875rem;">Failed to load messages: ' + e.message + '</p>';
+  }
+};
+
+window.markMsgRead = async function(msgId, btn) {
+  if (!currentUser) return;
+  btn.textContent = '...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/admin/messages/mark-read', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminId: currentUser.uid, msgId })
+    });
+    if (res.ok) {
+      btn.outerHTML = '<span style="color:#22c55e;font-size:0.7rem;margin-left:auto;">\\u2713 Read</span>';
+      const lbl = document.getElementById('mob-admin-msg-label');
+      if (lbl) {
+        fetch('/api/unread-messages').then(r=>r.json()).then(d=>{
+          lbl.textContent = d.count > 0 ? 'Help Desk Messages (' + d.count + ' new)' : 'Help Desk Messages';
+        }).catch(()=>{});
+      }
+    }
+  } catch(e) {
+    btn.textContent = 'Failed';
+  }
+};
+
+// ---- Admin Leaderboard Manager ----
+window.loadAdminLeaderboard = async function() {
+  const container = document.getElementById('admin-leaderboard-list');
+  if (!container) return;
+  container.innerHTML = '<p style="color:#71717a;font-size:0.875rem;">Loading leaderboard...</p>';
+  try {
+    const res = await fetch('/api/leaderboard');
+    const data = await res.json();
+    container.innerHTML = '';
+    if (!data.success || !data.board || data.board.length === 0) {
+      container.innerHTML = '<p style="color:#71717a;font-size:0.875rem;">No entries found this month.</p>';
+      return;
+    }
+    data.board.forEach((entry, idx) => {
+      const el = document.createElement('div');
+      el.style.cssText = "display:flex;align-items:center;justify-content:space-between;background:#18181b;padding:0.75rem 1rem;border-radius:0.75rem;border:1px solid #27272a;";
+      el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <div style="width:24px;height:24px;border-radius:50%;background:#eab308;color:black;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:0.75rem;">${idx+1}</div>
+          <span style="color:white;font-weight:600;font-size:0.9rem;">${entry.name}</span>
+          <span style="color:#a1a1aa;font-size:0.8rem;">(${entry.count} films)</span>
+        </div>
+        <button onclick="removeLeaderboardEntry('${entry.uid}')" style="background:transparent;border:none;color:#ef4444;font-size:1.25rem;cursor:pointer;padding:0 0.5rem;" title="Remove Entry">×</button>
+      `;
+      container.appendChild(el);
+    });
+  } catch (err) {
+    container.innerHTML = '<p style="color:#ef4444;font-size:0.875rem;">Failed to load leaderboard.</p>';
+  }
+};
+
+window.removeLeaderboardEntry = async function(targetUserId) {
+  if (!confirm('Are you sure you want to remove this user from the leaderboard for the month? This will delete their watch history for the current month.')) return;
+  
+  const container = document.getElementById('admin-leaderboard-list');
+  if (container) container.style.opacity = '0.5';
+  
+  try {
+    const adminEmail = currentUser?.email || '';
+    const res = await fetch('/api/remove-leaderboard-entry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminId: currentUser.uid, targetUserId })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed');
+    alert('User removed from leaderboard.');
+    if (window.loadAdminLeaderboard) window.loadAdminLeaderboard();
+  } catch(e) {
+    alert('Failed to remove: ' + e.message);
+  } finally {
+    if (container) container.style.opacity = '1';
+  }
+};
