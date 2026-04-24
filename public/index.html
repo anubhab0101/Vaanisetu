@@ -2065,6 +2065,17 @@
   <!-- AdSterra Social Bar — floating ad unit for additional revenue (normal users only) -->
   <script src="https://millionairelucidlytransmitted.com/82/3a/60/823a60f46b088bcbd52fceb040961ab1.js"></script>
   <script type="module" src="/app.js?v=64"></script>
+
+<script>
+  window.addEventListener('error', function(e) {
+    if (e.message && e.message.includes('ResizeObserver')) return;
+    alert('Global Error: ' + e.message + ' at ' + e.filename + ':' + e.lineno);
+  });
+  window.addEventListener('unhandledrejection', function(e) {
+    alert('Unhandled Promise: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason)));
+  });
+</script>
+
 </body>
 
 </html>
