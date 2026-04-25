@@ -4,9 +4,7 @@ import {
   GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, 
   onAuthStateChanged, updateProfile, signOut 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { 
-  getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove, query, collection, where, getDocs 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+// Firestore removed - data now via backend API
 
 const firebaseConfig = {
   apiKey: "AIzaSyBocu4_8iXU3ZsaPsdQDKM694awK-6IIBI",
@@ -19,7 +17,22 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app, "ai-studio-d5fada93-c575-4056-a5ca-c8a98edf9c90");
+// db removed - using backend API
+
+// === Supabase Realtime client (anon key - safe to expose) ===
+const _SB_URL = 'https://fgfacebhmcbydjefzfif.supabase.co';
+const _SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZnZmFjZWJobWNieWRqZWZ6ZmlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNTUyNzMsImV4cCI6MjA5MjYzMTI3M30.ErT0-TQu2C_HOdGXcX5kAXUXy61Y3799jw4JQmU-CjE';
+let _sbClient = null;
+async function getSBClient() {
+    if (_sbClient) return _sbClient;
+    try {
+        const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+        _sbClient = createClient(_SB_URL, _SB_ANON);
+    } catch(e) { console.warn('[Supabase] CDN failed:', e.message); }
+    return _sbClient;
+}
+
+
 
 // Global session initialized from Auth
 let sessionUserId = Math.random().toString(36).substring(2, 10);
@@ -343,15 +356,12 @@ btnGoogleLogin.addEventListener('click', async () => {
 if(btnLogout) btnLogout.addEventListener('click', () => signOut(auth));
 
 async function generateUniqueRoomCode() {
-    let code = '';
-    let isUnique = false;
-    while (!isUnique) {
-        code = Math.random().toString(36).substring(2, 8).toUpperCase();
-        const q = query(collection(db, 'users'), where('roomCode', '==', code));
-        const res = await getDocs(q);
-        if (res.empty) isUnique = true;
-    }
-    return code;
+    try {
+        const res = await fetch('/api/generate-room-code');
+        const d = await res.json();
+        if (d.code) return d.code;
+    } catch(e) {}
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
 btnSaveProfile.addEventListener('click', async () => {
@@ -362,13 +372,17 @@ btnSaveProfile.addEventListener('click', async () => {
         await updateProfile(auth.currentUser, { displayName: name });
         const code = await generateUniqueRoomCode();
         
-        await setDoc(doc(db, 'users', auth.currentUser.uid), {
-            uid: auth.currentUser.uid,
-            email: auth.currentUser.email,
-            displayName: name,
-            roomCode: code,
-            friends: [],
-            friendRequests: []
+        await fetch('/api/user-doc', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                uid: auth.currentUser.uid,
+                email: auth.currentUser.email,
+                displayName: name,
+                roomCode: code,
+                friends: [],
+                friendRequests: []
+            })
         });
 
         sessionUserName = name;
@@ -435,10 +449,22 @@ onAuthStateChanged(auth, async (user) => {
         initWebSocket(true); // Sign into Presence Layer
 
         try {
-            const userRef = doc(db, 'users', user.uid);
-            const userSnap = await getDoc(userRef);
+            // Try cache first for instant load
+            const _cachedDoc = localStorage.getItem('vsetu_userdoc_' + user.uid);
+            let _udJson;
+            if (_cachedDoc) {
+                try { _udJson = JSON.parse(_cachedDoc); } catch(e) {}
+            }
+            // Always fetch fresh in background (non-blocking)
+            const _fetchFresh = fetch('/api/user-doc?uid=' + user.uid)
+                .then(r => r.json())
+                .then(fresh => { if (fresh.exists) localStorage.setItem('vsetu_userdoc_' + user.uid, JSON.stringify(fresh)); return fresh; })
+                .catch(() => null);
+            // If no cache, wait for fresh
+            if (!_udJson || !_udJson.exists) _udJson = await _fetchFresh;
+            const userSnap = { exists: () => _udJson && _udJson.exists, data: () => _udJson && _udJson.data };
 
-            if (!userSnap.exists()) {
+            if (!_udJson.exists) {
                 authView.classList.add('hidden'); // hide auth only now
                 if (user.displayName) {
                     // Google Login provides a name, so auto-complete profile setup!
@@ -498,11 +524,13 @@ onAuthStateChanged(auth, async (user) => {
                 checkAccessAndRoute();
                 listenToUserDoc();
             }
-        } catch (err) {
+                } catch (err) {
             console.error("Failed to load user profile:", err);
+            authView.style.display = 'flex';
+            authView.classList.remove('hidden');
             authError.classList.remove('hidden', 'bg-green-900', 'text-green-500');
             authError.classList.add('bg-red-900', 'text-red-500');
-            authError.textContent = "Database Error: " + err.message + " (Firebase Security Rules Need Update)";
+            authError.textContent = "Login Error: " + err.message;
             // authView stays visible so user can see the error
         }
     } else {
@@ -515,26 +543,58 @@ onAuthStateChanged(auth, async (user) => {
         authView.classList.remove('hidden');
         authError.classList.add('hidden');
         authError.classList.remove('bg-green-900', 'text-green-500'); authError.classList.add('bg-red-900', 'text-red-500');
-        if(unsubscribeDoc) unsubscribeDoc();
+        if(unsubscribeDoc) { unsubscribeDoc(); unsubscribeDoc = null; }
+    if (currentUser) localStorage.removeItem('vsetu_userdoc_' + currentUser.uid);
     }
 });
 
-// ==== FIRESTORE SYNC ====
-function listenToUserDoc() {
-    if(unsubscribeDoc) unsubscribeDoc();
-    unsubscribeDoc = onSnapshot(doc(db, 'users', currentUser.uid), async (docSnap) => {
-        if(docSnap.exists()){
-            currentUserDoc = docSnap.data();
-            document.getElementById('my-room-code').textContent = currentUserDoc.roomCode;
-            
-            renderFriendRequests(currentUserDoc.friendRequests || []);
-            renderFriends(currentUserDoc.friends || []);
-            
-            // Unconditionally re-check access. If subscription expires while they are in app, they get kicked out.
-            // If they are on the payment view and just got subbed, they are routed to dashboard.
-            checkAccessAndRoute();
-        }
-    });
+// ==== SUPABASE REALTIME (Firestore-like instant sync) ====
+function _applyUserDoc(data) {
+    if (!data) return;
+    const out = {};
+    for (const [k, v] of Object.entries(data))
+        out[k.replace(/_([a-z])/g, (_, ch) => ch.toUpperCase())] = v;
+    currentUserDoc = out;
+    if (currentUser) localStorage.setItem('vsetu_userdoc_' + currentUser.uid, JSON.stringify({ exists: true, data: out }));
+    const codeEl = document.getElementById('my-room-code');
+    if (codeEl) codeEl.textContent = out.roomCode || '';
+    renderFriendRequests(out.friendRequests || []);
+    renderFriends(out.friends || []);
+    checkAccessAndRoute();
+}
+async function _pollUserDoc() {
+    if (!currentUser) return;
+    try {
+        const _r = await fetch('/api/user-doc?uid=' + currentUser.uid).then(r => r.json());
+        if (_r && _r.exists && _r.data) _applyUserDoc(_r.data);
+    } catch(e) {}
+}
+let _sbChannel = null;
+async function listenToUserDoc() {
+    if (unsubscribeDoc) unsubscribeDoc();
+    await _pollUserDoc(); // instant first load
+    // Try Supabase Realtime (same speed as Firestore onSnapshot)
+    try {
+        const sb = await getSBClient();
+        if (!sb) throw new Error('No client');
+        if (_sbChannel) sb.removeChannel(_sbChannel);
+        _sbChannel = sb.channel('ud-' + currentUser.uid)
+            .on('postgres_changes', {
+                event: '*', schema: 'public', table: 'users',
+                filter: 'uid=eq.' + currentUser.uid
+            }, (payload) => {
+                if (payload.new) _applyUserDoc(payload.new);
+            })
+            .subscribe();
+        unsubscribeDoc = () => {
+            if (_sbChannel && sb) { sb.removeChannel(_sbChannel); _sbChannel = null; }
+        };
+        console.log('[Realtime] subscribed to user doc');
+    } catch(e) {
+        console.warn('[Realtime] fallback to polling:', e.message);
+        const _p = setInterval(_pollUserDoc, 30000);
+        unsubscribeDoc = () => clearInterval(_p);
+    }
 
     // Refresh presence logic for friends periodically or if friends change
     if(ws && ws.readyState === WebSocket.OPEN && currentUserDoc && currentUserDoc.friends) {
@@ -1221,23 +1281,14 @@ document.getElementById('btn-send-request').addEventListener('click', async () =
     }
 
     try {
-        const q = query(collection(db, 'users'), where('roomCode', '==', code));
-        const qt = await getDocs(q);
-        if (qt.empty) {
-            errEl.textContent = "User not found."; errEl.classList.remove('hidden'); return;
+        const _afRes = await fetch('/api/add-friend', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fromUid: currentUser.uid, toRoomCode: code })
+        }).then(r => r.json());
+        if (!_afRes.success) {
+            errEl.textContent = _afRes.error || 'Error sending request.'; errEl.classList.remove('hidden'); return;
         }
-        
-        const targetUser = qt.docs[0];
-        const targetData = targetUser.data();
-        
-        if ((targetData.friends && targetData.friends.includes(currentUser.uid)) ||
-            (targetData.friendRequests && targetData.friendRequests.includes(currentUser.uid))) {
-             errEl.textContent = "Already friends or request pending."; errEl.classList.remove('hidden'); return;
-        }
-
-        await updateDoc(doc(db, 'users', targetUser.id), {
-            friendRequests: arrayUnion(currentUser.uid)
-        });
 
         succEl.textContent = "Request sent!"; succEl.classList.remove('hidden');
         document.getElementById('add-friend-input').value = '';
@@ -1255,16 +1306,23 @@ document.getElementById('btn-send-request').addEventListener('click', async () =
 
 async function acceptFriendRequest(reqId) {
     try {
-        await updateDoc(doc(db, 'users', currentUser.uid), {
-            friendRequests: arrayRemove(reqId), friends: arrayUnion(reqId)
+        await fetch('/api/friend-request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'accept', uid: currentUser.uid, reqId })
         });
-        await updateDoc(doc(db, 'users', reqId), { friends: arrayUnion(currentUser.uid) });
+        await _pollUserDoc();
     } catch(e) { console.error("Error accepting", e); }
 }
 
 async function declineFriendRequest(reqId) {
     try {
-        await updateDoc(doc(db, 'users', currentUser.uid), { friendRequests: arrayRemove(reqId) });
+        await fetch('/api/friend-request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'decline', uid: currentUser.uid, reqId })
+        });
+        await _pollUserDoc();
     } catch(e) { console.error("Error declining", e); }
 }
 
@@ -1279,9 +1337,9 @@ async function renderFriendRequests(requesterIds) {
     container.classList.remove('hidden'); list.innerHTML = '';
 
     for (const reqId of requesterIds) {
-        const reqSnap = await getDoc(doc(db, 'users', reqId));
-        if(!reqSnap.exists()) continue;
-        const reqData = reqSnap.data();
+        const _rr = await fetch('/api/user-doc?uid=' + reqId).then(r=>r.json()).catch(()=>({exists:false}));
+        if(!_rr.exists) continue;
+        const reqData = _rr.data;
 
         const div = document.createElement('div');
         div.className = 'flex items-center justify-between p-2 rounded-lg bg-zinc-900 border border-zinc-800';
@@ -1320,9 +1378,9 @@ async function renderFriends(friendIds) {
     for (const fid of friendIds) {
         let friend = friendCache.get(fid);
         if (!friend) {
-           const fSnap = await getDoc(doc(db, 'users', fid));
-           if(fSnap.exists()) {
-               friend = fSnap.data(); friendCache.set(fid, friend);
+           const _fr = await fetch('/api/user-doc?uid=' + fid).then(r=>r.json()).catch(()=>({exists:false}));
+           if(_fr.exists) {
+               friend = _fr.data; friendCache.set(fid, friend);
            } else continue;
         }
 
@@ -1349,9 +1407,9 @@ async function renderFriends(friendIds) {
              joinBtn.textContent = '...';
              joinBtn.disabled = true;
              
-             const fSnap = await getDoc(doc(db, 'users', fid));
-             if (fSnap.exists()) {
-                 const freshCode = fSnap.data().roomCode;
+             const _jb = await fetch('/api/user-doc?uid=' + fid).then(r=>r.json()).catch(()=>({exists:false}));
+             if (_jb.exists) {
+                 const freshCode = _jb.data.roomCode;
                  if (freshCode !== friend.roomCode) {
                      div.querySelector('.friend-code').innerHTML = `<span class="text-red-500 font-bold">Invalid</span> (Tap Reload \u27F3)`;
                      joinBtn.textContent = 'Join';
@@ -1559,8 +1617,9 @@ function handleNewUrl(formattedUrl, broadcast = false) {
   if (fabContainer) fabContainer.style.display = 'flex';
 
   if (broadcast && ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: "sync", action: "update-url", videoUrl: formattedUrl, time: 0, timestamp: Date.now() }));
-  }
+      ws.send(JSON.stringify({ type: "sync", action: "update-url", videoUrl: formattedUrl, time: 0, timestamp: Date.now() }));
+    }
+    if (typeof renderRoomSuggestions === 'function') renderRoomSuggestions();
 }
 
 // Ensure settings button is hidden for guests (Enforce Host-Only Privileges)
@@ -1680,9 +1739,8 @@ async function updateGuestWaitingUI() {
     
     if (!currentRoomOwnerUid) {
         try {
-           const q = query(collection(db, "users"), where("roomCode", "==", currentRoomId));
-           const snaps = await getDocs(q);
-           if (!snaps.empty) currentRoomOwnerUid = snaps.docs[0].id;
+           const _gw = await fetch('/api/room-owner?roomCode=' + currentRoomId).then(r=>r.json()).catch(()=>({}));
+           if (_gw.uid) currentRoomOwnerUid = _gw.uid;
         } catch(e) { console.error(e); }
     }
 
@@ -1730,6 +1788,7 @@ document.getElementById('btn-remove-video').addEventListener('click', () => {
     mainVideo.src = "";
     playerWrapper.classList.add('hidden');
     sourceUi.classList.remove('hidden');
+    document.getElementById('room-suggestions-container')?.classList.add('hidden');
     settingsModal.classList.add('hidden');
     
     // Clear chats
@@ -1790,6 +1849,7 @@ function initWebSocket(isPresenceOnly = false) {
         ws.send(JSON.stringify({
           type: "join", roomId: currentRoomId,
           userId: sessionUserId, userName: sessionUserName,
+          roomName: (currentUserDoc && currentUserDoc.roomName) || sessionUserName || 'My Room',
           videoUrl: currentVideoFile ? null : currentVideoUrl
         }));
     }
@@ -1892,6 +1952,7 @@ function initWebSocket(isPresenceOnly = false) {
            mainVideo.src = "";
            mainVideo.pause();
            playerWrapper.classList.add('hidden');
+           document.getElementById('room-suggestions-container')?.classList.add('hidden');
            
            // Clear chats on sync sync
            chatMessages.innerHTML = '';
@@ -2476,15 +2537,22 @@ function playRentedFilm(link, title, accessType = 'generic') {
   // Broadcast host access type to room doc so guests can read it
   if (currentUser) {
     // Write to Firestore host's user doc \u2014 guests who snapshot this will update their _roomHostAccessType
-    updateDoc(doc(db, 'users', currentUser.uid), {
-      roomHostAccessType: accessType,
-      roomFilmAdEnabled: window._currentPlayingFilmAdEnabled
+    fetch('/api/patch-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid: currentUser.uid, roomHostAccessType: accessType, roomFilmAdEnabled: window._currentPlayingFilmAdEnabled })
     }).catch(() => {});
   }
 
   // Play the film using existing room infrastructure
   const formatted = formatVideoUrl(link);
   handleNewUrl(formatted, true);
+
+  // Auto-navigate to the room view
+  if (currentUserDoc && currentUserDoc.roomCode) {
+    spaPushState('room');
+    showRoom(currentUserDoc.roomCode);
+  }
 }
 
 // ================================================================
@@ -3279,12 +3347,11 @@ async function startAdFlow() {
         setTimeout(() => {
             // If snapshot hasn't arrived yet, force re-read from Firestore
             if (!currentUserDoc || currentUserDoc.activeSubscription !== 'ad-pass') {
-                import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js')
-                    .then(({ doc, getDoc }) => {
-                        getDoc(doc(db, 'users', currentUser.uid)).then(snap => {
-                            if (snap.exists()) currentUserDoc = snap.data();
-                            checkAccessAndRoute();
-                        }).catch(() => checkAccessAndRoute());
+                fetch('/api/user-doc?uid=' + currentUser.uid)
+                    .then(r => r.json())
+                    .then(json => {
+                        if (json.data) currentUserDoc = json.data;
+                        checkAccessAndRoute();
                     }).catch(() => checkAccessAndRoute());
             } else {
                 checkAccessAndRoute();
@@ -4468,10 +4535,12 @@ document.getElementById('btn-send-push')?.addEventListener('click', async () => 
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error || 'Failed');
-      // Update display
       const displayEl = document.getElementById('mob-room-name-val');
       if (displayEl) displayEl.textContent = name;
-      if (msg) { msg.textContent = '\u2714 Saved!'; msg.style.color = '#22c55e'; }
+      const headerEl = document.getElementById('room-name-display');
+      if (headerEl) headerEl.textContent = name;
+      if (currentUserDoc) currentUserDoc.roomName = name;
+      if (msg) { msg.textContent = '✔ Saved!'; msg.style.color = '#22c55e'; }
       setTimeout(() => closeMobSheet('mob-room-name-modal'), 900);
     } catch(e) {
       console.error('[RoomName]', e);
@@ -4483,8 +4552,8 @@ document.getElementById('btn-send-push')?.addEventListener('click', async () => 
   window.openMobWatchHistory    = openMobWatchHistory;
   window.openMobPurchaseHistory = openMobPurchaseHistory;
   window.openMobRoomNameModal   = openMobRoomNameModal;
-    window.openMobAdminPanel = function(section) {
-    const adminView   = document.getElementById('admin-view');
+  window.openMobAdminPanel = function(section) {
+    const adminView = document.getElementById('admin-view');
     const dashView    = document.getElementById('dashboard-view');
     const roomView    = document.getElementById('room-view');
     const paymentView = document.getElementById('payment-view');
@@ -4643,3 +4712,77 @@ window.removeLeaderboardEntry = async function(targetUserId) {
     if (container) container.style.opacity = '1';
   }
 };
+
+
+// ================================================================
+// ==== YOUTUBE-STYLE ROOM SUGGESTIONS ====
+async function renderRoomSuggestions() {
+  const container = document.getElementById('room-suggestions-container');
+  const carousel  = document.getElementById('room-suggestions-carousel');
+  const grid      = document.getElementById('room-suggestions-grid');
+  if (!container) return;
+
+  if (!window._allFilms || window._allFilms.length === 0) {
+    try {
+      const res = await fetch('/api/films');
+      const data = await res.json();
+      if (data.success && data.films && data.films.length > 0) {
+        window._allFilms = data.films;
+      } else {
+        container.classList.add('hidden');
+        return;
+      }
+    } catch(e) {
+      container.classList.add('hidden');
+      return;
+    }
+  }
+
+  const films = window._allFilms.slice(0, 12);
+  if (films.length === 0) { container.classList.add('hidden'); return; }
+
+  const handleClick = () => {
+    if (typeof openFilmStoreModal === 'function') {
+      openFilmStoreModal();
+      const modalGrid = document.getElementById('films-grid');
+      if (modalGrid && modalGrid.innerHTML.trim() === '') loadFilmStore();
+    }
+  };
+
+  // ── Mobile carousel cards ──────────────────────────────────
+  if (carousel) {
+    carousel.innerHTML = '';
+    films.forEach(film => {
+      const card = document.createElement('div');
+      card.className = 'suggestion-card';
+      card.onclick = handleClick;
+      const img = film.thumbnailBase64
+        ? `<img src="${film.thumbnailBase64}" alt="${film.title}" loading="lazy">`
+        : `<div class="poster-placeholder">🎬</div>`;
+      card.innerHTML = `${img}<div class="card-title">${film.title}</div>`;
+      carousel.appendChild(card);
+    });
+  }
+
+  // ── PC sidebar grid cards ──────────────────────────────────
+  if (grid) {
+    grid.innerHTML = '';
+    films.forEach(film => {
+      const card = document.createElement('div');
+      card.className = 'suggestion-card-pc';
+      card.onclick = handleClick;
+      const img = film.thumbnailBase64
+        ? `<img src="${film.thumbnailBase64}" alt="${film.title}" loading="lazy">`
+        : `<div class="poster-placeholder">🎬</div>`;
+      card.innerHTML = `
+        ${img}
+        <div class="pc-info">
+          <div class="pc-title">${film.title}</div>
+          <div class="pc-sub">Tap to Watch</div>
+        </div>`;
+      grid.appendChild(card);
+    });
+  }
+
+  container.classList.remove('hidden');
+}

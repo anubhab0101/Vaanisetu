@@ -202,12 +202,9 @@ body {
 /* Room View */
 #room-view {
   display: flex;
-  flex-direction: row;
-  height: 100dvh;
-  height: 100vh; /* fallback */
-  overflow: hidden;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  flex-direction: column;
+  min-height: 100dvh;
+  position: relative;
 }
 #room-view.hidden { display: none; }
 
@@ -401,9 +398,9 @@ body {
    ROOM VIEW — TOP BAR
    ========================================= */
 .top-bar {
-  position: absolute;
+  position: sticky;
   top: 0; left: 0; right: 0;
-  z-index: 10;
+  z-index: 100;
   padding: max(0.75rem, var(--safe-top)) 0.75rem 0.75rem;
   display: flex;
   justify-content: space-between;
@@ -456,13 +453,13 @@ body {
    ROOM VIEW — VIDEO AREA
    ========================================= */
 .video-area {
-  flex: 1;
-  height: 100%;
   position: relative;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #000;
+  width: 100%;
 }
 .source-ui {
   /* Use flexbox centering via parent — avoids translate overflow on mobile */
@@ -892,8 +889,8 @@ input[type=range]:focus { outline: none; }
   /* Sync overlay button full-width on small phones */
   #sync-overlay .btn { width: 90%; max-width: 280px; }
 
-  /* Room view — prevent any child from exceeding viewport */
-  #room-view, #video-container {
+  /* Room view - prevent video container from exceeding viewport */
+  #video-container {
     max-width: 100vw;
     overflow: hidden;
   }
@@ -3296,4 +3293,189 @@ video {
   pointer-events: none !important;
   position: absolute !important;
   opacity: 0 !important;
+}
+
+
+
+/* Room view inner — column by default (mobile), row on PC */
+#room-view-inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+}
+
+/* Mobile: video-container fills remaining space, minimum 40% of viewport */
+#video-container {
+  flex: 1 1 auto;
+  min-height: 40vh;
+  width: 100%;
+  position: relative;
+}
+
+/* source-ui must always be visible when present (not hidden) */
+.source-ui:not(.hidden) {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  width: 100%;
+}
+/* =========================================
+   ROOM SUGGESTIONS — Responsive Carousel/Sidebar
+   ========================================= */
+
+/* Mobile: horizontal scroll carousel */
+#room-suggestions-container {
+  width: 100%;
+  padding: 0.75rem 0 0.75rem 0.75rem;
+  background: #09090b;
+  border-top: 1px solid #27272a;
+}
+
+#room-suggestions-container h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.6rem;
+  padding-right: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Hide grid on mobile, use carousel */
+#room-suggestions-grid {
+  display: none;
+}
+
+.suggestions-carousel {
+  display: flex;
+  gap: 0.65rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding-bottom: 0.5rem;
+  padding-right: 0.75rem;
+}
+.suggestions-carousel::-webkit-scrollbar { display: none; }
+
+.suggestion-card {
+  flex-shrink: 0;
+  width: 110px;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: transform 0.2s;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: #18181b;
+  border: 1px solid #27272a;
+}
+.suggestion-card:active { transform: scale(0.96); }
+
+.suggestion-card img,
+.suggestion-card .poster-placeholder {
+  width: 110px;
+  height: 155px;
+  object-fit: cover;
+  display: block;
+  border-radius: 0.5rem 0.5rem 0 0;
+  background: #27272a;
+}
+.poster-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #52525b;
+}
+
+.suggestion-card .card-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: white;
+  padding: 0.35rem 0.4rem 0.4rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* PC (≥768px): YouTube sidebar — flex row layout */
+@media (min-width: 768px) {
+  #room-view-inner {
+    display: flex;
+    flex-direction: row !important; /* override any inline style */
+    align-items: stretch;           /* both columns full height */
+    min-height: calc(100dvh - 60px);
+  }
+
+  #video-container {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-height: none !important; /* let it fill full column height on PC */
+  }
+
+  #room-suggestions-container {
+    width: 320px;
+    flex-shrink: 0;
+    max-height: calc(100dvh - 60px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-top: none;
+    border-left: 1px solid #27272a;
+    padding: 1rem 0.75rem 1rem 0.75rem;
+    background: #09090b;
+    scrollbar-width: thin;
+    scrollbar-color: #27272a transparent;
+  }
+
+  #room-suggestions-container h3 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  /* On PC: hide carousel, show vertical grid */
+  .suggestions-carousel { display: none; }
+  #room-suggestions-grid { display: flex !important; flex-direction: column; gap: 0.6rem; }
+
+  .suggestion-card-pc {
+    display: flex;
+    gap: 0.65rem;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    padding: 0.35rem;
+    transition: background 0.2s;
+    align-items: flex-start;
+  }
+  .suggestion-card-pc:hover { background: #18181b; }
+  .suggestion-card-pc img,
+  .suggestion-card-pc .poster-placeholder {
+    width: 80px;
+    height: 112px;
+    flex-shrink: 0;
+    object-fit: cover;
+    border-radius: 0.35rem;
+    background: #27272a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #52525b;
+  }
+  .suggestion-card-pc .pc-info { flex: 1; min-width: 0; }
+  .suggestion-card-pc .pc-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 0.2rem;
+  }
+  .suggestion-card-pc .pc-sub {
+    font-size: 0.7rem;
+    color: #71717a;
+  }
 }
