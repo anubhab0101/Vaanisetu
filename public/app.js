@@ -787,7 +787,8 @@ async function claimFreePass() {
                 msgEl.className = 'text-xs mt-3 text-green-400';
                 msgEl.classList.remove('hidden');
             }
-            // listenToUserDoc snapshot will pick up freePassActive and route to dashboard
+            // Force-refresh user doc then route to dashboard
+            setTimeout(() => _pollUserDoc(), 1500);
         } else {
             if (msgEl) {
                 msgEl.textContent = data.error || 'Could not claim free pass.';
@@ -3343,20 +3344,10 @@ async function startAdFlow() {
 
         showToast('\u{1F389} 24-hour free access granted!', 'success', 4000);
 
-        // Wait for Firestore onSnapshot to update currentUserDoc, then route
+        // Force-refresh user doc (handles snake_case→camelCase) then route to dashboard
         setTimeout(() => {
-            // If snapshot hasn't arrived yet, force re-read from Firestore
-            if (!currentUserDoc || currentUserDoc.activeSubscription !== 'ad-pass') {
-                fetch('/api/user-doc?uid=' + currentUser.uid)
-                    .then(r => r.json())
-                    .then(json => {
-                        if (json.data) currentUserDoc = json.data;
-                        checkAccessAndRoute();
-                    }).catch(() => checkAccessAndRoute());
-            } else {
-                checkAccessAndRoute();
-            }
-        }, 2500);
+            _pollUserDoc();
+        }, 2000);
 
     } catch (err) {
         showToast('Ad flow error: ' + err.message, 'error');
