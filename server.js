@@ -480,10 +480,10 @@ async function startServer() {
         "https://www.gstatic.com https://www.googleapis.com https://apis.google.com " +
         "https://cdn.jsdelivr.net " +
         "https://www.youtube.com https://s.ytimg.com " +
-        // AdSterra ad domains (banner + social bar — NOT popunder)
-        "https://millionairelucidlytransmitted.com https://*.millionairelucidlytransmitted.com " +
-        "https://www.highperformanceformat.com https://*.highperformanceformat.com " +
-        "https://*.adsterra.com https://adsterra.com; " +
+        "https://quge5.com https://*.quge5.com " +
+        "https://nap5k.com https://*.nap5k.com " +
+        "https://5gvci.com https://*.5gvci.com " +
+        "https://n6wxm.com https://*.n6wxm.com; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: blob: https:; " +
@@ -492,7 +492,7 @@ async function startServer() {
         "https://securetoken.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com " +
         "https://*.firestore.googleapis.com https://api.razorpay.com " +
         "https://vaanisethu-bot.onrender.com wss: " +
-        "https://millionairelucidlytransmitted.com https://*.millionairelucidlytransmitted.com https:; " +
+        "https:; " +
       "frame-src https://checkout.razorpay.com https://api.razorpay.com " +
         "https://accounts.google.com https://*.firebaseapp.com https:; " +
       "worker-src 'self' blob:;"
@@ -2142,13 +2142,11 @@ async function startServer() {
   const publicPath = path.join(process.cwd(), 'public');
 
   // \u2500\u2500 Server-side Premium HTML \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  // Reads index.html, removes AdSterra scripts, injects premium flag, serves it.
   // This replaces the broken client-side fetch+document.write() approach
   // (document.write blocks module scripts from executing).
   app.get('/premium.html', async (req, res) => {
     try {
       let html = await readFile(path.join(publicPath, 'index.html'), 'utf-8');
-      // Remove AdSterra Social Bar (not shown to premium users)
       html = html.replace(/<script[^>]*823a60f46b088bcbd52fceb040961ab1[^>]*><\/script>/g, '');
       html = html.replace(/<script[^>]*Social[\s\S]*?<\/script>/g, '');
       // Inject premium flag so app.js skips ads and redirect loops
@@ -2220,3 +2218,4 @@ async function startServer() {
 }
 
 startServer();
+

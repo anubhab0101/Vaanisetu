@@ -3508,3 +3508,11 @@ video {
 .youtube-fab:active {
   transform: scale(0.95);
 }
+
+/* Fix YouTube player height to avoid footer overlap */
+#youtube-player-container {
+  height: calc(100% - 45px) !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+}

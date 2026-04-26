@@ -683,8 +683,54 @@ function hasValidAccess() {
     return false;
 }
 
+let _monetagInjected = false;
+function injectMonetagAdsIfApplicable() {
+    if (_monetagInjected) return;
+    const paidPlans = ['weekly', 'monthly', 'access-code', 'extended_by_admin', 'one-time'];
+    const isPaid = currentUserDoc && paidPlans.includes(currentUserDoc.activeSubscription) && currentUserDoc.subscriptionExpiry > Date.now();
+    if (isPaid || currentUser.email === 'anubhabmohapatra.01@gmail.com') return;
+    
+    // 1. Onclick (Popunder)
+    const s1 = document.createElement('script');
+    s1.src = 'https://quge5.com/88/tag.min.js';
+    s1.dataset.zone = '233739';
+    s1.async = true;
+    s1.dataset.cfasync = 'false';
+    document.head.appendChild(s1);
+
+    // 2. In-Page Push
+    (function(s){s.dataset.zone='10928467',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')));
+
+    // 3. Push Notifications
+    const s3 = document.createElement('script');
+    s3.src = 'https://5gvci.com/act/files/tag.min.js?z=10928470';
+    s3.async = true;
+    s3.dataset.cfasync = 'false';
+    document.head.appendChild(s3);
+
+    _monetagInjected = true;
+}
+
+
+function showCustomMonetagWarning() {
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] px-4';
+    overlay.innerHTML = `<div class="bg-zinc-900 border border-orange-500/50 rounded-xl max-w-sm w-full p-6 text-center shadow-2xl transform transition-all scale-100"><div class="w-16 h-16 mx-auto mb-4 bg-orange-500/10 rounded-full flex items-center justify-center"><span class="text-3xl">??</span></div><h3 class="text-xl font-bold text-white mb-2">Important Notice / ?????? ?????</h3><p class="text-sm text-zinc-300 mb-4 leading-relaxed"><span class="font-bold text-orange-400">English:</span> As a free user, you will see ads to support our platform. Clicking anywhere on the screen might open an ad in a new tab. Please close the ad tab and return here to continue watching.<br><br><span class="font-bold text-orange-400">?????:</span> ????? ?? ???? ??? ?? ????? ?? ??? ???, ????? ???? ???????? (Ads) ????? ?????? ??????? ?? ???? ?? ????? ???? ?? ?? ?? ??? ??? ???????? ??? ???? ??? ????? ?? ??? ?? ??? ???? ?? ???? ????? ????? ?? ??? ???? ???? ?? ???? ?????????? ?? ???? ???? ??? ??? ???? ???</p><button class="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold py-3 rounded-lg hover:from-orange-600 hover:to-red-600 transition-colors shadow-lg shadow-orange-500/20">I Understand / ??? ??? ???</button></div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector('button').addEventListener('click', () => {
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.remove(), 300);
+    });
+}
+
 function checkAccessAndRoute() {
     if (adminView && !adminView.classList.contains('hidden')) return; // let them stay in admin view
+
+    injectMonetagAdsIfApplicable();
+    if (sessionStorage.getItem('showMonetagWarning') === 'true') {
+        sessionStorage.removeItem('showMonetagWarning');
+        showCustomMonetagWarning();
+    }
 
     const urlParams = new URLSearchParams(window.location.search);
     const joinCode = urlParams.get('join') ? urlParams.get('join').toUpperCase() : null;
@@ -3287,7 +3333,7 @@ function showAdModal(adNum, totalAds, durationSecs = 30) {
         const totalEl   = document.getElementById('ad-modal-total');
         const countdown = document.getElementById('ad-countdown');
         const fillEl    = document.getElementById('ad-progress-fill');
-        const bannerDiv = document.getElementById('adsterra-modal-banner');
+        const bannerDiv = document.getElementById('modal-banner-container');
 
         if (!modal) { resolve(); return; }
 
@@ -3297,13 +3343,11 @@ function showAdModal(adNum, totalAds, durationSecs = 30) {
         if (countdown) countdown.textContent = durationSecs;
         if (fillEl)  { fillEl.style.transition = 'none'; fillEl.style.width = '0%'; }
 
-        // Inject AdSterra 300\u00C3\u2014250 banner with a clean fallback behind it
         if (bannerDiv) {
             bannerDiv.innerHTML = '';
             bannerDiv.style.position = 'relative';
             bannerDiv.style.minHeight = '250px';
 
-            // Fallback \u2014 always visible; hidden only if real ad loads
             const fallback = document.createElement('div');
             fallback.id = 'ad-modal-fallback';
             fallback.style.cssText = `
@@ -3314,46 +3358,19 @@ function showAdModal(adNum, totalAds, durationSecs = 30) {
                 font-family:inherit;text-align:center;padding:2rem;z-index:1;
             `;
             fallback.innerHTML = `
-                <div style="font-size:3rem;line-height:1;">\u{1F4FA}</div>
+                <div style="font-size:3rem;line-height:1;">??</div>
                 <div style="color:#e4e4e7;font-size:1rem;font-weight:700;">Supporting Vaanisethu</div>
                 <div style="color:#71717a;font-size:0.78rem;line-height:1.6;max-width:240px;">
                     Ads keep Vaanisethu free for everyone.<br>
                     <span style="color:#a855f7;font-weight:600;">Please wait for the countdown to finish.</span>
                 </div>
-                <div style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.25);
-                    border-radius:8px;padding:0.4rem 1rem;
-                    color:#c084fc;font-size:0.7rem;font-weight:800;letter-spacing:0.1em;">
-                    VAANISETHU
-                </div>
             `;
             bannerDiv.appendChild(fallback);
 
-
-            // Real ad container (placed above the fallback)
-            const adWrap = document.createElement('div');
-            adWrap.style.cssText = 'position:relative;z-index:2;display:flex;align-items:center;justify-content:center;';
-            window.atOptions = { key: '466c31e87748ad9ff1e88a1b7cd5a34c', format: 'iframe', height: 250, width: 300, params: {} };
-            const s = document.createElement('script');
-            s.src = 'https://millionairelucidlytransmitted.com/466c31e87748ad9ff1e88a1b7cd5a34c/invoke.js';
-            s.async = true;
-            // When real ad loads and has content \u2014 hide the fallback
-            s.onload = () => {
-                setTimeout(() => {
-                    const iframe = adWrap.querySelector('iframe');
-                    if (iframe && iframe.offsetWidth > 10) {
-                        fallback.style.display = 'none';
-                    }
-                }, 1500);
-            };
-            s.onerror = () => {
-                // Ad blocked \u2014 show a clear fallback so user knows to wait
-                fallback.querySelector('div:last-child').style.color = '#71717a';
-            };
-            adWrap.appendChild(s);
-            bannerDiv.appendChild(adWrap);
+            // INJECT VIGNETTE AD SCRIPT
+            (function(s){s.dataset.zone='10928460',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')));
         }
 
-        // Use style.display directly \u2014 avoids hidden/flex class conflict on mobile
         modal.style.display = 'flex';
         modal.classList.remove('hidden');
 
@@ -3629,6 +3646,8 @@ function startInMovieAdWatch() {
         for (const breakSec of adBreakSchedule) {
             // Fire if within a 15-second window past the break point (handles fast-forward)
             if (t >= breakSec && t < breakSec + 15 && !_inmovieShownBreaks.has(breakSec)) {
+                let adLimit = (currentUserDoc && currentUserDoc.activeSubscription === 'one-time') ? 3 : 8;
+                if (_inmovieShownBreaks.size >= adLimit) break;
                 _inmovieShownBreaks.add(breakSec);
                 showInMovieAd();
                 break;
@@ -3690,8 +3709,7 @@ function showInMovieAd() {
     const hintTimer = document.getElementById('inmovie-hint-timer');
     if (hintTimer) hintTimer.textContent = `${remaining}s`;
 
-    // Inject AdSterra 300\u00C3\u2014250 + handle blocked/failed gracefully
-    const inmovieSlot = document.getElementById('adsterra-inmovie-banner');
+    const inmovieSlot = document.getElementById('inmovie-banner-container');
     if (inmovieSlot) {
         inmovieSlot.innerHTML = '';
 
@@ -3736,7 +3754,6 @@ function showInMovieAd() {
         // Inject the actual ad script
         window.atOptions = { key: '466c31e87748ad9ff1e88a1b7cd5a34c', format: 'iframe', height: 250, width: 300, params: {} };
         const s = document.createElement('script');
-        s.src = 'https://millionairelucidlytransmitted.com/466c31e87748ad9ff1e88a1b7cd5a34c/invoke.js';
         s.async = true;
         s.onerror = () => {
             // Script couldn't load at all (blocked by browser/CSP) \u2192 show fallback
@@ -3841,7 +3858,7 @@ function dismissInMovieAd() {
     const fill = document.getElementById('inmovie-progress-fill');
     if (fill) { fill.style.transition = 'none'; fill.style.width = '0%'; }
     // Clear ad iframe to stop any audio
-    const slot = document.getElementById('adsterra-inmovie-banner');
+    const slot = document.getElementById('inmovie-banner-container');
     if (slot) slot.innerHTML = '';
     // \u25B6 RESUME video after ad
     const video = document.getElementById('main-video');
@@ -4890,3 +4907,9 @@ async function renderRoomSuggestions() {
 
   container.classList.remove('hidden');
 }
+
+
+
+
+
+

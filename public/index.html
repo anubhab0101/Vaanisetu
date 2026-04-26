@@ -1,8 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" xml:lang="en">
 
 <head>
   <meta charset="UTF-8">
+  <meta name="monetag" content="d0196ea72af98ee449cae20ae8260dc4">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
   <!-- ===================== PRIMARY SEO ===================== -->
@@ -1678,7 +1679,8 @@
           <div id="custom-player-wrapper"
             class="player-wrapper hidden relative w-full h-full flex items-center justify-center">
             <!-- YouTube IFrame Container -->
-            <div id="youtube-player-container" class="w-full h-full absolute inset-0 hidden z-[5] bg-black"></div>
+            <div id="youtube-player-container"
+              class="absolute top-0 left-0 w-full h-[calc(100%-40px)] hidden z-[5] bg-black"></div>
 
             <!-- Main Video Tag — download/context-menu disabled to protect content -->
             <video id="main-video" controls playsinline webkit-playsinline class="max-w-full max-h-full"
@@ -2119,8 +2121,7 @@
     <!-- Centered ad content area -->
     <div class="inmovie-center">
       <div class="inmovie-ad-label">Advertisement</div>
-      <!-- AdSterra 300×250 (highest revenue standard unit) -->
-      <div id="adsterra-inmovie-banner" class="inmovie-banner-slot"></div>
+      <div id="inmovie-banner-container" class="inmovie-banner-slot"></div>
       <div class="inmovie-resume-hint" id="inmovie-resume-hint">
         ⏸ Movie paused · Ad ends in <span id="inmovie-hint-timer">15s</span>
       </div>
@@ -2152,10 +2153,9 @@
         </div>
       </div>
 
-      <!-- Ad Modal full-screen countdown player — Real 300×250 AdSterra Banner -->
       <div class="ad-player-area" id="ad-player-area"
         style="min-height:280px;padding:1rem;flex-direction:column;gap:0.5rem;">
-        <div id="adsterra-modal-banner"
+        <div id="modal-banner-container"
           style="display:flex;align-items:center;justify-content:center;width:100%;min-height:250px;">
           <!-- Loaded dynamically when modal opens to avoid wasted impressions -->
         </div>
@@ -2171,8 +2171,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js"></script>
-  <!-- AdSterra Social Bar — floating ad unit for additional revenue (normal users only) -->
-  <script src="https://millionairelucidlytransmitted.com/82/3a/60/823a60f46b088bcbd52fceb040961ab1.js"></script>
+  <!-- Monetag Ad Unit (Loaded dynamically in app.js for free users only) -->
   <script src="https://www.youtube.com/iframe_api"></script>
   <script type="module" src="/app.js?v=67"></script>
 
