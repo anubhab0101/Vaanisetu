@@ -34,6 +34,63 @@ async function getSBClient() {
 
 
 
+// === YOUTUBE INTEGRATION ===
+let ytPlayer = null;
+let ytPlayerReady = false;
+let isYouTubeMode = false;
+let ytSyncInterval = null;
+let pendingYtVideoId = null;
+
+function initYTPlayer() {
+    ytPlayer = new YT.Player('youtube-player-container', {
+        height: '100%',
+        width: '100%',
+        playerVars: { 'autoplay': 1, 'controls': 1, 'modestbranding': 1, 'rel': 0 },
+        events: {
+            'onReady': () => { 
+                ytPlayerReady = true; 
+                if (pendingYtVideoId) {
+                    ytPlayer.loadVideoById(pendingYtVideoId);
+                    pendingYtVideoId = null;
+                }
+            },
+            'onStateChange': onPlayerStateChange
+        }
+    });
+}
+
+window.onYouTubeIframeAPIReady = initYTPlayer;
+
+if (window.YT && window.YT.Player) {
+    initYTPlayer();
+} else {
+    const ytScriptTag = document.createElement('script');
+    ytScriptTag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    if (firstScriptTag && firstScriptTag.parentNode) {
+        firstScriptTag.parentNode.insertBefore(ytScriptTag, firstScriptTag);
+    } else {
+        document.head.appendChild(ytScriptTag);
+    }
+}
+
+function onPlayerStateChange(event) {
+    if (!isYouTubeMode) return;
+    if (event.data == YT.PlayerState.PLAYING) {
+        if (!isUpdating) sendVideoState('play');
+        if (ytSyncInterval) clearInterval(ytSyncInterval);
+        ytSyncInterval = setInterval(() => {
+            if (ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
+                window._ytLastKnownTime = ytPlayer.getCurrentTime();
+            }
+        }, 500);
+    } else if (event.data == YT.PlayerState.PAUSED) {
+        if (!isUpdating) sendVideoState('pause');
+        if (ytSyncInterval) clearInterval(ytSyncInterval);
+    }
+}
+// ================================================================
+
 // Global session initialized from Auth
 let sessionUserId = Math.random().toString(36).substring(2, 10);
 let sessionUserName = "Guest";
@@ -319,6 +376,8 @@ authForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     authError.classList.add('hidden');
     btnAuthSubmit.disabled = true;
+    const authRefForm = document.getElementById('auth-referral');
+    if (authRefForm && authRefForm.value) window._pendingAuthReferral = authRefForm.value.trim().toUpperCase();
     const email = authEmail.value;
     const password = authPassword.value;
     
@@ -346,6 +405,8 @@ authForm.addEventListener('submit', async (e) => {
 btnGoogleLogin.addEventListener('click', async () => {
     try {
         const provider = new GoogleAuthProvider();
+        const authRef = document.getElementById('auth-referral');
+        if (authRef && authRef.value) window._pendingAuthReferral = authRef.value.trim().toUpperCase();
         await signInWithPopup(auth, provider);
     } catch (error) {
         authError.classList.remove('hidden');
@@ -430,7 +491,8 @@ btnSaveProfile.addEventListener('click', async () => {
         }
 
         
-        listenToUserDoc();
+        setupProfileView.classList.add('hidden');
+        await _pollUserDoc();
         initWebSocket(true);
         checkAccessAndRoute();
     } catch (e) {
@@ -522,7 +584,8 @@ onAuthStateChanged(auth, async (user) => {
                 }).catch(() => {});
 
                 checkAccessAndRoute();
-                listenToUserDoc();
+                setupProfileView.classList.add('hidden');
+        await _pollUserDoc();
             }
                 } catch (err) {
             console.error("Failed to load user profile:", err);
@@ -565,7 +628,7 @@ function _applyUserDoc(data) {
 async function _pollUserDoc() {
     if (!currentUser) return;
     try {
-        const _r = await fetch('/api/user-doc?uid=' + currentUser.uid).then(r => r.json());
+        const _r = await fetch('/api/user-doc?uid=' + currentUser.uid + '&_t=' + Date.now()).then(r => r.json());
         if (_r && _r.exists && _r.data) _applyUserDoc(_r.data);
     } catch(e) {}
 }
@@ -772,7 +835,7 @@ async function claimFreePass() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                userId: currentUser.uid, 
+                userId: (currentUserDoc?.uid || currentUser?.uid), 
                 fingerprint: _deviceFingerprint,
                 localKey
             })
@@ -849,7 +912,7 @@ async function initiateCheckout(plan, amount) {
                         razorpay_order_id: response.razorpay_order_id,
                         razorpay_payment_id: response.razorpay_payment_id,
                         razorpay_signature: response.razorpay_signature,
-                        userId: currentUser.uid,
+                        userId: (currentUserDoc?.uid || currentUser?.uid),
                         plan: plan,
                         amount: amount
                     })
@@ -895,7 +958,7 @@ if (btnRedeemCode) {
             const res = await fetch('/api/redeem-code', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ code: code, userId: currentUser.uid })
+                body: JSON.stringify({ code: code, userId: (currentUserDoc?.uid || currentUser?.uid) })
             });
             const data = await res.json();
             
@@ -1567,6 +1630,7 @@ function leaveRoom() {
   currentVideoUrl = null;
   currentVideoFile = null;
   mainVideo.src = "";
+  if (isYouTubeMode && ytPlayerReady && ytPlayer && typeof ytPlayer.stopVideo === 'function') ytPlayer.stopVideo();
   playerWrapper.classList.add('hidden');
   sourceUi.classList.remove('hidden');
   if(waitingUi) waitingUi.classList.add('hidden');
@@ -1609,10 +1673,34 @@ function handleNewUrl(formattedUrl, broadcast = false) {
   sourceUi.classList.add('hidden');
   if(waitingUi) waitingUi.classList.add('hidden');
   playerWrapper.classList.remove('hidden');
-  mainVideo.src = formattedUrl;
   settingsModal.classList.add('hidden');
 
-  // Video loaded - ALWAYS show chat FAB for everyone
+  const isYouTube = formattedUrl && (formattedUrl.includes('youtu.be') || formattedUrl.includes('youtube.com'));
+  if (isYouTube) {
+      isYouTubeMode = true;
+      mainVideo.classList.add('hidden');
+      mainVideo.pause();
+      const ytContainer = document.getElementById('youtube-player-container');
+      if (ytContainer) ytContainer.classList.remove('hidden');
+      
+      const m = formattedUrl.match(/(?:youtu\.be\/|v=|embed\/)([\w-]{11})/);
+      const vidId = m ? m[1] : null;
+      if (vidId) {
+          if (ytPlayerReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+              ytPlayer.loadVideoById(vidId);
+          } else {
+              pendingYtVideoId = vidId;
+          }
+      }
+  } else {
+      isYouTubeMode = false;
+      const ytContainer = document.getElementById('youtube-player-container');
+      if (ytContainer) ytContainer.classList.add('hidden');
+      if (ytPlayerReady && ytPlayer && typeof ytPlayer.stopVideo === 'function') ytPlayer.stopVideo();
+      mainVideo.classList.remove('hidden');
+      mainVideo.src = formattedUrl;
+  }
+
   if (btnChatFab) btnChatFab.style.display = 'flex';
   const fabContainer = document.getElementById('chat-fab-container');
   if (fabContainer) fabContainer.style.display = 'flex';
@@ -1667,6 +1755,11 @@ function openSourceStep(type) {
 
     // Wake up the Render bot since free instances sleep after inactivity
     fetch('https://vaanisethu-bot.onrender.com/', { mode: 'no-cors' }).catch(() => {});
+  } else if(type === 'youtube') {
+    srcStepTitle.textContent = 'YOUTUBE';
+    urlGroup.classList.remove('hidden');
+    roomUrlInput.placeholder = 'Paste YouTube Link Here';
+    roomUrlInput.focus();
   } else {
     srcStepTitle.textContent = 'LOCAL FILE';
     localGroup.classList.remove('hidden');
@@ -1676,6 +1769,7 @@ function openSourceStep(type) {
 document.getElementById('btn-src-dropbox')?.addEventListener('click', () => openSourceStep('dropbox'));
 document.getElementById('btn-src-telegram')?.addEventListener('click', () => openSourceStep('telegram'));
 document.getElementById('btn-src-local')?.addEventListener('click', () => openSourceStep('local'));
+document.getElementById('btn-src-youtube')?.addEventListener('click', () => openSourceStep('youtube'));
 
 document.getElementById('btn-back-source')?.addEventListener('click', () => {
   srcSelectionStep.classList.remove('hidden');
@@ -1731,8 +1825,9 @@ chatForm.addEventListener('submit', (e) => {
 });
 
 const sendVideoState = (action) => {
-  if(isUpdating || !ws) return;
-  ws.send(JSON.stringify({ type: "sync", action, time: mainVideo.currentTime, timestamp: Date.now() }));
+  if (isUpdating || !ws || ws.readyState !== WebSocket.OPEN) return;
+  const time = isYouTubeMode && ytPlayerReady && ytPlayer && typeof ytPlayer.getCurrentTime === 'function' ? ytPlayer.getCurrentTime() : mainVideo.currentTime;
+  ws.send(JSON.stringify({ type: "sync", action, time, timestamp: Date.now() }));
 };
 
 async function updateGuestWaitingUI() {
@@ -1795,13 +1890,16 @@ document.getElementById('btn-remove-video').addEventListener('click', () => {
     // Clear chats
     chatMessages.innerHTML = '';
     
+    if (isYouTubeMode && ytPlayerReady && ytPlayer && typeof ytPlayer.stopVideo === 'function') ytPlayer.stopVideo();
     if (ws && ws.readyState === WebSocket.OPEN) {
        ws.send(JSON.stringify({ type: "sync", action: "remove-video", time: 0, timestamp: Date.now() }));
     }
 });
 
 btnSyncPlayback.addEventListener('click', () => {
-   isUpdating = true; mainVideo.play().catch(console.error);
+   isUpdating = true; 
+   if (isYouTubeMode && ytPlayerReady && ytPlayer && typeof ytPlayer.playVideo === 'function') ytPlayer.playVideo();
+   else mainVideo.play().catch(console.error);
    if(ws) ws.send(JSON.stringify({ type: "request-sync" }));
    syncOverlay.classList.add('hidden');
    setTimeout(() => isUpdating = false, 500);
@@ -1952,6 +2050,7 @@ function initWebSocket(isPresenceOnly = false) {
            currentVideoFile = null;
            mainVideo.src = "";
            mainVideo.pause();
+           if (isYouTubeMode && ytPlayerReady && ytPlayer && typeof ytPlayer.stopVideo === 'function') ytPlayer.stopVideo();
            playerWrapper.classList.add('hidden');
            document.getElementById('room-suggestions-container')?.classList.add('hidden');
            
@@ -1986,11 +2085,25 @@ function initWebSocket(isPresenceOnly = false) {
        const latency = data.timestamp ? Math.max(0, Math.min((Date.now() - data.timestamp) / 1000, 2)) : 0;
        const targetTime = data.time + (data.action === "play" ? latency : 0);
 
-       if (data.action === "play" && mainVideo.paused) {
-           mainVideo.play().catch(() => { syncOverlay.classList.remove('hidden'); mainVideo.pause(); isUpdating = false; });
-       } else if (data.action === "pause" && !mainVideo.paused) mainVideo.pause();
+       if (data.action === "play") {
+           if (isYouTubeMode && ytPlayerReady && ytPlayer) {
+               if (ytPlayer.getPlayerState && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) ytPlayer.playVideo();
+           } else if (mainVideo.paused) {
+               mainVideo.play().catch(() => { syncOverlay.classList.remove('hidden'); mainVideo.pause(); isUpdating = false; });
+           }
+       } else if (data.action === "pause") {
+           if (isYouTubeMode && ytPlayerReady && ytPlayer) {
+               if (typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo();
+           } else if (!mainVideo.paused) {
+               mainVideo.pause();
+           }
+       }
 
-       if (Math.abs(mainVideo.currentTime - targetTime) > 0.5) mainVideo.currentTime = targetTime;
+       if (isYouTubeMode && ytPlayerReady && ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
+           if (Math.abs(ytPlayer.getCurrentTime() - targetTime) > 0.5) ytPlayer.seekTo(targetTime, true);
+       } else {
+           if (Math.abs(mainVideo.currentTime - targetTime) > 0.5) mainVideo.currentTime = targetTime;
+       }
        setTimeout(() => { isUpdating = false; }, 500);
     }
   };
@@ -2284,7 +2397,7 @@ function buildFilmCard(film) {
         const res = await fetch('/api/use-free-rental', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: currentUser.uid, filmId: film.filmId })
+          body: JSON.stringify({ userId: (currentUserDoc?.uid || currentUser?.uid), filmId: film.filmId })
         });
         const data = await res.json();
         if (data.success) {
@@ -2359,7 +2472,7 @@ async function initiateFilmRental(filmId, filmTitle, price, rentalDays) {
     const res = await fetch('/api/rent-film', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: currentUser.uid, filmId })
+      body: JSON.stringify({ userId: (currentUserDoc?.uid || currentUser?.uid), filmId })
     });
     const order = await res.json();
     if (!order || !order.id) throw new Error(order.error || 'Failed to create order');
@@ -2379,7 +2492,7 @@ async function initiateFilmRental(filmId, filmTitle, price, rentalDays) {
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature,
-            userId: currentUser.uid,
+            userId: (currentUserDoc?.uid || currentUser?.uid),
             filmId
           })
         });
@@ -3311,7 +3424,7 @@ async function startAdFlow() {
             const r = await fetch('/api/verify-ad-completion', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: currentUser.uid, adIndex: i })
+                body: JSON.stringify({ userId: (currentUserDoc?.uid || currentUser?.uid), adIndex: i })
             });
             const d = await r.json();
             if (!d.success) throw new Error(d.error || `Ad ${i} verification failed`);
@@ -3330,7 +3443,7 @@ async function startAdFlow() {
         const rGrant = await fetch('/api/grant-ad-pass', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: currentUser.uid, tokens: collectedTokens, fingerprint: fp })
+            body: JSON.stringify({ userId: (currentUserDoc?.uid || currentUser?.uid), tokens: collectedTokens, fingerprint: fp })
         });
         const dGrant = await rGrant.json();
         if (!dGrant.success) throw new Error(dGrant.error || 'Access grant failed');
@@ -3410,7 +3523,7 @@ async function startFilmAdUnlock(filmId, filmTitle, adBtn) {
         const r = await fetch('/api/verify-ad-completion', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: currentUser.uid, adIndex: 1 })
+            body: JSON.stringify({ userId: (currentUserDoc?.uid || currentUser?.uid), adIndex: 1 })
         });
         const d = await r.json();
         if (!d.success) throw new Error(d.error || 'Ad verification failed');
@@ -3419,7 +3532,7 @@ async function startFilmAdUnlock(filmId, filmTitle, adBtn) {
         const rUnlock = await fetch('/api/grant-film-ad-unlock', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: currentUser.uid, filmId, token: d.token })
+            body: JSON.stringify({ userId: (currentUserDoc?.uid || currentUser?.uid), filmId, token: d.token })
         });
         const dUnlock = await rUnlock.json();
         if (!dUnlock.success) throw new Error(dUnlock.error || 'Unlock failed');
@@ -3438,7 +3551,7 @@ async function startFilmAdUnlock(filmId, filmTitle, adBtn) {
 async function fetchMyAdUnlocks() {
     if (!currentUser) return new Map();
     try {
-        const res = await fetch(`/api/my-ad-unlocks?userId=${encodeURIComponent(currentUser.uid)}`);
+        const res = await fetch(`/api/my-ad-unlocks?userId=${encodeURIComponent((currentUserDoc?.uid || currentUser?.uid))}`);
         const data = await res.json();
         if (!data.success) return new Map();
         const map = new Map();
@@ -3896,7 +4009,7 @@ async function loadWatchHistory() {
   if (!list || !currentUser) return;
   list.innerHTML = '<p style="color:#52525b;text-align:center;padding:3rem 0;">Loading...</p>';
   try {
-    const res  = await fetch(`/api/my-watch-history?userId=${encodeURIComponent(currentUser.uid)}`);
+    const res  = await fetch(`/api/my-watch-history?userId=${encodeURIComponent((currentUserDoc?.uid || currentUser?.uid))}`);
     const data = await res.json();
     if (!data.success || !data.history || data.history.length === 0) {
       list.innerHTML = '<p style="color:#52525b;text-align:center;padding:3rem 0;">No watch history yet. Watch a film to see it here!</p>';
@@ -3961,7 +4074,7 @@ window.removeLbEntry = async function(btn, targetUserId) {
     const res = await fetch('/api/remove-leaderboard-entry', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminId: currentUser.uid, targetUserId })
+      body: JSON.stringify({ adminId: (currentUserDoc?.uid || currentUser?.uid), targetUserId })
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed');
@@ -4000,7 +4113,7 @@ window.rateFilm = async function(filmId, filmTitle, rating, starBar) {
     const res  = await fetch('/api/rate-film', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: currentUser.uid, filmId, filmTitle, rating })
+      body: JSON.stringify({ userId: (currentUserDoc?.uid || currentUser?.uid), filmId, filmTitle, rating })
     });
     const data = await res.json();
     if (data.success) {
@@ -4036,7 +4149,7 @@ window.logWatchHistory = function(filmId, filmTitle, thumbnailBase64) {
   fetch('/api/log-watch-history', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId: currentUser.uid, filmId, filmTitle, thumbnailBase64: thumbnailBase64 || '' })
+    body: JSON.stringify({ userId: (currentUserDoc?.uid || currentUser?.uid), filmId, filmTitle, thumbnailBase64: thumbnailBase64 || '' })
   }).catch(() => {});
 };
 
@@ -4116,7 +4229,7 @@ const _dashObserver = new MutationObserver((mutations) => {
     if (m.type === 'attributes' && m.attributeName === 'class') {
       const el = m.target;
       if (el.id === 'dashboard-view' && !el.classList.contains('hidden')) {
-        if (currentUser) setTimeout(() => subscribeToPush(currentUser.uid), 3500);
+        if (currentUser) setTimeout(() => subscribeToPush((currentUserDoc?.uid || currentUser?.uid)), 3500);
         _dashObserver.disconnect();
       }
     }
@@ -4314,7 +4427,7 @@ document.getElementById('btn-send-push')?.addEventListener('click', async () => 
   // Notification toggle \u2192 manage push subscription
   document.getElementById('mob-notif-toggle')?.addEventListener('change', async function() {
     if (this.checked && currentUser) {
-      await subscribeToPush(currentUser.uid);
+      await subscribeToPush((currentUserDoc?.uid || currentUser?.uid));
     }
   });
 
@@ -4522,7 +4635,7 @@ document.getElementById('btn-send-push')?.addEventListener('click', async () => 
       const res = await fetch('/api/update-room-name', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.uid, roomName: name })
+        body: JSON.stringify({ userId: (currentUserDoc?.uid || currentUser?.uid), roomName: name })
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error || 'Failed');
@@ -4592,7 +4705,7 @@ window.loadHelpDeskMessages = async function() {
     const res = await fetch('/api/admin/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminId: currentUser.uid })
+      body: JSON.stringify({ adminId: (currentUserDoc?.uid || currentUser?.uid) })
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error);
@@ -4633,7 +4746,7 @@ window.markMsgRead = async function(msgId, btn) {
     const res = await fetch('/api/admin/messages/mark-read', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminId: currentUser.uid, msgId })
+      body: JSON.stringify({ adminId: (currentUserDoc?.uid || currentUser?.uid), msgId })
     });
     if (res.ok) {
       btn.outerHTML = '<span style="color:#22c55e;font-size:0.7rem;margin-left:auto;">\\u2713 Read</span>';
@@ -4691,7 +4804,7 @@ window.removeLeaderboardEntry = async function(targetUserId) {
     const res = await fetch('/api/remove-leaderboard-entry', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminId: currentUser.uid, targetUserId })
+      body: JSON.stringify({ adminId: (currentUserDoc?.uid || currentUser?.uid), targetUserId })
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed');

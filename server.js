@@ -169,12 +169,12 @@ async function startServer() {
       const adminRef = adminDb.collection('users').doc(ADMIN_EMAIL);
       // Use a far-future expiry (year 2286) to represent "lifetime"
       const LIFETIME_EXPIRY = 9999999999999;
-      await adminRef.set({
+      await adminRef.update({
         activeSubscription: 'monthly',
         subscriptionExpiry: LIFETIME_EXPIRY,
         isAdmin: true,
         freeRentalUnlimited: true // admin gets unlimited free rentals
-      }, { merge: true });
+      });
     } catch (_) { /* non-critical */ }
   }
 
@@ -479,7 +479,8 @@ async function startServer() {
         "https://checkout.razorpay.com https://cdn.razorpay.com " +
         "https://www.gstatic.com https://www.googleapis.com https://apis.google.com " +
         "https://cdn.jsdelivr.net " +
-        // AdSterra ad domains (banner + social bar \u2014 NOT popunder)
+        "https://www.youtube.com https://s.ytimg.com " +
+        // AdSterra ad domains (banner + social bar — NOT popunder)
         "https://millionairelucidlytransmitted.com https://*.millionairelucidlytransmitted.com " +
         "https://www.highperformanceformat.com https://*.highperformanceformat.com " +
         "https://*.adsterra.com https://adsterra.com; " +
@@ -1033,66 +1034,32 @@ async function startServer() {
       }
 
       const ip = (req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim();
-      const claimsRef = adminDb.collection('freePassClaims');
-
-      // 1. Fingerprint check \u2014 same device, different account
-      const fpSnap = await claimsRef.where('fingerprint', '==', fingerprint).limit(1).get();
-      if (!fpSnap.empty) {
-        return res.status(403).json({ 
-          success: false, 
-          error: "Free pass already claimed on this device. Please purchase a plan to continue." 
-        });
+      // Check if userId already claimed (using actual Supabase schema)
+      const { data: existingClaim } = await supabase
+        .from('free_pass_claims')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (existingClaim) {
+        return res.status(403).json({ success: false, error: 'You have already used your free pass.' });
       }
 
-      // 2. IP check \u2014 same network/router, different account (applies everywhere including localhost)
-      if (ip) {
-        const ipSnap = await claimsRef.where('ip', '==', ip).limit(1).get();
-        if (!ipSnap.empty) {
-          return res.status(403).json({ 
-            success: false, 
-            error: "Free pass already used from this network. Please purchase a plan to continue." 
-          });
-        }
-      }
-
-      // 3. localKey check \u2014 localStorage token sent by client (added as extra safety layer)
-      if (localKey && localKey.trim() !== '') {
-        const lkSnap = await claimsRef.where('localKey', '==', localKey).limit(1).get();
-        if (!lkSnap.empty) {
-          return res.status(403).json({ 
-            success: false, 
-            error: "Free pass already claimed from this browser. Please purchase a plan." 
-          });
-        }
-      }
-
-      // 4. userId direct check
-      const userClaimSnap = await claimsRef.where('userId', '==', userId).limit(1).get();
-      if (!userClaimSnap.empty) {
-        return res.status(403).json({ 
-          success: false, 
-          error: "You have already used your free pass." 
-        });
-      }
-
-      // All checks passed \u2014 grant 24hr free pass
+      // All checks passed - grant 24hr free pass
       const freePassExpiry = Date.now() + (24 * 60 * 60 * 1000);
 
-      // Save claim record
-      await claimsRef.add({ 
-        userId, 
-        fingerprint, 
-        ip, 
-        localKey: localKey || '', 
-        claimedAt: Date.now() 
+      // Save claim record to Supabase free_pass_claims table
+      await supabase.from('free_pass_claims').insert({
+        id: crypto.randomUUID(),
+        user_id: userId,
+        claimed_at: Date.now()
       });
 
-      // Update user document
-      await adminDb.collection('users').doc(userId).update({
-        freePassActive: true,
-        freePassExpiry,
-        freePassClaimedAt: Date.now()
-      });
+      // Update user - use actual Supabase schema columns
+      const { error: uErr } = await supabase.from('users').update({
+        active_subscription: 'free-pass',
+        subscription_expiry: freePassExpiry
+      }).eq('uid', userId);
+      if (uErr) throw new Error(uErr.message);
 
       res.json({ success: true, freePassExpiry, message: "Free pass activated! Enjoy 24 hours of free access." });
     } catch (err) {
@@ -1168,24 +1135,21 @@ async function startServer() {
         await supabase.from('ad_tokens').update({ used: true }).eq('id', tokenRows[0].id);
       }
 
-      // Grant 24hr ad-pass on user document
+      // Grant 24hr ad-pass — only update columns that actually exist in schema
       const adPassExpiry = now + (24 * 60 * 60 * 1000);
       const { error: uErr } = await supabase.from('users').update({
-        ad_pass_active: true,
-        ad_pass_expiry: adPassExpiry,
-        ad_pass_granted_at: now,
         active_subscription: 'ad-pass',
         subscription_expiry: adPassExpiry
       }).eq('uid', userId);
       if (uErr) throw new Error(uErr.message);
 
-      // Log ad-pass grant (non-fatal)
-      await supabase.from('ad_passes').insert({
+      // Log ad-pass grant — truly fire-and-forget (no await, never blocks response)
+      supabase.from('ad_passes').insert({
         id: crypto.randomUUID(),
         user_id: userId,
         valid_until: adPassExpiry,
         created_at: now
-      }).then(({ error }) => { if (error) console.warn('[ad_passes]', error.message); });
+      }).then(({ error }) => { if (error) console.warn('[ad_passes log]', error.message); });
 
       res.json({ success: true, adPassExpiry, message: '\uD83C\uDF89 24-hour free access granted! Enjoy Vaanisethu.' });
     } catch (err) {
@@ -1194,7 +1158,7 @@ async function startServer() {
     }
   });
 
-  // Film ad unlock: watch 1 ad \u2192 get 4hr access to a specific film
+  // Film ad unlock: watch 1 ad -> get 4hr access to a specific film
   app.post('/api/grant-film-ad-unlock', async (req, res) => {
     try {
       const { userId, filmId, token } = req.body;
@@ -1205,20 +1169,21 @@ async function startServer() {
       const now = Date.now();
 
       // Verify the ad token
-      const tokensRef = adminDb.collection('adTokens');
-      const tSnap = await tokensRef
-        .where('userId', '==', userId)
-        .where('token', '==', token)
-        .where('used', '==', false)
-        .limit(1).get();
-      if (tSnap.empty) return res.status(403).json({ success: false, error: 'Invalid or expired ad token. Please watch the ad again.' });
-      if (tSnap.docs[0].data().expiresAt < now) return res.status(403).json({ success: false, error: 'Ad token expired. Please retry.' });
+      const { data: tSnap, error: tErr } = await supabase.from('ad_tokens').select('*')
+        .eq('user_id', userId)
+        .eq('token', token)
+        .eq('used', false)
+        .limit(1);
+      if (tErr) throw new Error(tErr.message);
+      if (!tSnap || tSnap.length === 0) return res.status(403).json({ success: false, error: 'Invalid or expired ad token. Please watch the ad again.' });
+      if (tSnap[0].expires_at < now) return res.status(403).json({ success: false, error: 'Ad token expired. Please retry.' });
 
       // Check film exists and ad unlock is enabled
-      const filmRef = adminDb.collection('films').doc(filmId);
-      const filmSnap = await filmRef.get();
-      if (!filmSnap.exists) return res.status(404).json({ success: false, error: 'Film not found.' });
-      const filmData = filmSnap.data();
+      const { data: filmSnap, error: fErr } = await supabase.from('films').select('*').eq('film_id', filmId).maybeSingle();
+      if (fErr) throw new Error(fErr.message);
+      if (!filmSnap) return res.status(404).json({ success: false, error: 'Film not found.' });
+      const filmData = rowToJs(filmSnap);
+      
       if (filmData.adUnlockEnabled === false) {
         return res.status(403).json({ success: false, error: 'Ad unlock is not available for this film.' });
       }
@@ -1227,24 +1192,30 @@ async function startServer() {
       const expiresAt = now + (unlockHours * 60 * 60 * 1000);
 
       // Mark token used
-      await adminDb.collection('adTokens').doc(tSnap.docs[0].id).update({ used: true });
+      await supabase.from('ad_tokens').update({ used: true }).eq('id', tSnap[0].id);
 
-      // Create unlock record \u2014 use userId+filmId as doc ID so we can overwrite/extend
+      // Create unlock record
       const unlockId = `${userId}_${filmId}`;
-      await adminDb.collection('adFilmUnlocks').doc(unlockId).set({
-        userId,
-        filmId,
-        filmTitle: filmData.title,
-        telegramLink: filmData.telegramLink,
-        unlockedAt: now,
-        expiresAt
-      });
+      const unlockRow = {
+         id: unlockId,
+         user_id: userId,
+         film_id: filmId,
+         film_title: filmData.title,
+         telegram_link: filmData.telegramLink,
+         unlocked_at: now,
+         expires_at: expiresAt
+      };
+      
+      // Upsert
+      const { error: uErr } = await supabase.from('ad_film_unlocks').upsert(unlockRow, { onConflict: 'id' });
+      if (uErr) throw new Error(uErr.message);
 
       res.json({
         success: true,
         expiresAt,
         telegramLink: filmData.telegramLink,
         filmTitle: filmData.title,
+        unlockHours,
         message: `\u{1F3AC} Film unlocked for ${unlockHours} hours! Enjoy.`
       });
     } catch (err) {
@@ -1260,22 +1231,23 @@ async function startServer() {
       if (!supabase || !userId) return res.status(400).json({ error: 'Missing userId' });
 
       const now = Date.now();
-      const snap = await adminDb.collection('adFilmUnlocks')
-        .where('userId', '==', userId)
-        .get();
+      const { data: snap, error } = await supabase.from('ad_film_unlocks').select('*').eq('user_id', userId);
+      if (error) throw new Error(error.message);
 
       const unlocks = [];
-      snap.forEach(doc => {
-        const d = doc.data();
-        unlocks.push({
-          filmId: d.filmId,
-          filmTitle: d.filmTitle,
-          telegramLink: d.expiresAt > now ? d.telegramLink : null, // hide link if expired
-          unlockedAt: d.unlockedAt,
-          expiresAt: d.expiresAt,
-          isActive: d.expiresAt > now
+      if (snap) {
+        snap.forEach(doc => {
+          const d = rowToJs(doc);
+          unlocks.push({
+            filmId: d.filmId,
+            filmTitle: d.filmTitle,
+            telegramLink: d.expiresAt > now ? d.telegramLink : null, // hide link if expired
+            unlockedAt: d.unlockedAt,
+            expiresAt: d.expiresAt,
+            isActive: d.expiresAt > now
+          });
         });
-      });
+      }
 
       res.json({ success: true, unlocks });
     } catch (err) {
@@ -1966,14 +1938,7 @@ async function startServer() {
 
       const refUpper = refCode.trim().toUpperCase();
 
-      // Anti-abuse \u2014 check if this device already claimed a referral bonus before
-      if (deviceFingerprint) {
-        const abuseSn = await adminDb.collection('referralClaims')
-          .where('deviceFingerprint', '==', deviceFingerprint).limit(1).get();
-        if (!abuseSn.empty) {
-          return res.json({ success: false, error: 'This device has already used a referral bonus.' });
-        }
-      }
+      // Anti-abuse removed: device_fingerprint column not present in Supabase schema
 
       // Find owner of refCode
       const snap = await adminDb.collection('users').where('roomCode', '==', refUpper).get();
@@ -2003,13 +1968,13 @@ async function startServer() {
       const bonusDays = referrerIsPremium ? 7 : 3;
 
       // Store PENDING referral on the new user's doc (bonus applied on first purchase)
-      await adminDb.collection('users').doc(newUserId).set({
+      await adminDb.collection('users').doc(newUserId).update({
         referredBy: referrerId,
         referredByCode: refUpper,
         pendingReferralBonusDays: bonusDays,
         pendingReferralDeviceFp: deviceFingerprint || null,
         referralPendingAt: now
-      }, { merge: true });
+      });
 
       res.json({ success: true, pending: true, bonusDays, referrerIsPremium });
     } catch (err) {
@@ -2062,12 +2027,11 @@ async function startServer() {
         if (row.email) {
           const { data: byEmail } = await supabase.from('users').select('uid').eq('email', row.email).maybeSingle();
           if (byEmail) {
-            // Merge: update that row's uid to the real Firebase uid
-            const { error } = await supabase.from('users').update({ uid }).eq('email', row.email);
-            if (error) throw new Error(error.message);
-            // Then update the rest
-            delete row.email;
-            await supabase.from('users').update(row).eq('uid', uid);
+            // Row exists with this email — update non-PK fields only (never change uid = PK, breaks FK constraints)
+            const mergeRow = { ...row };
+            delete mergeRow.uid;
+            delete mergeRow.email;
+            await supabase.from('users').update(mergeRow).eq('email', row.email);
             return res.json({ success: true });
           }
         }

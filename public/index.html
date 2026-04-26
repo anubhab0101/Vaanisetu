@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" xml:lang="en">
 
 <head>
@@ -280,6 +280,13 @@
               <input type="password" id="auth-password" class="input w-full" required autocomplete="current-password">
             </div>
 
+            <!-- Referral Code -->
+            <div class="mb-4" id="auth-referral-group">
+              <label for="auth-referral" class="text-zinc-400 text-sm mb-1 block">Referral Code (Optional)</label>
+              <input type="text" id="auth-referral" class="input w-full uppercase mono" placeholder="FRIEND'S CODE">
+              <p class="text-xs text-zinc-500 mt-1" style="color: #c084fc;">Get +3 to +7 bonus days on signup!</p>
+            </div>
+
             <button type="submit" id="btn-auth-submit" class="btn btn-primary w-full mt-4">Sign In</button>
 
             <div class="flex justify-between items-center text-sm mt-4 text-zinc-400 w-full mb-4">
@@ -319,13 +326,16 @@
           autocomplete="nickname">
 
         <!-- Referral Code Section -->
-        <div style="margin-top:1rem;background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.2);border-radius:12px;padding:0.9rem 1rem;">
+        <div
+          style="margin-top:1rem;background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.2);border-radius:12px;padding:0.9rem 1rem;">
           <div style="display:flex;align-items:center;gap:0.4rem;margin-bottom:0.5rem;justify-content:center;">
             <span style="font-size:1.1rem;">🎁</span>
-            <span style="font-size:0.75rem;font-weight:800;color:#c084fc;letter-spacing:0.04em;">REFERRAL CODE (Optional)</span>
+            <span style="font-size:0.75rem;font-weight:800;color:#c084fc;letter-spacing:0.04em;">REFERRAL CODE
+              (Optional)</span>
           </div>
           <label for="setup-ref-input" class="text-zinc-400 text-xs block mb-2">
-            Enter a friend's room code → get <strong style="color:#c084fc;">+3 to +7 bonus days</strong> added to your <strong>first subscription</strong>!
+            Enter a friend's room code → get <strong style="color:#c084fc;">+3 to +7 bonus days</strong> added to your
+            <strong>first subscription</strong>!
           </label>
           <input type="text" id="setup-ref-input" class="input w-full text-center mono uppercase"
             placeholder="FRIEND'S CODE" autocomplete="off" maxlength="8"
@@ -427,10 +437,12 @@
               </div>
             </div>
             <div class="mob-desktop-only">
-              <div class="text-xs uppercase bg-orange text-white inline-block px-2 py-1 rounded font-bold mb-2">Popular</div>
+              <div class="text-xs uppercase bg-orange text-white inline-block px-2 py-1 rounded font-bold mb-2">Popular
+              </div>
               <h3 class="text-white text-xl font-bold mb-2">Weekly Pass</h3>
               <p class="text-zinc-400 text-sm mb-4">Best for weekend binges.</p>
-              <div class="text-3xl text-orange font-bold mb-6">₹150 <span class="text-sm font-normal text-zinc-500">/week</span></div>
+              <div class="text-3xl text-orange font-bold mb-6">₹150 <span
+                  class="text-sm font-normal text-zinc-500">/week</span></div>
               <ul class="text-zinc-300 text-sm mb-6 space-y-2">
                 <li>✓ Full Access for 7 Days</li>
                 <li>✓ Invite Unlimited Friends</li>
@@ -443,7 +455,8 @@
           </div>
 
           <!-- Monthly -->
-          <div class="card premium-card mob-monthly-card" style="display:flex;flex-direction:column;justify-content:space-between;">
+          <div class="card premium-card mob-monthly-card"
+            style="display:flex;flex-direction:column;justify-content:space-between;">
             <span class="mob-plan-badge purple-badge">BEST VALUE</span>
             <div class="mob-plan-inner">
               <div class="mob-plan-left">
@@ -465,7 +478,8 @@
             <div class="mob-desktop-only">
               <h3 class="text-white text-xl font-bold mb-2">Monthly Pass</h3>
               <p class="text-zinc-400 text-sm mb-4">For the true cinephiles.</p>
-              <div class="text-3xl text-orange font-bold mb-6">₹400 <span class="text-sm font-normal text-zinc-500">/month</span></div>
+              <div class="text-3xl text-orange font-bold mb-6">₹400 <span
+                  class="text-sm font-normal text-zinc-500">/month</span></div>
               <ul class="text-zinc-300 text-sm mb-6 space-y-2">
                 <li>✓ 30 Days of Access</li>
                 <li>✓ Invite Unlimited Friends</li>
@@ -547,53 +561,72 @@
           <div style="display:flex;flex-direction:column;gap:0.55rem;margin-bottom:1rem;">
 
             <div style="display:flex;gap:0.65rem;align-items:flex-start;">
-              <div style="background:rgba(168,85,247,0.2);color:#c084fc;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">1</div>
+              <div
+                style="background:rgba(168,85,247,0.2);color:#c084fc;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">
+                1</div>
               <div>
                 <div style="font-size:0.78rem;font-weight:700;color:#e4e4e7;">Share Your Room Code</div>
-                <div style="font-size:0.7rem;color:#71717a;">Your unique room code (shown on dashboard) is your referral code. Share it with friends before they create their account.</div>
+                <div style="font-size:0.7rem;color:#71717a;">Your unique room code (shown on dashboard) is your referral
+                  code. Share it with friends before they create their account.</div>
               </div>
             </div>
 
             <div style="display:flex;gap:0.65rem;align-items:flex-start;">
-              <div style="background:rgba(168,85,247,0.2);color:#c084fc;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">2</div>
+              <div
+                style="background:rgba(168,85,247,0.2);color:#c084fc;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">
+                2</div>
               <div>
                 <div style="font-size:0.78rem;font-weight:700;color:#e4e4e7;">Friend Enters Code on Signup</div>
-                <div style="font-size:0.7rem;color:#71717a;">Your friend enters your room code in the "Referral Code" box during their profile setup.</div>
+                <div style="font-size:0.7rem;color:#71717a;">Your friend enters your room code in the "Referral Code"
+                  box during their profile setup.</div>
               </div>
             </div>
 
             <div style="display:flex;gap:0.65rem;align-items:flex-start;">
-              <div style="background:rgba(234,179,8,0.2);color:#eab308;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">3</div>
+              <div
+                style="background:rgba(234,179,8,0.2);color:#eab308;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">
+                3</div>
               <div>
                 <div style="font-size:0.78rem;font-weight:700;color:#e4e4e7;">Bonus Applied on First Purchase</div>
-                <div style="font-size:0.7rem;color:#71717a;">The bonus is <strong style="color:#eab308;">added to their first subscription only</strong> — not given immediately. This ensures fair use.</div>
+                <div style="font-size:0.7rem;color:#71717a;">The bonus is <strong style="color:#eab308;">added to their
+                    first subscription only</strong> — not given immediately. This ensures fair use.</div>
               </div>
             </div>
 
             <div style="display:flex;gap:0.65rem;align-items:flex-start;">
-              <div style="background:rgba(168,85,247,0.2);color:#c084fc;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">4</div>
+              <div
+                style="background:rgba(168,85,247,0.2);color:#c084fc;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">
+                4</div>
               <div>
                 <div style="font-size:0.78rem;font-weight:700;color:#e4e4e7;">Bonus Days — Tiered by Your Status</div>
                 <div style="font-size:0.7rem;color:#71717a;">
-                  <span style="color:#c084fc;font-weight:700;">You are Premium (Weekly/Monthly)</span> → friend gets <strong style="color:#4ade80;">+7 days</strong> bonus<br>
-                  <span style="color:#71717a;font-weight:700;">You are a regular user</span> → friend gets <strong style="color:#4ade80;">+3 days</strong> bonus<br>
+                  <span style="color:#c084fc;font-weight:700;">You are Premium (Weekly/Monthly)</span> → friend gets
+                  <strong style="color:#4ade80;">+7 days</strong> bonus<br>
+                  <span style="color:#71717a;font-weight:700;">You are a regular user</span> → friend gets <strong
+                    style="color:#4ade80;">+3 days</strong> bonus<br>
                   You (the referrer) also get the same number of bonus days!
                 </div>
               </div>
             </div>
 
             <div style="display:flex;gap:0.65rem;align-items:flex-start;">
-              <div style="background:rgba(239,68,68,0.2);color:#f87171;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">5</div>
+              <div
+                style="background:rgba(239,68,68,0.2);color:#f87171;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;flex-shrink:0;margin-top:1px;">
+                5</div>
               <div>
                 <div style="font-size:0.78rem;font-weight:700;color:#e4e4e7;">One-Time Only — Anti-Abuse</div>
-                <div style="font-size:0.7rem;color:#71717a;">Each user can only use a referral code <strong style="color:#f87171;">once</strong>. Creating a new email on the same device will not work — we track devices to prevent abuse.</div>
+                <div style="font-size:0.7rem;color:#71717a;">Each user can only use a referral code <strong
+                    style="color:#f87171;">once</strong>. Creating a new email on the same device will not work — we
+                  track devices to prevent abuse.</div>
               </div>
             </div>
 
           </div>
 
-          <div style="background:rgba(168,85,247,0.1);border-radius:8px;padding:0.6rem 0.75rem;font-size:0.68rem;color:#a1a1aa;text-align:center;">
-            💡 <strong style="color:#c084fc;">Tip:</strong> You can refer unlimited friends — each successful referral extends your subscription!
+          <div
+            style="background:rgba(168,85,247,0.1);border-radius:8px;padding:0.6rem 0.75rem;font-size:0.68rem;color:#a1a1aa;text-align:center;">
+            💡 <strong style="color:#c084fc;">Tip:</strong> You can refer unlimited friends — each successful referral
+            extends your subscription!
           </div>
         </div>
 
@@ -724,9 +757,12 @@
               <h2 class="text-base text-white m-0 mb-1">📣 Push Notification</h2>
               <p class="text-xs text-zinc-500 m-0 mb-3">Send a notification to all subscribed users (PWA).</p>
               <div class="flex flex-col gap-2">
-                <input type="text" id="push-notif-title" class="input w-full bg-black" placeholder="Title e.g. 🎬 New Film Added!" maxlength="80">
-                <textarea id="push-notif-body" class="input w-full bg-black" placeholder="Message body..." maxlength="200" rows="2" style="resize:vertical;font-family:inherit;"></textarea>
-                <input type="text" id="push-notif-url" class="input w-full bg-black" placeholder="URL on click (default = /)" maxlength="200">
+                <input type="text" id="push-notif-title" class="input w-full bg-black"
+                  placeholder="Title e.g. 🎬 New Film Added!" maxlength="80">
+                <textarea id="push-notif-body" class="input w-full bg-black" placeholder="Message body..."
+                  maxlength="200" rows="2" style="resize:vertical;font-family:inherit;"></textarea>
+                <input type="text" id="push-notif-url" class="input w-full bg-black"
+                  placeholder="URL on click (default = /)" maxlength="200">
                 <button id="btn-send-push" class="btn w-full"
                   style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;font-weight:700;">
                   📣 Send to All Subscribers
@@ -961,16 +997,21 @@
                   </div>
                   <!-- Trailer Link (optional) -->
                   <div>
-                    <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold block mb-1">🎬 Trailer Link <span style="color:#52525b;font-weight:400;">(optional)</span></label>
+                    <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold block mb-1">🎬 Trailer Link
+                      <span style="color:#52525b;font-weight:400;">(optional)</span></label>
                     <input type="url" id="film-form-trailer" class="input w-full bg-black"
                       placeholder="YouTube: https://youtu.be/xxxx  or  direct .mp4 URL">
-                    <span style="font-size:0.65rem;color:#52525b;display:block;margin-top:0.2rem;">Paste YouTube link OR a direct .mp4 URL — shown on hover over poster</span>
+                    <span style="font-size:0.65rem;color:#52525b;display:block;margin-top:0.2rem;">Paste YouTube link OR
+                      a direct .mp4 URL — shown on hover over poster</span>
                   </div>
                   <!-- Early Access (optional) -->
                   <div>
-                    <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold block mb-1">⭐ Early Access Until <span style="color:#52525b;font-weight:400;">(optional — full premium only before this date)</span></label>
+                    <label class="text-xs text-zinc-500 uppercase tracking-widest font-bold block mb-1">⭐ Early Access
+                      Until <span style="color:#52525b;font-weight:400;">(optional — full premium only before this
+                        date)</span></label>
                     <input type="datetime-local" id="film-form-early-access" class="input w-full bg-black">
-                    <span style="font-size:0.65rem;color:#52525b;display:block;margin-top:0.2rem;">Leave blank for immediate public access. Set a future date to restrict non-premium users until then.</span>
+                    <span style="font-size:0.65rem;color:#52525b;display:block;margin-top:0.2rem;">Leave blank for
+                      immediate public access. Set a future date to restrict non-premium users until then.</span>
                   </div>
                   <!-- Ad Unlock toggle -->
                   <label
@@ -1092,8 +1133,9 @@
                 </svg>
                 Help Desk Messages
               </h2>
-              <button onclick="if(window.loadHelpDeskMessages) window.loadHelpDeskMessages()" class="icon-btn hover-bg bg-black shadow-inner border border-zinc-800"
-                style="width:32px;height:32px" title="Refresh">
+              <button onclick="if(window.loadHelpDeskMessages) window.loadHelpDeskMessages()"
+                class="icon-btn hover-bg bg-black shadow-inner border border-zinc-800" style="width:32px;height:32px"
+                title="Refresh">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                   <path d="M3 2v6h6" />
@@ -1123,8 +1165,9 @@
                 </svg>
                 Leaderboard Manager
               </h2>
-              <button onclick="if(window.loadAdminLeaderboard) window.loadAdminLeaderboard()" class="icon-btn hover-bg bg-black shadow-inner border border-zinc-800"
-                style="width:32px;height:32px" title="Refresh">
+              <button onclick="if(window.loadAdminLeaderboard) window.loadAdminLeaderboard()"
+                class="icon-btn hover-bg bg-black shadow-inner border border-zinc-800" style="width:32px;height:32px"
+                title="Refresh">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                   <path d="M3 2v6h6" />
@@ -1153,9 +1196,11 @@
           <span style="font-weight:900;color:white;font-size:1rem;letter-spacing:-0.02em;">Vaanisethu</span>
         </div>
         <div style="display:flex;align-items:center;gap:0.5rem;">
-          <div style="background:#18181b;border:1px solid #27272a;border-radius:9999px;padding:0.3rem 0.7rem;display:flex;align-items:center;gap:0.4rem;">
+          <div
+            style="background:#18181b;border:1px solid #27272a;border-radius:9999px;padding:0.3rem 0.7rem;display:flex;align-items:center;gap:0.4rem;">
             <span style="width:7px;height:7px;border-radius:50%;background:#f97316;flex-shrink:0;"></span>
-            <span id="mob-username-display" style="font-size:0.78rem;font-weight:700;color:#e4e4e7;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+            <span id="mob-username-display"
+              style="font-size:0.78rem;font-weight:700;color:#e4e4e7;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
           </div>
         </div>
       </div>
@@ -1193,105 +1238,107 @@
 
         <!-- Welcome strip (mobile only) -->
         <div class="mob-welcome-strip">
-          <p style="font-weight:800;color:white;font-size:0.95rem;margin:0 0 0.1rem;">Welcome back, <span id="mob-welcome-name">there</span> 👋</p>
+          <p style="font-weight:800;color:white;font-size:0.95rem;margin:0 0 0.1rem;">Welcome back, <span
+              id="mob-welcome-name">there</span> 👋</p>
           <p style="font-size:0.75rem;color:rgba(255,255,255,0.75);margin:0;">Ready to watch together?</p>
         </div>
 
-      <div class="card-grid max-w-4xl mt-4 gap-8">
+        <div class="card-grid max-w-4xl mt-4 gap-8">
 
-        <!-- My Room Column -->
-        <div class="flex flex-col gap-8 w-full">
-          <div class="card fade-up">
-            <div class="icon-box orange-box mb-4">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="m22 8-6 4 6 4V8Z" />
-                <rect x="2" y="6" width="14" height="12" rx="2" ry="2" />
-              </svg>
-            </div>
-            <h2 class="mb-2">My Room</h2>
-            <p class="text-zinc-400 mb-6">Your permanent shared space.</p>
+          <!-- My Room Column -->
+          <div class="flex flex-col gap-8 w-full">
+            <div class="card fade-up">
+              <div class="icon-box orange-box mb-4">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m22 8-6 4 6 4V8Z" />
+                  <rect x="2" y="6" width="14" height="12" rx="2" ry="2" />
+                </svg>
+              </div>
+              <h2 class="mb-2">My Room</h2>
+              <p class="text-zinc-400 mb-6">Your permanent shared space.</p>
 
-            <div class="p-6 border border-zinc-800 bg-zinc-950 rounded-xl relative w-full text-left">
-              <span class="text-zinc-500 text-xs uppercase tracking-widest block mb-3 font-bold text-center">Room
-                Code</span>
-              <div class="flex items-center justify-center bg-[#111] p-3 rounded-xl border border-zinc-800">
-                <span id="my-room-code"
-                  class="mono text-3xl text-white font-bold tracking-widest text-center">------</span>
+              <div class="p-6 border border-zinc-800 bg-zinc-950 rounded-xl relative w-full text-left">
+                <span class="text-zinc-500 text-xs uppercase tracking-widest block mb-3 font-bold text-center">Room
+                  Code</span>
+                <div class="flex items-center justify-center bg-[#111] p-3 rounded-xl border border-zinc-800">
+                  <span id="my-room-code"
+                    class="mono text-3xl text-white font-bold tracking-widest text-center">------</span>
+                </div>
+              </div>
+
+              <div class="w-full mt-6 flex flex-col gap-3">
+                <button id="btn-start-my-room" class="btn btn-primary w-full lg-btn"
+                  style="box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);">Start Room</button>
+                <button id="btn-copy-invite"
+                  class="btn btn-outline w-full lg-btn flex items-center justify-center gap-2">Copy Invite Link</button>
               </div>
             </div>
 
-            <div class="w-full mt-6 flex flex-col gap-3">
-              <button id="btn-start-my-room" class="btn btn-primary w-full lg-btn"
-                style="box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);">Start Room</button>
-              <button id="btn-copy-invite"
-                class="btn btn-outline w-full lg-btn flex items-center justify-center gap-2">Copy Invite Link</button>
+            <!-- Manual Join Card -->
+            <div class="card fade-up" style="animation-delay: 0.1s">
+              <h2 class="text-lg mb-4">Join Manually</h2>
+              <div class="w-full flex gap-3">
+                <input type="text" id="join-key-input" class="input text-center text-xl tracking-widest mono uppercase"
+                  placeholder="XXXXXX">
+                <button id="btn-join" class="btn btn-secondary w-full" style="max-width: 120px;">Join</button>
+              </div>
             </div>
           </div>
 
-          <!-- Manual Join Card -->
-          <div class="card fade-up" style="animation-delay: 0.1s">
-            <h2 class="text-lg mb-4">Join Manually</h2>
-            <div class="w-full flex gap-3">
-              <input type="text" id="join-key-input" class="input text-center text-xl tracking-widest mono uppercase"
-                placeholder="XXXXXX">
-              <button id="btn-join" class="btn btn-secondary w-full" style="max-width: 120px;">Join</button>
+          <!-- Leaderboard Card -->
+          <div class="card fade-up" style="animation-delay:0.15s;">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="icon-box" style="background:rgba(234,179,8,0.15);color:#eab308;">🏆</div>
+              <div>
+                <h2 class="m-0">Leaderboard</h2>
+                <p class="text-zinc-500 text-xs m-0">Top film watchers this month</p>
+              </div>
+            </div>
+            <div id="leaderboard-list" style="display:flex;flex-direction:column;gap:0.5rem;">
+              <p style="color:#52525b;font-size:0.8rem;text-align:center;padding:1rem;">Loading...</p>
             </div>
           </div>
+
+          <!-- Friends Area Column -->
+          <div class="card fade-up flex-col w-full h-full"
+            style="animation-delay: 0.2s; padding: 0; overflow: hidden; align-items: stretch;">
+            <div class="p-6 border-b border-zinc-800 flex items-center justify-between bg-zinc-900">
+              <h2 class="m-0 text-xl flex items-center gap-2 font-bold">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                Friends
+                <button id="btn-reload-friends"
+                  class="icon-btn hover-bg ml-2 text-zinc-500 hover:text-white border-none bg-transparent"
+                  title="Refresh Contacts" style="width: 28px; height: 28px; padding: 4px;"><svg width="100%"
+                    height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 2v6h6" />
+                  </svg></button>
+              </h2>
+              <button id="btn-open-add-friend" class="btn btn-primary text-sm"
+                style="width: auto; padding: 0.5rem 1rem;">Add</button>
+            </div>
+
+            <div id="friend-requests-container" class="hidden border-b border-zinc-800 p-4 bg-zinc-950">
+              <h3 class="text-zinc-400 text-xs font-bold uppercase tracking-widest mb-3">Pending Requests</h3>
+              <div id="requests-list" class="flex flex-col gap-2">
+                <!-- Request items injected here -->
+              </div>
+            </div>
+
+            <div class="p-4 flex-1 overflow-y-auto" style="min-height: 200px;">
+              <p class="text-zinc-500 text-center text-sm mt-4 italic" id="empty-friends-msg">You have no friends yet.
+              </p>
+              <div id="friends-list" class="flex flex-col gap-2 relative w-full"></div>
+            </div>
+          </div>
+
         </div>
-
-        <!-- Leaderboard Card -->
-        <div class="card fade-up" style="animation-delay:0.15s;">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="icon-box" style="background:rgba(234,179,8,0.15);color:#eab308;">🏆</div>
-            <div>
-              <h2 class="m-0">Leaderboard</h2>
-              <p class="text-zinc-500 text-xs m-0">Top film watchers this month</p>
-            </div>
-          </div>
-          <div id="leaderboard-list" style="display:flex;flex-direction:column;gap:0.5rem;">
-            <p style="color:#52525b;font-size:0.8rem;text-align:center;padding:1rem;">Loading...</p>
-          </div>
-        </div>
-
-        <!-- Friends Area Column -->
-        <div class="card fade-up flex-col w-full h-full"
-          style="animation-delay: 0.2s; padding: 0; overflow: hidden; align-items: stretch;">
-          <div class="p-6 border-b border-zinc-800 flex items-center justify-between bg-zinc-900">
-            <h2 class="m-0 text-xl flex items-center gap-2 font-bold">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
-              Friends
-              <button id="btn-reload-friends"
-                class="icon-btn hover-bg ml-2 text-zinc-500 hover:text-white border-none bg-transparent"
-                title="Refresh Contacts" style="width: 28px; height: 28px; padding: 4px;"><svg width="100%"
-                  height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                  <path d="M3 2v6h6" />
-                </svg></button>
-            </h2>
-            <button id="btn-open-add-friend" class="btn btn-primary text-sm"
-              style="width: auto; padding: 0.5rem 1rem;">Add</button>
-          </div>
-
-          <div id="friend-requests-container" class="hidden border-b border-zinc-800 p-4 bg-zinc-950">
-            <h3 class="text-zinc-400 text-xs font-bold uppercase tracking-widest mb-3">Pending Requests</h3>
-            <div id="requests-list" class="flex flex-col gap-2">
-              <!-- Request items injected here -->
-            </div>
-          </div>
-
-          <div class="p-4 flex-1 overflow-y-auto" style="min-height: 200px;">
-            <p class="text-zinc-500 text-center text-sm mt-4 italic" id="empty-friends-msg">You have no friends yet.</p>
-            <div id="friends-list" class="flex flex-col gap-2 relative w-full"></div>
-          </div>
-        </div>
-
-      </div>
-      <!-- END card-grid -->
+        <!-- END card-grid -->
       </div><!-- END mob-sec-home -->
 
       <!-- ── FILMS TAB SECTION (mobile carousel shown here; desktop sees film-store-modal) ── -->
@@ -1303,7 +1350,8 @@
         <div class="mob-film-carousel-wrap">
           <div class="mob-film-carousel" id="mob-film-carousel">
             <!-- Injected by app.js -->
-            <div style="color:#52525b;font-size:0.85rem;padding:2rem;text-align:center;width:100%;">Loading films...</div>
+            <div style="color:#52525b;font-size:0.85rem;padding:2rem;text-align:center;width:100%;">Loading films...
+            </div>
           </div>
         </div>
       </div><!-- END mob-sec-films -->
@@ -1317,8 +1365,10 @@
           <button id="mob-btn-add-friend" class="mob-see-all">+ Add</button>
         </div>
         <div style="background:#18181b;border:1px solid #27272a;border-radius:1rem;overflow:hidden;">
-          <div id="mob-friends-list" style="padding:0.5rem 0.75rem;display:flex;flex-direction:column;gap:0.25rem;min-height:80px;">
-            <p style="color:#52525b;font-size:0.82rem;text-align:center;padding:1.5rem 0;" id="mob-empty-friends">No friends yet — add one!</p>
+          <div id="mob-friends-list"
+            style="padding:0.5rem 0.75rem;display:flex;flex-direction:column;gap:0.25rem;min-height:80px;">
+            <p style="color:#52525b;font-size:0.82rem;text-align:center;padding:1.5rem 0;" id="mob-empty-friends">No
+              friends yet — add one!</p>
           </div>
         </div>
       </div><!-- END mob-sec-friends -->
@@ -1330,10 +1380,12 @@
         <div class="mob-profile-avatar-wrap">
           <label for="mob-profile-pic-input" class="mob-profile-avatar" id="mob-profile-avatar">
             <span id="mob-profile-avatar-letter">?</span>
-            <img id="mob-profile-avatar-img" src="" alt="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;">
+            <img id="mob-profile-avatar-img" src="" alt=""
+              style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;">
           </label>
           <input type="file" id="mob-profile-pic-input" accept="image/*" hidden>
-          <button class="mob-profile-change-photo" onclick="document.getElementById('mob-profile-pic-input').click()">✏️ Change Photo</button>
+          <button class="mob-profile-change-photo" onclick="document.getElementById('mob-profile-pic-input').click()">✏️
+            Change Photo</button>
           <p class="mob-profile-name" id="mob-profile-name-display">Loading...</p>
           <span class="mob-profile-badge" id="mob-profile-badge">Free</span>
         </div>
@@ -1358,7 +1410,8 @@
           <div class="mob-settings-item" id="mob-setting-referral">
             <span class="mob-settings-icon">📋</span>
             <span class="mob-settings-label">Referral Code</span>
-            <span class="mob-settings-value" id="mob-referral-code-val" style="font-family:monospace;color:#f97316;"></span>
+            <span class="mob-settings-value" id="mob-referral-code-val"
+              style="font-family:monospace;color:#f97316;"></span>
             <span class="mob-settings-arrow">⎘</span>
           </div>
         </div>
@@ -1427,7 +1480,8 @@
 
         <!-- ABOUT Box (replaces footer on mobile) -->
         <p class="mob-settings-section-label">About</p>
-        <div style="background:#18181b;border:1px solid #27272a;border-radius:1rem;padding:1rem;text-align:center;margin-bottom:0.5rem;">
+        <div
+          style="background:#18181b;border:1px solid #27272a;border-radius:1rem;padding:1rem;text-align:center;margin-bottom:0.5rem;">
           <div style="display:flex;align-items:center;justify-content:center;gap:0.4rem;margin-bottom:0.4rem;">
             <span style="font-size:1rem;">🔥</span>
             <span style="font-weight:900;color:#f97316;font-size:1.1rem;" id="mob-page-views">–</span>
@@ -1448,12 +1502,16 @@
            ══════════════════════════════════════════════════ -->
 
       <!-- Watch History Bottom Sheet -->
-      <div id="mob-watch-history-sheet" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);" onclick="if(event.target===this)closeMobSheet('mob-watch-history-sheet')">
-        <div style="position:absolute;bottom:0;left:0;right:0;background:#0f0f12;border-radius:1.5rem 1.5rem 0 0;max-height:80vh;overflow-y:auto;padding:1.25rem 1rem 5rem;">
+      <div id="mob-watch-history-sheet"
+        style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);"
+        onclick="if(event.target===this)closeMobSheet('mob-watch-history-sheet')">
+        <div
+          style="position:absolute;bottom:0;left:0;right:0;background:#0f0f12;border-radius:1.5rem 1.5rem 0 0;max-height:80vh;overflow-y:auto;padding:1.25rem 1rem 5rem;">
           <div style="width:40px;height:4px;background:#3f3f46;border-radius:2px;margin:0 auto 1rem;"></div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
             <h3 style="color:white;font-size:1rem;font-weight:800;margin:0;">📺 Watch History</h3>
-            <button onclick="closeMobSheet('mob-watch-history-sheet')" style="background:none;border:none;color:#71717a;font-size:1.25rem;cursor:pointer;">✕</button>
+            <button onclick="closeMobSheet('mob-watch-history-sheet')"
+              style="background:none;border:none;color:#71717a;font-size:1.25rem;cursor:pointer;">✕</button>
           </div>
           <div id="mob-watch-history-list" style="display:flex;flex-direction:column;gap:0.6rem;">
             <p style="color:#52525b;text-align:center;padding:2rem 0;">Loading...</p>
@@ -1462,12 +1520,16 @@
       </div>
 
       <!-- Purchase History Bottom Sheet -->
-      <div id="mob-purchase-history-sheet" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);" onclick="if(event.target===this)closeMobSheet('mob-purchase-history-sheet')">
-        <div style="position:absolute;bottom:0;left:0;right:0;background:#0f0f12;border-radius:1.5rem 1.5rem 0 0;max-height:80vh;overflow-y:auto;padding:1.25rem 1rem 5rem;">
+      <div id="mob-purchase-history-sheet"
+        style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);"
+        onclick="if(event.target===this)closeMobSheet('mob-purchase-history-sheet')">
+        <div
+          style="position:absolute;bottom:0;left:0;right:0;background:#0f0f12;border-radius:1.5rem 1.5rem 0 0;max-height:80vh;overflow-y:auto;padding:1.25rem 1rem 5rem;">
           <div style="width:40px;height:4px;background:#3f3f46;border-radius:2px;margin:0 auto 1rem;"></div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
             <h3 style="color:white;font-size:1rem;font-weight:800;margin:0;">💳 Purchase History</h3>
-            <button onclick="closeMobSheet('mob-purchase-history-sheet')" style="background:none;border:none;color:#71717a;font-size:1.25rem;cursor:pointer;">✕</button>
+            <button onclick="closeMobSheet('mob-purchase-history-sheet')"
+              style="background:none;border:none;color:#71717a;font-size:1.25rem;cursor:pointer;">✕</button>
           </div>
           <div id="mob-purchase-history-list" style="display:flex;flex-direction:column;gap:0.6rem;">
             <p style="color:#52525b;text-align:center;padding:2rem 0;">Loading...</p>
@@ -1476,17 +1538,23 @@
       </div>
 
       <!-- Room Name Edit Modal -->
-      <div id="mob-room-name-modal" style="display:none;position:fixed;inset:0;z-index:9001;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);align-items:center;justify-content:center;" onclick="if(event.target===this)closeMobSheet('mob-room-name-modal')">
-        <div style="background:#18181b;border:1px solid #3f3f46;border-radius:1.25rem;padding:1.5rem;margin:1rem;width:100%;max-width:360px;">
+      <div id="mob-room-name-modal"
+        style="display:none;position:fixed;inset:0;z-index:9001;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);align-items:center;justify-content:center;"
+        onclick="if(event.target===this)closeMobSheet('mob-room-name-modal')">
+        <div
+          style="background:#18181b;border:1px solid #3f3f46;border-radius:1.25rem;padding:1.5rem;margin:1rem;width:100%;max-width:360px;">
           <h3 style="color:white;font-size:1rem;font-weight:800;margin:0 0 0.5rem;">🏠 Set Room Name</h3>
           <p style="color:#71717a;font-size:0.78rem;margin:0 0 1rem;">This name shows when friends join your room.</p>
           <input id="mob-room-name-input" type="text" maxlength="30" placeholder="My Cozy Room"
             style="width:100%;background:#0f0f12;border:1.5px solid #3f3f46;border-radius:0.75rem;padding:0.75rem 1rem;color:white;font-size:0.95rem;outline:none;box-sizing:border-box;margin-bottom:1rem;">
           <div style="display:flex;gap:0.75rem;">
-            <button onclick="closeMobSheet('mob-room-name-modal')" style="flex:1;padding:0.7rem;background:#27272a;border:none;border-radius:0.75rem;color:#a1a1aa;font-weight:700;cursor:pointer;">Cancel</button>
-            <button id="mob-room-name-save-btn" style="flex:2;padding:0.7rem;background:linear-gradient(135deg,#ea580c,#c2410c);border:none;border-radius:0.75rem;color:white;font-weight:800;cursor:pointer;">Save</button>
+            <button onclick="closeMobSheet('mob-room-name-modal')"
+              style="flex:1;padding:0.7rem;background:#27272a;border:none;border-radius:0.75rem;color:#a1a1aa;font-weight:700;cursor:pointer;">Cancel</button>
+            <button id="mob-room-name-save-btn"
+              style="flex:2;padding:0.7rem;background:linear-gradient(135deg,#ea580c,#c2410c);border:none;border-radius:0.75rem;color:white;font-weight:800;cursor:pointer;">Save</button>
           </div>
-          <p id="mob-room-name-msg" style="font-size:0.72rem;color:#71717a;text-align:center;margin:0.5rem 0 0;min-height:1rem;"></p>
+          <p id="mob-room-name-msg"
+            style="font-size:0.72rem;color:#71717a;text-align:center;margin:0.5rem 0 0;min-height:1rem;"></p>
         </div>
       </div>
 
@@ -1555,7 +1623,8 @@
               style="font-size:1.1rem;line-height:1;">
               😊
             </button>
-            <div id="emoji-tray" style="display:none;position:fixed;background:#18181b;border:1px solid #3f3f46;border-radius:14px;padding:0.45rem 0.6rem;gap:0.3rem;z-index:99999;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,0.7);">
+            <div id="emoji-tray"
+              style="display:none;position:fixed;background:#18181b;border:1px solid #3f3f46;border-radius:14px;padding:0.45rem 0.6rem;gap:0.3rem;z-index:99999;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,0.7);">
               <button class="emoji-btn" data-emoji="❤️">❤️</button>
               <button class="emoji-btn" data-emoji="😂">😂</button>
               <button class="emoji-btn" data-emoji="😮">😮</button>
@@ -1569,7 +1638,8 @@
             aria-label="Share room on WhatsApp"
             style="display:none;background-color:rgba(37,211,102,0.15);color:#25d366;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+              <path
+                d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
             </svg>
           </button>
         </div>
@@ -1590,248 +1660,262 @@
       <!-- Video + Suggestions flex wrapper -->
       <div id="room-view-inner" style="display:flex;flex:1;">
 
-      <!-- Video Area -->
-      <div id="video-container" class="video-area bg-zinc-950 flex items-center justify-center relative w-full h-full">
-        <div id="sync-overlay" class="absolute inset-0 bg-black-60 hidden flex items-center justify-center z-50">
-          <button id="btn-sync-playback"
-            class="btn btn-primary lg-btn transform-hover flex items-center gap-3 ptr-auto">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="m22 8-6 4 6 4V8Z" />
-              <rect x="2" y="6" width="14" height="12" rx="2" ry="2" />
-            </svg>
-            Tap to Sync Playback
-          </button>
-        </div>
-
-        <!-- Custom Player Wrapper -->
-        <div id="custom-player-wrapper"
-          class="player-wrapper hidden relative w-full h-full flex items-center justify-center">
-          <!-- Main Video Tag — download/context-menu disabled to protect content -->
-          <video id="main-video" controls playsinline webkit-playsinline class="max-w-full max-h-full"
-            controlsList="nodownload noremoteplayback"
-            oncontextmenu="return false;"
-            style="touch-action: manipulation; -webkit-user-select:none; user-select:none;"></video>
-
-          <!-- Ad Break Timeline Bar — yellow markers below video -->
-          <div id="ad-timeline-bar" class="ad-timeline-bar hidden">
-            <div class="ad-timeline-inner">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="#f97316" style="flex-shrink:0;opacity:0.7">
-                <path d="M2 7h20v13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7z" />
-                <path d="M16 2 12 7 8 2" fill="none" stroke="#f97316" stroke-width="2" />
+        <!-- Video Area -->
+        <div id="video-container"
+          class="video-area bg-zinc-950 flex items-center justify-center relative w-full h-full">
+          <div id="sync-overlay" class="absolute inset-0 bg-black-60 hidden flex items-center justify-center z-50">
+            <button id="btn-sync-playback"
+              class="btn btn-primary lg-btn transform-hover flex items-center gap-3 ptr-auto">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m22 8-6 4 6 4V8Z" />
+                <rect x="2" y="6" width="14" height="12" rx="2" ry="2" />
               </svg>
-              <div class="ad-timeline-track" id="ad-timeline-track">
-                <div class="ad-timeline-cursor" id="ad-timeline-cursor"></div>
-                <!-- Yellow ad break markers injected by JS -->
-              </div>
-              <span class="ad-timeline-label">Ad Breaks</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Waiting UI (For guests in an empty room) -->
-        <div id="waiting-ui" class="source-ui text-center text-white p-8 max-w-md w-full fade-up hidden">
-          <div class="icon-box mx-auto mb-6 text-zinc-500" style="background: rgba(255,255,255,0.05);">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-          </div>
-          <h3 class="text-xl font-bold mb-2">Waiting for Host</h3>
-          <p class="text-zinc-500 text-sm mb-6">The room owner is currently selecting a movie. Please wait.</p>
-        </div>
-
-        <!-- Source Select UI -->
-        <div id="source-ui" class="source-ui text-center text-white p-8 max-w-md w-full fade-up">
-          <div class="icon-box dark-box mx-auto mb-6">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="m22 8-6 4 6 4V8Z" />
-              <rect x="2" y="6" width="14" height="12" rx="2" ry="2" />
-            </svg>
-          </div>
-          <h3 class="text-xl font-bold mb-2">Select Movie Source</h3>
-          <p class="text-zinc-500 text-sm mb-6">Choose how you want to play the movie.</p>
-
-          <!-- Step 1: Choose Source Type -->
-          <div id="source-selection-step" class="flex flex-col gap-3 w-full">
-            <button id="btn-src-dropbox" class="btn btn-secondary w-full flex items-center justify-center gap-3">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 12l-6.8 5.4-4-3.2-4 3.2L.4 12l6.8-5.4 4 3.2 4-3.2z" />
-                <path d="M7.2 17.4l4 3.2 4-3.2" />
-              </svg>
-              Dropbox Link
-            </button>
-            <button id="btn-src-telegram" class="btn btn-secondary w-full flex items-center justify-center gap-3">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="m22 2-7 20-4-9-9-4Z" />
-                <path d="M22 2 11 13" />
-              </svg>
-              Telegram Bot Stream
-            </button>
-            <button id="btn-src-local" class="btn btn-secondary w-full flex items-center justify-center gap-3">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
-              </svg>
-              Local File Upload
-            </button>
-            <!-- Rented Films button -->
-            <div class="store-divider">OR</div>
-            <button id="btn-src-rented" class="btn w-full flex items-center justify-center gap-3"
-              style="background: linear-gradient(135deg, #1a0a2e 0%, #0f172a 100%); border: 1px solid rgba(168,85,247,0.5); color: #c084fc;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M7 2h10l4 4v16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" />
-                <path d="M9 2v4h6V2" />
-                <path d="M12 11v6" />
-                <path d="M9 14l3 3 3-3" />
-              </svg>
-              Rented Films Store
+              Tap to Sync Playback
             </button>
           </div>
 
-          <!-- Step 2: Input Field -->
-          <div id="source-input-step" class="w-full form-group hidden mt-4">
-            <div class="flex items-center mb-4">
-              <button id="btn-back-source"
-                class="text-zinc-400 hover:text-white text-sm bg-transparent border-none pointer flex items-center gap-1 font-bold"
-                style="padding:0.25rem;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="m15 18-6-6 6-6" />
-                </svg> Back
-              </button>
-              <span id="source-step-title"
-                class="text-sm text-zinc-500 uppercase tracking-widest font-bold mx-auto pr-8">Source</span>
-            </div>
+          <!-- Custom Player Wrapper -->
+          <div id="custom-player-wrapper"
+            class="player-wrapper hidden relative w-full h-full flex items-center justify-center">
+            <!-- YouTube IFrame Container -->
+            <div id="youtube-player-container" class="w-full h-full absolute inset-0 hidden z-[5] bg-black"></div>
 
-            <!-- Guide exclusively for Telegram -->
-            <div id="telegram-guide" class="text-left bg-zinc-900 border border-zinc-800 p-4 rounded-xl mb-6 hidden">
-              <h4 class="text-white font-bold text-sm mb-2 flex items-center gap-2">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 16v-4" />
-                  <path d="M12 8h.01" />
+            <!-- Main Video Tag — download/context-menu disabled to protect content -->
+            <video id="main-video" controls playsinline webkit-playsinline class="max-w-full max-h-full"
+              controlsList="nodownload noremoteplayback" oncontextmenu="return false;"
+              style="touch-action: manipulation; -webkit-user-select:none; user-select:none;"></video>
+
+            <!-- Ad Break Timeline Bar — yellow markers below video -->
+            <div id="ad-timeline-bar" class="ad-timeline-bar hidden">
+              <div class="ad-timeline-inner">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="#f97316" style="flex-shrink:0;opacity:0.7">
+                  <path d="M2 7h20v13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7z" />
+                  <path d="M16 2 12 7 8 2" fill="none" stroke="#f97316" stroke-width="2" />
                 </svg>
-                How to get Telegram link
-              </h4>
-              <p class="text-xs text-zinc-400 mb-3 leading-relaxed">Forward your movie file on Telegram to our direct
-                streaming bot <a href="https://t.me/Vaanisetu_Streamer_bot" target="_blank"
-                  class="text-orange underline font-bold">@Vaanisetu_Streamer_bot</a>. The bot will reply with a direct
-                playable link. Copy that link and paste it below.</p>
+                <div class="ad-timeline-track" id="ad-timeline-track">
+                  <div class="ad-timeline-cursor" id="ad-timeline-cursor"></div>
+                  <!-- Yellow ad break markers injected by JS -->
+                </div>
+                <span class="ad-timeline-label">Ad Breaks</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Waiting UI (For guests in an empty room) -->
+          <div id="waiting-ui" class="source-ui text-center text-white p-8 max-w-md w-full fade-up hidden">
+            <div class="icon-box mx-auto mb-6 text-zinc-500" style="background: rgba(255,255,255,0.05);">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Waiting for Host</h3>
+            <p class="text-zinc-500 text-sm mb-6">The room owner is currently selecting a movie. Please wait.</p>
+          </div>
+
+          <!-- Source Select UI -->
+          <div id="source-ui" class="source-ui text-center text-white p-8 max-w-md w-full fade-up">
+            <div class="icon-box dark-box mx-auto mb-6">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m22 8-6 4 6 4V8Z" />
+                <rect x="2" y="6" width="14" height="12" rx="2" ry="2" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Select Movie Source</h3>
+            <p class="text-zinc-500 text-sm mb-6">Choose how you want to play the movie.</p>
+
+            <!-- Step 1: Choose Source Type -->
+            <div id="source-selection-step" class="flex flex-col gap-3 w-full">
+              <button id="btn-src-dropbox" class="btn btn-secondary w-full flex items-center justify-center gap-3">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 12l-6.8 5.4-4-3.2-4 3.2L.4 12l6.8-5.4 4 3.2 4-3.2z" />
+                  <path d="M7.2 17.4l4 3.2 4-3.2" />
+                </svg>
+                Dropbox Link
+              </button>
+              <button id="btn-src-telegram" class="btn btn-secondary w-full flex items-center justify-center gap-3">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m22 2-7 20-4-9-9-4Z" />
+                  <path d="M22 2 11 13" />
+                </svg>
+                Telegram Bot Stream
+              </button>
+              <button id="btn-src-local" class="btn btn-secondary w-full flex items-center justify-center gap-3">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                Local File Upload
+              </button>
+              <button id="btn-src-youtube" class="btn btn-secondary w-full flex items-center justify-center gap-3"
+                style="color: #f87171; border-color: rgba(248, 113, 113, 0.3);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path
+                    d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.376.55 9.376.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                </svg>
+                YouTube Video
+              </button>
+              <!-- Rented Films button -->
+              <div class="store-divider">OR</div>
+              <button id="btn-src-rented" class="btn w-full flex items-center justify-center gap-3"
+                style="background: linear-gradient(135deg, #1a0a2e 0%, #0f172a 100%); border: 1px solid rgba(168,85,247,0.5); color: #c084fc;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M7 2h10l4 4v16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" />
+                  <path d="M9 2v4h6V2" />
+                  <path d="M12 11v6" />
+                  <path d="M9 14l3 3 3-3" />
+                </svg>
+                Rented Films Store
+              </button>
             </div>
 
-            <!-- URL Inputs -->
-            <div id="url-input-group" class="flex gap-2 w-full hidden">
-              <input type="text" id="room-url-input" class="input flex-1" placeholder="Paste URL Here">
-              <button id="btn-play-url" class="btn btn-primary"
-                style="width: auto; padding: 0.75rem 1.25rem;">Go</button>
-            </div>
+            <!-- Step 2: Input Field -->
+            <div id="source-input-step" class="w-full form-group hidden mt-4">
+              <div class="flex items-center mb-4">
+                <button id="btn-back-source"
+                  class="text-zinc-400 hover:text-white text-sm bg-transparent border-none pointer flex items-center gap-1 font-bold"
+                  style="padding:0.25rem;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m15 18-6-6 6-6" />
+                  </svg> Back
+                </button>
+                <span id="source-step-title"
+                  class="text-sm text-zinc-500 uppercase tracking-widest font-bold mx-auto pr-8">Source</span>
+              </div>
 
-            <!-- Local File -->
-            <div id="local-input-group" class="w-full hidden mt-2">
-              <label for="room-file-upload" class="file-label">Choose Video File</label>
-              <input type="file" id="room-file-upload" accept="video/*" hidden>
-              <p class="text-xs text-zinc-500 mt-3">Local files are only streamed from your device. Syncing is
-                supported.</p>
+              <!-- Guide exclusively for Telegram -->
+              <div id="telegram-guide" class="text-left bg-zinc-900 border border-zinc-800 p-4 rounded-xl mb-6 hidden">
+                <h4 class="text-white font-bold text-sm mb-2 flex items-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 16v-4" />
+                    <path d="M12 8h.01" />
+                  </svg>
+                  How to get Telegram link
+                </h4>
+                <p class="text-xs text-zinc-400 mb-3 leading-relaxed">Forward your movie file on Telegram to our direct
+                  streaming bot <a href="https://t.me/Vaanisetu_Streamer_bot" target="_blank"
+                    class="text-orange underline font-bold">@Vaanisetu_Streamer_bot</a>. The bot will reply with a
+                  direct
+                  playable link. Copy that link and paste it below.</p>
+              </div>
+
+              <!-- URL Inputs -->
+              <div id="url-input-group" class="flex gap-2 w-full hidden">
+                <input type="text" id="room-url-input" class="input flex-1" placeholder="Paste URL Here">
+                <button id="btn-play-url" class="btn btn-primary"
+                  style="width: auto; padding: 0.75rem 1.25rem;">Go</button>
+              </div>
+
+              <!-- Local File -->
+              <div id="local-input-group" class="w-full hidden mt-2">
+                <label for="room-file-upload" class="file-label">Choose Video File</label>
+                <input type="file" id="room-file-upload" accept="video/*" hidden>
+                <p class="text-xs text-zinc-500 mt-3">Local files are only streamed from your device. Syncing is
+                  supported.</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Chat Popup Modal -->
-      <div id="chat-popup" class="chat-popup closed">
-        <div class="sidebar-header border-b border-zinc-800 p-4 flex items-center justify-between bg-zinc-900">
-          <h2 class="font-bold text-white flex items-center gap-2 text-md">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-            Room Chat
-          </h2>
-          <button id="btn-close-sidebar" class="icon-btn hover-text text-zinc-500 bg-transparent border-none"
-            aria-label="Close chat">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              aria-hidden="true">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-          <!-- Messages will be injected here -->
-        </div>
-
-        <form id="chat-form" class="p-3 bg-zinc-950 border-t border-zinc-800">
-          <div class="relative w-full flex items-center">
-            <label for="chat-input" class="sr-only">Type a chat message</label>
-            <input type="text" id="chat-input" class="input w-full pr-12 text-sm bg-zinc-900" autocomplete="off"
-              placeholder="Type a message...">
-            <button type="submit" class="absolute right-2 text-orange bg-transparent border-none ptr-auto pointer p-1"
-              aria-label="Send message">
+        <!-- Chat Popup Modal -->
+        <div id="chat-popup" class="chat-popup closed">
+          <div class="sidebar-header border-b border-zinc-800 p-4 flex items-center justify-between bg-zinc-900">
+            <h2 class="font-bold text-white flex items-center gap-2 text-md">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              Room Chat
+            </h2>
+            <button id="btn-close-sidebar" class="icon-btn hover-text text-zinc-500 bg-transparent border-none"
+              aria-label="Close chat">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 aria-hidden="true">
-                <path d="m22 2-7 20-4-9-9-4Z" />
-                <path d="M22 2 11 13" />
+                <path d="M18 6 6 18M6 6l12 12" />
               </svg>
             </button>
           </div>
-        </form>
-      </div>
 
-      <!-- Player Settings Modal (inside room-view is fine, only used in room) -->
-      <div id="settings-modal" class="hidden items-center justify-center fade-in"
-        style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.6); z-index: 9999;">
-        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl w-full max-w-sm">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-bold text-white">Room Settings</h3>
-            <button id="btn-close-settings"
-              class="text-zinc-500 hover:text-white pointer bg-transparent border-none"><svg width="20" height="20"
-                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 6 6 18M6 6l12 12" />
-              </svg></button>
+          <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+            <!-- Messages will be injected here -->
           </div>
-          <p class="text-sm text-zinc-400 mb-6">Force a synchronization with your partner, or remove the current video
-            to select a new one.</p>
 
-          <button id="btn-force-sync" class="btn btn-primary w-full mb-3 flex items-center justify-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="m22 8-6 4 6 4V8Z" />
-              <rect x="2" y="6" width="14" height="12" rx="2" ry="2" />
-            </svg>
-            Sync with partner
-          </button>
-
-          <button id="btn-clear-chat-global"
-            class="btn btn-outline w-full text-orange mb-3 transition-colors flex items-center justify-center gap-2"
-            style="border-color: var(--orange);">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              <line x1="9" y1="9" x2="15" y2="15" />
-              <line x1="15" y1="9" x2="9" y2="15" />
-            </svg>
-            Clear Chat
-          </button>
-
-          <button id="btn-remove-video"
-            class="btn btn-outline w-full text-red-500 border-red-500 hover:bg-red-900 transition-colors flex items-center justify-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-            </svg>
-            Remove this video
-          </button>
-
-          <input type="hidden" id="settings-url-input">
-          <button id="btn-apply-settings" class="hidden">Apply</button>
+          <form id="chat-form" class="p-3 bg-zinc-950 border-t border-zinc-800">
+            <div class="relative w-full flex items-center">
+              <label for="chat-input" class="sr-only">Type a chat message</label>
+              <input type="text" id="chat-input" class="input w-full pr-12 text-sm bg-zinc-900" autocomplete="off"
+                placeholder="Type a message...">
+              <button type="submit" class="absolute right-2 text-orange bg-transparent border-none ptr-auto pointer p-1"
+                aria-label="Send message">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  aria-hidden="true">
+                  <path d="m22 2-7 20-4-9-9-4Z" />
+                  <path d="M22 2 11 13" />
+                </svg>
+              </button>
+            </div>
+          </form>
         </div>
-      </div>
 
-      <!-- Suggestions Section — Mobile carousel + PC sidebar -->
-      <div id="room-suggestions-container" class="hidden">
-        <h3>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-          Suggested Films
-        </h3>
-        <div class="suggestions-carousel" id="room-suggestions-carousel"></div>
-        <div id="room-suggestions-grid"></div>
-      </div>
+        <!-- Player Settings Modal (inside room-view is fine, only used in room) -->
+        <div id="settings-modal" class="hidden items-center justify-center fade-in"
+          style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.6); z-index: 9999;">
+          <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl w-full max-w-sm">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-bold text-white">Room Settings</h3>
+              <button id="btn-close-settings"
+                class="text-zinc-500 hover:text-white pointer bg-transparent border-none"><svg width="20" height="20"
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg></button>
+            </div>
+            <p class="text-sm text-zinc-400 mb-6">Force a synchronization with your partner, or remove the current video
+              to select a new one.</p>
+
+            <button id="btn-force-sync" class="btn btn-primary w-full mb-3 flex items-center justify-center gap-2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m22 8-6 4 6 4V8Z" />
+                <rect x="2" y="6" width="14" height="12" rx="2" ry="2" />
+              </svg>
+              Sync with partner
+            </button>
+
+            <button id="btn-clear-chat-global"
+              class="btn btn-outline w-full text-orange mb-3 transition-colors flex items-center justify-center gap-2"
+              style="border-color: var(--orange);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+                <line x1="15" y1="9" x2="9" y2="15" />
+              </svg>
+              Clear Chat
+            </button>
+
+            <button id="btn-remove-video"
+              class="btn btn-outline w-full text-red-500 border-red-500 hover:bg-red-900 transition-colors flex items-center justify-center gap-2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+              Remove this video
+            </button>
+
+            <input type="hidden" id="settings-url-input">
+            <button id="btn-apply-settings" class="hidden">Apply</button>
+          </div>
+        </div>
+
+        <!-- Suggestions Section — Mobile carousel + PC sidebar -->
+        <div id="room-suggestions-container" class="hidden">
+          <h3>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            Suggested Films
+          </h3>
+          <div class="suggestions-carousel" id="room-suggestions-carousel"></div>
+          <div id="room-suggestions-grid"></div>
+        </div>
 
       </div><!-- end room-view-inner -->
 
@@ -1899,7 +1983,8 @@
 
         <!-- Tabs -->
         <div class="film-store-tabs-bar">
-          <button id="tab-btn-browse" class="film-tab-btn active" onclick="switchFilmTab('browse')">Browse Films</button>
+          <button id="tab-btn-browse" class="film-tab-btn active" onclick="switchFilmTab('browse')">Browse
+            Films</button>
           <button id="tab-btn-rentals" class="film-tab-btn" onclick="switchFilmTab('rentals')">My Rentals</button>
           <button id="tab-btn-history" class="film-tab-btn" onclick="switchFilmTab('history')">📊 History</button>
         </div>
@@ -1951,6 +2036,15 @@
     </div>
     <div class="footer-copy">&copy; 2025 Vaanisethu. All rights reserved.</div>
   </footer>
+
+  <!-- ====== YouTube FAB Button ====== -->
+  <a href="https://www.youtube.com/@Vaanisethu" target="_blank" rel="noopener" id="youtube-fab" class="youtube-fab"
+    aria-label="Our YouTube Channel" title="Our YouTube Channel">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+      <path
+        d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.376.55 9.376.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+    </svg>
+  </a>
 
   <!-- ====== Help FAB Button ====== -->
   <button id="help-fab" class="help-fab" aria-label="Help and Contact" title="Help & Contact">
@@ -2079,17 +2173,18 @@
   <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js"></script>
   <!-- AdSterra Social Bar — floating ad unit for additional revenue (normal users only) -->
   <script src="https://millionairelucidlytransmitted.com/82/3a/60/823a60f46b088bcbd52fceb040961ab1.js"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
   <script type="module" src="/app.js?v=67"></script>
 
-<script>
-  window.addEventListener('error', function(e) {
-    if (e.message && e.message.includes('ResizeObserver')) return;
-    alert('Global Error: ' + e.message + ' at ' + e.filename + ':' + e.lineno);
-  });
-  window.addEventListener('unhandledrejection', function(e) {
-    alert('Unhandled Promise: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason)));
-  });
-</script>
+  <script>
+    window.addEventListener('error', function (e) {
+      if (e.message && e.message.includes('ResizeObserver')) return;
+      alert('Global Error: ' + e.message + ' at ' + e.filename + ':' + e.lineno);
+    });
+    window.addEventListener('unhandledrejection', function (e) {
+      alert('Unhandled Promise: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason)));
+    });
+  </script>
 
 </body>
 
