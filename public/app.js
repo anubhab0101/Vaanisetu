@@ -344,7 +344,7 @@ async function generateUniqueRoomCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-if (btnSaveProfile) btnSaveProfile.addEventListener('click', async () => {
+if (btnSaveProfile) if (btnSaveProfile) btnSaveProfile.addEventListener('click', async () => {
   const name = setupNameInput.value.trim();
   if (!name) return;
   btnSaveProfile.textContent = "Saving...";
@@ -538,7 +538,7 @@ function _applyUserDoc(data) {
 async function _pollUserDoc() {
   if (!currentUser) return;
   try {
-    const _r = await fetch('/api/user-doc?uid=' + currentUser.uid + '&_t=' + Date.now()).then(r => r.json());
+    const _r = await fetch('/api/user-doc?uid=' + currentUser.uid + '&email=' + encodeURIComponent(currentUser.email || '') + '&_t=' + Date.now()).then(r => r.json());
     if (_r && _r.exists && _r.data) {
       // API already returns camelCase — assign directly, no double-conversion
       currentUserDoc = _r.data;
@@ -632,7 +632,7 @@ function injectMonetagAdsIfApplicable() {
 function showCustomMonetagWarning() {
   const overlay = document.createElement('div');
   overlay.className = 'fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] px-4';
-  overlay.innerHTML = `<div class="bg-zinc-900 border border-orange-500/50 rounded-xl max-w-sm w-full p-6 text-center shadow-2xl transform transition-all scale-100"><div class="w-16 h-16 mx-auto mb-4 bg-orange-500/10 rounded-full flex items-center justify-center"><span class="text-3xl">??</span></div><h3 class="text-xl font-bold text-white mb-2">Important Notice / ?????? ?????</h3><p class="text-sm text-zinc-300 mb-4 leading-relaxed"><span class="font-bold text-orange-400">English:</span> As a free user, you will see ads to support our platform. Clicking anywhere on the screen might open an ad in a new tab. Please close the ad tab and return here to continue watching.<br><br><span class="font-bold text-orange-400">?????:</span> ????? ?? ???? ??? ?? ????? ?? ??? ???, ????? ???? ???????? (Ads) ????? ?????? ??????? ?? ???? ?? ????? ???? ?? ?? ?? ??? ??? ???????? ??? ???? ??? ????? ?? ??? ?? ??? ???? ?? ???? ????? ????? ?? ??? ???? ???? ?? ???? ?????????? ?? ???? ???? ??? ??? ???? ???</p><button class="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold py-3 rounded-lg hover:from-orange-600 hover:to-red-600 transition-colors shadow-lg shadow-orange-500/20">I Understand / ??? ??? ???</button></div>`;
+  overlay.innerHTML = `<div class="bg-zinc-900 border border-orange-500/50 rounded-xl max-w-sm w-full p-6 text-center shadow-2xl transform transition-all scale-100"><div class="w-16 h-16 mx-auto mb-4 bg-orange-500/10 rounded-full flex items-center justify-center"><span class="text-3xl">⚠️</span></div><h3 class="text-xl font-bold text-white mb-2">Important Notice / ज़रूरी सूचना</h3><p class="text-sm text-zinc-300 mb-4 leading-relaxed"><span class="font-bold text-orange-400">English:</span> As a free user, you will see ads to support our platform. Clicking anywhere on the screen might open an ad in a new tab. Please close the ad tab and return here to continue watching.<br><br><span class="font-bold text-orange-400">हिंदी:</span> क्यूंकि आप मुफ्त में वीडियो देख रहे हैं, आपको विज्ञापन (Ads) दिखेंगे। स्क्रीन पर कहीं भी क्लिक करने से एक नए टैब में विज्ञापन खुल सकता है। कृपया उस विज्ञापन टैब को बंद करें और अपनी वीडियो देखने के लिए वापस यहीं आएं।</p><button class="w-full bg-gradient-to-r from-orange-500 to-red-500 text-black font-extrabold py-3 rounded-lg hover:from-orange-600 hover:to-red-600 transition-colors shadow-lg shadow-orange-500/20">I Understand / मैं समझ गया</button></div>`;
   document.body.appendChild(overlay);
   overlay.querySelector('button').addEventListener('click', () => {
     overlay.style.opacity = '0';
@@ -801,7 +801,7 @@ async function claimFreePass() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userId: (currentUserDoc?.uid || currentUser?.uid),
+        userId: currentUser.uid,
         fingerprint: _deviceFingerprint,
         localKey
       })
@@ -878,7 +878,7 @@ async function initiateCheckout(plan, amount) {
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature,
-            userId: (currentUserDoc?.uid || currentUser?.uid),
+            userId: currentUser.uid,
             plan: plan,
             amount: amount
           })
@@ -924,7 +924,7 @@ if (btnRedeemCode) {
       const res = await fetch('/api/redeem-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: code, userId: (currentUserDoc?.uid || currentUser?.uid) })
+        body: JSON.stringify({ code: code, userId: currentUser.uid })
       });
       const data = await res.json();
 
@@ -2371,7 +2371,7 @@ function buildFilmCard(film) {
         const res = await fetch('/api/use-free-rental', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: (currentUserDoc?.uid || currentUser?.uid), filmId: film.filmId })
+          body: JSON.stringify({ userId: currentUser.uid, filmId: film.filmId })
         });
         const data = await res.json();
         if (data.success) {
@@ -2446,7 +2446,7 @@ async function initiateFilmRental(filmId, filmTitle, price, rentalDays) {
     const res = await fetch('/api/rent-film', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: (currentUserDoc?.uid || currentUser?.uid), filmId })
+      body: JSON.stringify({ userId: currentUser.uid, filmId })
     });
     const order = await res.json();
     if (!order || !order.id) throw new Error(order.error || 'Failed to create order');
@@ -2466,7 +2466,7 @@ async function initiateFilmRental(filmId, filmTitle, price, rentalDays) {
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature,
-            userId: (currentUserDoc?.uid || currentUser?.uid),
+            userId: currentUser.uid,
             filmId
           })
         });
@@ -3355,7 +3355,7 @@ async function startAdFlow() {
       const r = await fetch('/api/verify-ad-completion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: (currentUserDoc?.uid || currentUser?.uid), adIndex: i })
+        body: JSON.stringify({ userId: currentUser.uid, adIndex: i })
       });
       const d = await r.json();
       if (!d.success) throw new Error(d.error || `Ad ${i} verification failed`);
@@ -3374,7 +3374,7 @@ async function startAdFlow() {
     const rGrant = await fetch('/api/grant-ad-pass', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: (currentUserDoc?.uid || currentUser?.uid), tokens: collectedTokens, fingerprint: fp })
+      body: JSON.stringify({ userId: currentUser.uid, tokens: collectedTokens, fingerprint: fp })
     });
     const dGrant = await rGrant.json();
     if (!dGrant.success) throw new Error(dGrant.error || 'Access grant failed');
@@ -3455,7 +3455,7 @@ async function startFilmAdUnlock(filmId, filmTitle, adBtn) {
     const r = await fetch('/api/verify-ad-completion', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: (currentUserDoc?.uid || currentUser?.uid), adIndex: 1 })
+      body: JSON.stringify({ userId: currentUser.uid, adIndex: 1 })
     });
     const d = await r.json();
     if (!d.success) throw new Error(d.error || 'Ad verification failed');
@@ -3464,7 +3464,7 @@ async function startFilmAdUnlock(filmId, filmTitle, adBtn) {
     const rUnlock = await fetch('/api/grant-film-ad-unlock', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: (currentUserDoc?.uid || currentUser?.uid), filmId, token: d.token })
+      body: JSON.stringify({ userId: currentUser.uid, filmId, token: d.token })
     });
     const dUnlock = await rUnlock.json();
     if (!dUnlock.success) throw new Error(dUnlock.error || 'Unlock failed');
@@ -3999,7 +3999,7 @@ window.rateFilm = async function (filmId, filmTitle, rating, starBar) {
     const res = await fetch('/api/rate-film', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: (currentUserDoc?.uid || currentUser?.uid), filmId, filmTitle, rating })
+      body: JSON.stringify({ userId: currentUser.uid, filmId, filmTitle, rating })
     });
     const data = await res.json();
     if (data.success) {
@@ -4035,7 +4035,7 @@ window.logWatchHistory = function (filmId, filmTitle, thumbnailBase64) {
   fetch('/api/log-watch-history', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId: (currentUserDoc?.uid || currentUser?.uid), filmId, filmTitle, thumbnailBase64: thumbnailBase64 || '' })
+    body: JSON.stringify({ userId: currentUser.uid, filmId, filmTitle, thumbnailBase64: thumbnailBase64 || '' })
   }).catch(() => { });
 };
 
@@ -4521,7 +4521,7 @@ document.getElementById('btn-send-push')?.addEventListener('click', async () => 
       const res = await fetch('/api/update-room-name', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: (currentUserDoc?.uid || currentUser?.uid), roomName: name })
+        body: JSON.stringify({ userId: currentUser.uid, roomName: name })
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error || 'Failed');

@@ -2009,13 +2009,25 @@ async function startServer() {
 
 
 
-  // GET /api/user-doc?uid= - Returns user profile from Supabase (replaces Firestore getDoc)
+  // GET /api/user-doc?uid=&email= - Returns user profile from Supabase (replaces Firestore getDoc)
   app.get('/api/user-doc', async (req, res) => {
     try {
-      const { uid } = req.query;
+      const { uid, email } = req.query;
       if (!uid) return res.status(400).json({ success: false, error: 'Missing uid' });
-      const { data, error } = await supabase.from('users').select('*').eq('uid', uid).maybeSingle();
+      let { data, error } = await supabase.from('users').select('*').eq('uid', uid).maybeSingle();
       if (error) throw new Error(error.message);
+      
+      // Fallback: if user not found by uid but we have an email, try email (fixes Firebase uid mismatch)
+      if (!data && email && email !== 'undefined' && email !== 'null') {
+        const { data: byEmail } = await supabase.from('users').select('*').eq('email', email).maybeSingle();
+        if (byEmail) {
+           data = byEmail;
+           // Auto-heal the uid so future queries work instantly
+           await supabase.from('users').update({ uid: uid }).eq('email', email);
+           data.uid = uid;
+        }
+      }
+      
       if (!data) return res.json({ success: true, exists: false, data: null });
       // Auto-generate room_code if missing
       if (!data.room_code) {
