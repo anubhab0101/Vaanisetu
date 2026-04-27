@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <!-- NO Monetag meta here — login page must be 100% ad-free -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  <title>Login | Vaanisethu — Watch Movies Together</title>
+  <meta name="description" content="Login or create your Vaanisethu account to start watching movies together with friends and family.">
+  <meta name="robots" content="noindex, nofollow">
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/logo.png">
+
+  <!-- Firebase preconnect -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+  <main id="app-root" style="display:contents">
+    <div id="auth-view" class="view min-h-screen items-center justify-center fade-in" style="display:flex;">
+      <!-- Animated background orbs -->
+      <div class="auth-orb auth-orb-1" aria-hidden="true"></div>
+      <div class="auth-orb auth-orb-2" aria-hidden="true"></div>
+      <div class="auth-orb auth-orb-3" aria-hidden="true"></div>
+      <div class="header-center mx-auto fade-down">
+        <img src="/logo.png" alt="Vaanisethu Logo" class="mx-auto mb-4"
+          style="width: 80px; height: 80px; object-fit: cover; border-radius: 20px;">
+        <h1 class="gradient-text">Vaanisethu.online</h1>
+        <p class="subtitle text-zinc-400 mb-8">Login to continue</p>
+
+        <div class="card max-w-sm w-full mx-auto">
+          <form id="auth-form" class="w-full form-group text-left">
+            <h2 id="auth-title" class="text-xl font-bold text-center mb-4">Sign In</h2>
+
+            <div id="auth-error"
+              class="hidden text-sm text-center py-2 px-3 rounded-lg mb-3 bg-red-900 text-red-500"></div>
+
+            <div class="mb-4">
+              <label class="label" for="auth-email">Email</label>
+              <input type="email" id="auth-email" class="input w-full" required autocomplete="email">
+            </div>
+            <div class="mb-4" id="password-group">
+              <label class="label" for="auth-password">Password</label>
+              <input type="password" id="auth-password" class="input w-full" required autocomplete="current-password">
+            </div>
+
+            <div class="mb-4" id="auth-referral-group">
+              <label class="label" for="auth-referral">Referral Code <span class="text-zinc-500">(optional)</span></label>
+              <input type="text" id="auth-referral" class="input w-full uppercase mono" placeholder="FRIEND'S CODE">
+            </div>
+
+            <button type="submit" id="btn-auth-submit" class="btn btn-primary w-full mt-4">Sign In</button>
+
+            <div class="flex items-center justify-between mt-3 text-sm text-zinc-400">
+              <button type="button" id="btn-forgot-pwd" class="hover-text pointer bg-transparent border-none">Forgot
+                Password?</button>
+              <button type="button" id="btn-toggle-auth"
+                class="hover-text pointer bg-transparent border-none">Create Account</button>
+            </div>
+
+            <div class="divider my-4"><span>or</span></div>
+
+            <button type="button" id="btn-google-login"
+              class="btn btn-secondary w-full flex items-center justify-center gap-3">
+              <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                <path fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+              </svg>
+              Continue with Google
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="/login.js?v=2"></script>
+</body>
+
+</html>

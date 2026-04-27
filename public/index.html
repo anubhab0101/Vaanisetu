@@ -253,70 +253,7 @@
   <main id="app-root" style="display:contents" aria-label="Vaanisethu App">
 
     <!-- Auth View — hidden by default; only shown if user is not logged in -->
-    <div id="auth-view" class="view min-h-screen items-center justify-center fade-in" style="display:none;">
-      <!-- Animated background orbs -->
-      <div class="auth-orb auth-orb-1" aria-hidden="true"></div>
-      <div class="auth-orb auth-orb-2" aria-hidden="true"></div>
-      <div class="auth-orb auth-orb-3" aria-hidden="true"></div>
-      <div class="header-center mx-auto fade-down">
-        <img src="/logo.png" alt="Logo" class="mx-auto mb-4"
-          style="width: 80px; height: 80px; object-fit: cover; border-radius: 20px;">
-        <h1 class="gradient-text">Vaanisethu.online</h1>
-        <p class="subtitle text-zinc-400 mb-8">Login to continue</p>
-
-        <div class="card fade-up max-w-sm w-full mx-auto" style="animation-delay: 0.1s">
-          <form id="auth-form" class="w-full form-group text-left">
-            <h2 id="auth-title" class="text-xl font-bold text-center mb-4">Sign In</h2>
-
-            <div id="auth-error"
-              class="hidden text-red-500 text-sm mb-4 text-center bg-red-900 bg-opacity-20 p-2 rounded"></div>
-
-            <div class="mb-4">
-              <label for="auth-email" class="text-zinc-400 text-sm mb-1 block">Email</label>
-              <input type="email" id="auth-email" class="input w-full" required autocomplete="email">
-            </div>
-
-            <div class="mb-4" id="password-group">
-              <label for="auth-password" class="text-zinc-400 text-sm mb-1 block">Password</label>
-              <input type="password" id="auth-password" class="input w-full" required autocomplete="current-password">
-            </div>
-
-            <!-- Referral Code -->
-            <div class="mb-4" id="auth-referral-group">
-              <label for="auth-referral" class="text-zinc-400 text-sm mb-1 block">Referral Code (Optional)</label>
-              <input type="text" id="auth-referral" class="input w-full uppercase mono" placeholder="FRIEND'S CODE">
-              <p class="text-xs text-zinc-500 mt-1" style="color: #c084fc;">Get +3 to +7 bonus days on signup!</p>
-            </div>
-
-            <button type="submit" id="btn-auth-submit" class="btn btn-primary w-full mt-4">Sign In</button>
-
-            <div class="flex justify-between items-center text-sm mt-4 text-zinc-400 w-full mb-4">
-              <button type="button" id="btn-forgot-pwd" class="hover-text pointer bg-transparent border-none">Forgot
-                Password?</button>
-              <button type="button" id="btn-toggle-auth"
-                class="hover-text pointer text-orange bg-transparent border-none">Create Account</button>
-            </div>
-
-            <div class="or-divider">OR</div>
-
-            <button type="button" id="btn-google-login"
-              class="btn btn-outline w-full flex justify-center items-center gap-2">
-              <svg width="18" height="18" viewBox="0 0 24 24">
-                <path fill="currentColor"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                <path fill="currentColor"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                <path fill="currentColor"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                <path fill="currentColor"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-              </svg>
-              Continue with Google
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
+    
 
     <div id="setup-profile-view" class="view hidden min-h-screen items-center justify-center fade-in">
       <div class="card max-w-sm w-full mx-auto text-center" style="max-width: 24rem; margin: 0 auto;">
@@ -644,7 +581,7 @@
             </div>
             <div>
               <h4 class="text-white font-bold text-base mb-0">Free Access via Ads 📺</h4>
-              <p style="color:#c084fc;" class="text-xs mt-0">Watch 2 short ads → get 24hr full access</p>
+              <p style="color:#c084fc;" class="text-xs mt-0">Watch 4 short ads → get 24hr full access</p>
             </div>
           </div>
           <p class="text-zinc-400 text-xs mb-3">No payment required. Support Vaanisethu by watching 4 short ads and get
@@ -1664,6 +1601,9 @@
         <!-- Video Area -->
         <div id="video-container"
           class="video-area bg-zinc-950 flex items-center justify-center relative w-full h-full">
+          
+          <!-- Glowing Ad Instruction Banner -->
+          
           <div id="sync-overlay" class="absolute inset-0 bg-black-60 hidden flex items-center justify-center z-50">
             <button id="btn-sync-playback"
               class="btn btn-primary lg-btn transform-hover flex items-center gap-3 ptr-auto">
@@ -1676,6 +1616,23 @@
           </div>
 
           <!-- Custom Player Wrapper -->
+          <!-- Global Ad Instruction Banner -->
+  <div id="ad-instruction-banner" class="absolute top-[5%] left-1/2 transform -translate-x-1/2 bg-zinc-900 border border-purple-500/50 rounded-xl p-4 shadow-[0_0_20px_rgba(168,85,247,0.6)] w-[90%] max-w-lg hidden flex-col gap-3 pointer-events-auto" style="z-index: 99999;">
+    <button onclick="this.parentElement.classList.add('hidden')" class="absolute top-3 right-3 text-zinc-400 hover:text-white bg-zinc-800 rounded-full p-1" aria-label="Close">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+    </button>
+    <div class="flex items-center gap-2 text-purple-400 font-bold text-lg border-b border-zinc-800 pb-2">
+      <span class="animate-pulse">⚠️</span> Important Sponsor Notice
+    </div>
+    <p class="text-sm text-zinc-300 leading-relaxed">
+      To keep Vaanisethu 100% free, we rely on sponsorships. <br>If clicking anywhere opens a new tab, simply press <b class="text-white bg-zinc-800 px-1.5 py-0.5 rounded">BACK</b> to return here. Your controls will work perfectly after that!
+    </p>
+    <p class="text-xs text-zinc-400 leading-relaxed border-t border-zinc-800 pt-2">
+      <span class="text-orange-400/90 font-medium">Hindi:</span> Vaanisethu ko free rakhne ke liye ads use hote hain. Agar click karne par naya tab khule, toh bas <b class="text-white bg-zinc-800 px-1 py-0.5 rounded">BACK</b> daba kar wapas aa jayein. Phir sab normal kaam karega! 🙏
+    </p>
+    <button onclick="this.parentElement.classList.add('hidden')" class="mt-2 w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 rounded-lg transition-colors">I Understand</button>
+  </div>
+
           <div id="custom-player-wrapper"
             class="player-wrapper hidden relative w-full h-full flex items-center justify-center">
             <!-- YouTube IFrame Container -->
@@ -2185,6 +2142,7 @@
     });
   </script>
 
-</body>
+
+  </body>
 
 </html>

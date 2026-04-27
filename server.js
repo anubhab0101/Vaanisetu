@@ -475,15 +475,7 @@ async function startServer() {
     }
     res.setHeader('Content-Security-Policy',
       "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' " +
-        "https://checkout.razorpay.com https://cdn.razorpay.com " +
-        "https://www.gstatic.com https://www.googleapis.com https://apis.google.com " +
-        "https://cdn.jsdelivr.net " +
-        "https://www.youtube.com https://s.ytimg.com " +
-        "https://quge5.com https://*.quge5.com " +
-        "https://nap5k.com https://*.nap5k.com " +
-        "https://5gvci.com https://*.5gvci.com " +
-        "https://n6wxm.com https://*.n6wxm.com; " +
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: http:; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: blob: https:; " +
@@ -1143,13 +1135,8 @@ async function startServer() {
       }).eq('uid', userId);
       if (uErr) throw new Error(uErr.message);
 
-      // Log ad-pass grant — truly fire-and-forget (no await, never blocks response)
-      supabase.from('ad_passes').insert({
-        id: crypto.randomUUID(),
-        user_id: userId,
-        valid_until: adPassExpiry,
-        created_at: now
-      }).then(({ error }) => { if (error) console.warn('[ad_passes log]', error.message); });
+      // Log ad-pass grant to console (ad_passes table has FK to supabase auth.users — not compatible with Firebase UIDs)
+      console.log(`[ad_passes] Access granted: userId=${userId}, expiry=${adPassExpiry}`);
 
       res.json({ success: true, adPassExpiry, message: '\uD83C\uDF89 24-hour free access granted! Enjoy Vaanisethu.' });
     } catch (err) {
@@ -2218,4 +2205,5 @@ async function startServer() {
 }
 
 startServer();
+
 
