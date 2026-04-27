@@ -344,7 +344,7 @@ async function generateUniqueRoomCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-btnSaveProfile.addEventListener('click', async () => {
+if (btnSaveProfile) btnSaveProfile.addEventListener('click', async () => {
   const name = setupNameInput.value.trim();
   if (!name) return;
   btnSaveProfile.textContent = "Saving...";
@@ -539,7 +539,14 @@ async function _pollUserDoc() {
   if (!currentUser) return;
   try {
     const _r = await fetch('/api/user-doc?uid=' + currentUser.uid + '&_t=' + Date.now()).then(r => r.json());
-    if (_r && _r.exists && _r.data) _applyUserDoc(_r.data);
+    if (_r && _r.exists && _r.data) {
+      // API already returns camelCase — assign directly, no double-conversion
+      currentUserDoc = _r.data;
+      if (currentUser) localStorage.setItem('vsetu_userdoc_' + currentUser.uid, JSON.stringify({ exists: true, data: _r.data }));
+      const codeEl = document.getElementById('my-room-code');
+      if (codeEl) codeEl.textContent = _r.data.roomCode || '';
+      checkAccessAndRoute();
+    }
   } catch (e) { }
 }
 let _sbChannel = null;

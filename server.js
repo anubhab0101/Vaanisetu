@@ -1127,13 +1127,50 @@ async function startServer() {
         await supabase.from('ad_tokens').update({ used: true }).eq('id', tokenRows[0].id);
       }
 
-      // Grant 24hr ad-pass — only update columns that actually exist in schema
+      // Grant 24hr ad-pass — use upsert so new users get row created if missing
       const adPassExpiry = now + (24 * 60 * 60 * 1000);
-      const { error: uErr } = await supabase.from('users').update({
+
+      // First try update (for existing users)
+      const { data: updateData, error: uErr } = await supabase.from('users').update({
         active_subscription: 'ad-pass',
         subscription_expiry: adPassExpiry
-      }).eq('uid', userId);
+      }).eq('uid', userId).select('uid');
       if (uErr) throw new Error(uErr.message);
+
+      // If no rows were updated (new user, row doesn't exist yet), upsert using Firebase Auth email
+      if (!updateData || updateData.length === 0) {
+        console.warn(`[grant-ad-pass] No row found for uid=${userId}, attempting upsert via Firebase...`);
+        let userEmail = null;
+        try {
+          if (firebaseAuth) {
+            const fbUser = await firebaseAuth.getUser(userId);
+            userEmail = fbUser.email || null;
+          }
+        } catch (fbErr) {
+          console.warn('[grant-ad-pass] Could not fetch Firebase user:', fbErr.message);
+        }
+        if (!userEmail) throw new Error('Could not find user account. Please complete profile setup first.');
+
+        // Check if row exists by email (e.g. created with different uid)
+        const { data: byEmail } = await supabase.from('users').select('uid').eq('email', userEmail).maybeSingle();
+        if (byEmail) {
+          // Update by email instead
+          await supabase.from('users').update({
+            active_subscription: 'ad-pass',
+            subscription_expiry: adPassExpiry
+          }).eq('email', userEmail);
+        } else {
+          // Create minimal row with required fields
+          const { error: upsertErr } = await supabase.from('users').upsert({
+            uid: userId,
+            email: userEmail,
+            active_subscription: 'ad-pass',
+            subscription_expiry: adPassExpiry,
+            created_at: now
+          }, { onConflict: 'uid' });
+          if (upsertErr) throw new Error('Upsert failed: ' + upsertErr.message);
+        }
+      }
 
       // Log ad-pass grant to console (ad_passes table has FK to supabase auth.users — not compatible with Firebase UIDs)
       console.log(`[ad_passes] Access granted: userId=${userId}, expiry=${adPassExpiry}`);
