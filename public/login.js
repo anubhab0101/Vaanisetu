@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import {
   getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, onAuthStateChanged
+  GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, signInWithPopup, sendPasswordResetEmail, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -32,9 +32,13 @@ const btnToggleAuth = document.getElementById('btn-toggle-auth');
 const btnGoogleLogin = document.getElementById('btn-google-login');
 const authTitle = document.getElementById('auth-title');
 const authError = document.getElementById('auth-error');
+const emailGroup = document.getElementById('auth-email').parentElement;
+const btnPhoneLogin = document.getElementById('btn-phone-login');
 const passwordGroup = document.getElementById('password-group');
 // ==== AUTH & PROFILE LOGIC ====
 let authMode = 'login';
+
+
 
 btnToggleAuth.addEventListener('click', () => {
   if (authMode === 'login') {
@@ -53,6 +57,8 @@ btnToggleAuth.addEventListener('click', () => {
     authPassword.required = true;
   }
   authError.classList.add('hidden');
+  emailGroup.classList.remove('hidden');
+    otpGroup.classList.add('hidden');
 });
 
 btnForgotPwd.addEventListener('click', () => {
@@ -63,11 +69,15 @@ btnForgotPwd.addEventListener('click', () => {
   passwordGroup.classList.add('hidden');
   authPassword.required = false;
   authError.classList.add('hidden');
+  emailGroup.classList.remove('hidden');
+    otpGroup.classList.add('hidden');
 });
 
 authForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   authError.classList.add('hidden');
+  emailGroup.classList.remove('hidden');
+    otpGroup.classList.add('hidden');
   btnAuthSubmit.disabled = true;
   const authRefForm = document.getElementById('auth-referral');
   if (authRefForm && authRefForm.value) window._pendingAuthReferral = authRefForm.value.trim().toUpperCase();
@@ -106,3 +116,5 @@ btnGoogleLogin.addEventListener('click', async () => {
     authError.textContent = error.message.replace('Firebase:', '').trim();
   }
 });
+
+
