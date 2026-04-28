@@ -600,39 +600,24 @@ function hasValidAccess() {
   return false;
 }
 
-let _monetagInjected = false;
-function injectMonetagAdsIfApplicable() {
-  if (_monetagInjected) return;
+let _adsenseInjected = false;
+function injectAdSenseIfApplicable() {
+  if (_adsenseInjected) return;
   const paidPlans = ['weekly', 'monthly', 'access-code', 'extended_by_admin', 'one-time'];
   const isPaid = currentUserDoc && paidPlans.includes(currentUserDoc.activeSubscription) && currentUserDoc.subscriptionExpiry > Date.now();
   if (isPaid || currentUser.email === 'anubhabmohapatra.01@gmail.com') return;
 
-  // 1. Onclick (Popunder)
-  const s1 = document.createElement('script');
-  s1.src = 'https://quge5.com/88/tag.min.js';
-  s1.dataset.zone = '233739';
-  s1.async = true;
-  s1.dataset.cfasync = 'false';
-  document.head.appendChild(s1);
-
-  // 2. In-Page Push
-  (function (s) { s.dataset.zone = '10928467', s.src = 'https://nap5k.com/tag.min.js' })([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')));
-
-  // 3. Push Notifications
-  const s3 = document.createElement('script');
-  s3.src = 'https://5gvci.com/act/files/tag.min.js?z=10928470';
-  s3.async = true;
-  s3.dataset.cfasync = 'false';
-  document.head.appendChild(s3);
-
-  _monetagInjected = true;
+  // Google AdSense is loaded via index.html <script async src="...">
+  // Auto-ads will automatically inject themselves if configured in the AdSense dashboard.
+  
+  _adsenseInjected = true;
 }
 
 
-function showCustomMonetagWarning() {
+function showCustomAdWarning() {
   const overlay = document.createElement('div');
   overlay.className = 'fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] px-4';
-  overlay.innerHTML = `<div class="bg-zinc-900 border border-orange-500/50 rounded-xl max-w-sm w-full p-6 text-center shadow-2xl transform transition-all scale-100"><div class="w-16 h-16 mx-auto mb-4 bg-orange-500/10 rounded-full flex items-center justify-center"><span class="text-3xl">⚠️</span></div><h3 class="text-xl font-bold text-white mb-2">Important Notice / ज़रूरी सूचना</h3><p class="text-sm text-zinc-300 mb-4 leading-relaxed"><span class="font-bold text-orange-400">English:</span> As a free user, you will see ads to support our platform. Clicking anywhere on the screen might open an ad in a new tab. Please close the ad tab and return here to continue watching.<br><br><span class="font-bold text-orange-400">हिंदी:</span> क्यूंकि आप मुफ्त में वीडियो देख रहे हैं, आपको विज्ञापन (Ads) दिखेंगे। स्क्रीन पर कहीं भी क्लिक करने से एक नए टैब में विज्ञापन खुल सकता है। कृपया उस विज्ञापन टैब को बंद करें और अपनी वीडियो देखने के लिए वापस यहीं आएं।</p><button class="w-full bg-gradient-to-r from-orange-500 to-red-500 text-black font-extrabold py-3 rounded-lg hover:from-orange-600 hover:to-red-600 transition-colors shadow-lg shadow-orange-500/20">I Understand / मैं समझ गया</button></div>`;
+  overlay.innerHTML = `<div class="bg-zinc-900 border border-orange-500/50 rounded-xl max-w-sm w-full p-6 text-center shadow-2xl transform transition-all scale-100"><div class="w-16 h-16 mx-auto mb-4 bg-orange-500/10 rounded-full flex items-center justify-center"><span class="text-3xl">⚠️</span></div><h3 class="text-xl font-bold text-white mb-2">Important Notice / ज़रूरी सूचना</h3><p class="text-sm text-zinc-300 mb-4 leading-relaxed"><span class="font-bold text-orange-400">English:</span> As a free user, you will see occasional banner ads to support our platform. Thank you for your support!<br><br><span class="font-bold text-orange-400">हिंदी:</span> क्यूंकि आप मुफ्त में वीडियो देख रहे हैं, आपको स्क्रीन पर कुछ विज्ञापन (Ads) दिखेंगे। सपोर्ट करने के लिए धन्यवाद!</p><button class="w-full bg-gradient-to-r from-orange-500 to-red-500 text-black font-extrabold py-3 rounded-lg hover:from-orange-600 hover:to-red-600 transition-colors shadow-lg shadow-orange-500/20">I Understand / मैं समझ गया</button></div>`;
   document.body.appendChild(overlay);
   overlay.querySelector('button').addEventListener('click', () => {
     overlay.style.opacity = '0';
@@ -643,10 +628,10 @@ function showCustomMonetagWarning() {
 function checkAccessAndRoute() {
   if (adminView && !adminView.classList.contains('hidden')) return; // let them stay in admin view
 
-  injectMonetagAdsIfApplicable();
-  if (sessionStorage.getItem('showMonetagWarning') === 'true') {
-    sessionStorage.removeItem('showMonetagWarning');
-    showCustomMonetagWarning();
+  injectAdSenseIfApplicable();
+  if (sessionStorage.getItem('showAdWarning') === 'true') {
+    sessionStorage.removeItem('showAdWarning');
+    showCustomAdWarning();
   }
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -775,7 +760,7 @@ async function claimFreePass() {
       msgEl.className = 'text-xs mt-3 text-red-400';
       msgEl.classList.remove('hidden');
     }
-    btn.textContent = 'Claim Free 24-Hour Pass';
+    btn.textContent = 'Claim Free 4-Hour Pass';
     btn.disabled = false;
     return;
   }
@@ -824,7 +809,7 @@ async function claimFreePass() {
         msgEl.className = 'text-xs mt-3 text-red-400';
         msgEl.classList.remove('hidden');
       }
-      btn.textContent = 'Claim Free 24-Hour Pass';
+      btn.textContent = 'Claim Free 4-Hour Pass';
       btn.disabled = false;
     }
   } catch (e) {
@@ -833,7 +818,7 @@ async function claimFreePass() {
       msgEl.className = 'text-xs mt-3 text-red-400';
       msgEl.classList.remove('hidden');
     }
-    btn.textContent = 'Claim Free 24-Hour Pass';
+    btn.textContent = 'Claim Free 4-Hour Pass';
     btn.disabled = false;
   }
 }
@@ -3278,11 +3263,27 @@ function showAdModal(adNum, totalAds, durationSecs = 30) {
 
       const fallback = document.createElement('div');
       fallback.id = 'ad-modal-fallback';
-      fallback.style.cssText = `display:flex; flex-direction:column; align-items:center; justify-content:center; width:300px; min-height:250px; text-align:center; gap:0.75rem; padding:1.5rem; color:#71717a; font-size:0.8rem;`; fallback.innerHTML = `<div class="animate-pulse" style="font-size:4rem; margin-bottom:1rem;">👆</div><div style="font-weight:800;color:#a855f7;font-size:1.2rem;margin-bottom:0.5rem;">TAP TO VIEW SPONSOR</div><div style="font-size:0.85rem;color:#d4d4d8;line-height:1.5;max-width:250px;">    Tap anywhere on the screen, then press BACK to return.<br>    <span style="color:#71717a;font-size:0.75rem;">Access granted automatically.</span></div>`;
+      fallback.style.cssText = `display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; min-height:250px; text-align:center; gap:0.75rem; padding:1.5rem; color:#71717a; font-size:0.8rem;`; 
+      fallback.innerHTML = `<div class="animate-pulse" style="font-size:3rem; margin-bottom:1rem;">⏳</div><div style="font-weight:800;color:#a855f7;font-size:1.2rem;margin-bottom:0.5rem;">LOADING SPONSOR MESSAGE</div><div style="font-size:0.85rem;color:#d4d4d8;line-height:1.5;max-width:250px;">Please wait while the ad loads...<br><span style="color:#71717a;font-size:0.75rem;">Access granted automatically after countdown.</span></div>
+      
+      <!-- AdSense Ad Unit Placeholder -->
+      <ins class="adsbygoogle"
+           style="display:block; width:100%; margin-top:10px;"
+           data-ad-client="ca-pub-6945763754748904"
+           data-ad-slot="5720828633"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      `;
       bannerDiv.appendChild(fallback);
+      
+      // Initialize AdSense dynamically
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      } catch (e) {
+        console.warn("AdSense failed to push:", e);
+      }
 
-      // INJECT VIGNETTE AD SCRIPT
-      (function (s) { s.dataset.zone = '10928460', s.src = 'https://n6wxm.com/vignette.min.js' })([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')));
+      // AdSense is handled via the <ins> tag above
     }
 
     modal.style.display = 'flex';
@@ -3381,12 +3382,12 @@ async function startAdFlow() {
 
     if (stepEls[4]) stepEls[4].className = 'ad-step-indicator ad-step-done';
     if (msgEl) {
-      msgEl.textContent = '\u{1F389} 24-hour access granted! Redirecting...';
+      msgEl.textContent = '\u{1F389} 4-hour access granted! Redirecting...';
       msgEl.className = 'text-xs mt-3 text-center text-green-400';
       msgEl.classList.remove('hidden');
     }
 
-    showToast('\u{1F389} 24-hour free access granted!', 'success', 4000);
+    showToast('\u{1F389} 4-hour free access granted!', 'success', 4000);
 
     // Force-refresh user doc (handles snake_case→camelCase) then route to dashboard
     setTimeout(async () => {
@@ -3403,7 +3404,7 @@ async function startAdFlow() {
     }
     // Reset all steps
     stepEls.forEach(el => { if (el) el.className = 'ad-step-indicator ad-step-pending'; });
-    if (btn) { btn.disabled = false; btn.textContent = '\u{1F4FA} Watch 4 Ads & Get Free 24hr Access'; }
+    if (btn) { btn.disabled = false; btn.textContent = '\u{1F4FA} Watch 4 Ads & Get Free 4hr Access'; }
   }
 }
 
@@ -3447,7 +3448,7 @@ async function startFilmAdUnlock(filmId, filmTitle, adBtn) {
 
   try {
     // Show the ad modal \u2014 30s countdown
-    await showAdModal(1, 1, 30);
+    await showAdModal(1, 1, 60);
 
     if (adBtn) adBtn.textContent = '\u23F3 Verifying...';
 
@@ -3631,11 +3632,25 @@ function showInMovieAd() {
     // Fallback UI \u2014 shown if ad script fails / is blocked
     const fallback = document.createElement('div');
     fallback.id = 'inmovie-ad-fallback';
-    fallback.style.cssText = `display:flex; flex-direction:column; align-items:center; justify-content:center; width:300px; min-height:250px; text-align:center; gap:0.75rem; padding:1.5rem; color:#71717a; font-size:0.8rem;`; fallback.innerHTML = `<div class="animate-pulse" style="font-size:4rem; margin-bottom:1rem;">👆</div><div style="font-weight:800;color:#a855f7;font-size:1.2rem;margin-bottom:0.5rem;">TAP TO VIEW SPONSOR</div><div style="font-size:0.85rem;color:#d4d4d8;line-height:1.5;max-width:250px;">Tap anywhere on the screen, then press BACK to return.<br><span style="color:#71717a;font-size:0.75rem;">Movie resumes automatically after 15s.</span></div>`;
+    fallback.style.cssText = `display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; min-height:250px; text-align:center; gap:0.75rem; padding:1.5rem; color:#71717a; font-size:0.8rem;`; 
+    fallback.innerHTML = `<div class="animate-pulse" style="font-size:3rem; margin-bottom:1rem;">⏳</div><div style="font-weight:800;color:#a855f7;font-size:1.2rem;margin-bottom:0.5rem;">LOADING SPONSOR MESSAGE</div><div style="font-size:0.85rem;color:#d4d4d8;line-height:1.5;max-width:250px;">Please wait while the ad loads...<br><span style="color:#71717a;font-size:0.75rem;">Movie resumes automatically after 15s.</span></div>
+    
+    <!-- AdSense Ad Unit Placeholder -->
+    <ins class="adsbygoogle"
+         style="display:block; width:100%; margin-top:10px;"
+         data-ad-client="ca-pub-6945763754748904"
+         data-ad-slot="5720828633"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    `;
     inmovieSlot.appendChild(fallback);
 
-    // INJECT VIGNETTE AD SCRIPT
-    (function (s) { s.dataset.zone = '10928460', s.src = 'https://n6wxm.com/vignette.min.js' })([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')));
+    // Initialize AdSense dynamically
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (e) {
+      console.warn("AdSense failed to push:", e);
+    }
 
 
   }
@@ -4240,7 +4255,7 @@ document.getElementById('btn-send-push')?.addEventListener('click', async () => 
     const plan = window._mobUserPlan || 'free';
     const subEl = document.getElementById('mob-sub-status');
     if (subEl) {
-      const labels = { 'monthly': '\u2705 Monthly Active', 'weekly': '\u2705 Weekly Active', 'one-time': '\u2705 24Hr Active', 'ad-pass': 'Ad Pass', 'free': 'Free' };
+      const labels = { 'monthly': '\u2705 Monthly Active', 'weekly': '\u2705 Weekly Active', 'one-time': '\u2705 4Hr Active', 'ad-pass': 'Ad Pass', 'free': 'Free' };
       subEl.textContent = labels[plan] || plan;
     }
 
@@ -4249,7 +4264,7 @@ document.getElementById('btn-send-push')?.addEventListener('click', async () => 
     if (badge) {
       if (plan === 'monthly') { badge.textContent = '\u{1F49C} Monthly Premium'; badge.style.background = 'rgba(168,85,247,0.15)'; badge.style.color = '#c084fc'; badge.style.borderColor = 'rgba(168,85,247,0.4)'; }
       else if (plan === 'weekly') { badge.textContent = '\u{1F7E0} Weekly Premium'; badge.style.background = 'rgba(249,115,22,0.15)'; badge.style.color = '#f97316'; badge.style.borderColor = 'rgba(249,115,22,0.4)'; }
-      else if (plan === 'one-time') { badge.textContent = '\u23F1 24-Hour Pass'; badge.style.background = 'rgba(234,179,8,0.15)'; badge.style.color = '#eab308'; badge.style.borderColor = 'rgba(234,179,8,0.4)'; }
+      else if (plan === 'one-time') { badge.textContent = '\u23F1 4-Hour Pass'; badge.style.background = 'rgba(234,179,8,0.15)'; badge.style.color = '#eab308'; badge.style.borderColor = 'rgba(234,179,8,0.4)'; }
       else { badge.textContent = 'Free Plan'; badge.style.background = ''; badge.style.color = ''; badge.style.borderColor = ''; }
     }
 
@@ -4486,7 +4501,7 @@ document.getElementById('btn-send-push')?.addEventListener('click', async () => 
       const data = await res.json();
       const items = data.purchases || [];
       if (!items.length) { list.innerHTML = '<p style="color:#52525b;text-align:center;padding:2rem 0;">No purchases yet \u{1F4B3}</p>'; return; }
-      const planLabels = { 'one-time': '24-Hour Pass', 'weekly': 'Weekly Pass', 'monthly': 'Monthly Pass', 'access-code': 'Access Code' };
+      const planLabels = { 'one-time': '4-Hour Pass', 'weekly': 'Weekly Pass', 'monthly': 'Monthly Pass', 'access-code': 'Access Code' };
       list.innerHTML = items.map(p => {
         const dateStr = p.timestamp ? new Date(p.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
         const amtStr = p.amount ? `\u20B9${(p.amount / 100).toFixed(0)}` : '-';

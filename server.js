@@ -1128,7 +1128,7 @@ async function startServer() {
       }
 
       // Grant 24hr ad-pass — use upsert so new users get row created if missing
-      const adPassExpiry = now + (24 * 60 * 60 * 1000);
+      const adPassExpiry = now + (4 * 60 * 60 * 1000);
 
       // First try update (for existing users)
       const { data: updateData, error: uErr } = await supabase.from('users').update({
@@ -1175,7 +1175,7 @@ async function startServer() {
       // Log ad-pass grant to console (ad_passes table has FK to supabase auth.users — not compatible with Firebase UIDs)
       console.log(`[ad_passes] Access granted: userId=${userId}, expiry=${adPassExpiry}`);
 
-      res.json({ success: true, adPassExpiry, message: '\uD83C\uDF89 24-hour free access granted! Enjoy Vaanisethu.' });
+      res.json({ success: true, adPassExpiry, message: '\uD83C\uDF89 4-hour free access granted! Enjoy Vaanisethu.' });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: err.message });
