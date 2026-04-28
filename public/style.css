@@ -3272,11 +3272,11 @@ video {
   /* Keep only the first column (Room card + manual join) visible */
   /* Allowed flex on all children */
 
-  /* Manual join inside first col - hide on mobile (room code already visible) */
-  #mob-sec-home #btn-join,
+  /* Manual join inside first col - shown on mobile as requested */
+  /* #mob-sec-home #btn-join,
   #mob-sec-home .card.fade-up:has(#join-key-input) {
     display: none !important;
-  }
+  } */
 }
 
 /* ════════════════════════════════════════════════
