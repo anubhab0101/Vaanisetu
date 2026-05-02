@@ -18,7 +18,7 @@ const auth = getAuth(app);
 
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    window.location.replace('/');
+    window.location.replace('/' + window.location.search);
   }
 });
 
