@@ -515,7 +515,7 @@ onAuthStateChanged(auth, async (user) => {
     roomView.classList.add('hidden'); dashView.classList.add('hidden'); setupProfileView.classList.add('hidden');
     paymentView.classList.add('hidden'); adminView.classList.add('hidden');
     // Reveal auth view \u2014 override the default display:none set in HTML
-    window.location.replace('/login.html');
+    window.location.replace('/login.html' + window.location.search);
     if (unsubscribeDoc) { unsubscribeDoc(); unsubscribeDoc = null; }
     if (currentUser) localStorage.removeItem('vsetu_userdoc_' + currentUser.uid);
   }
