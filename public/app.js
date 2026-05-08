@@ -59,11 +59,13 @@ function initYTPlayer() {
   });
 }
 
-window.onYouTubeIframeAPIReady = initYTPlayer;
-
-if (window.YT && window.YT.Player) {
-  initYTPlayer();
-} else {
+function loadYouTubeApi() {
+  if (window.YT && window.YT.Player) {
+    initYTPlayer();
+    return;
+  }
+  if (document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) return;
+  window.onYouTubeIframeAPIReady = initYTPlayer;
   const ytScriptTag = document.createElement('script');
   ytScriptTag.src = "https://www.youtube.com/iframe_api";
   const firstScriptTag = document.getElementsByTagName('script')[0];
@@ -166,6 +168,7 @@ async function getPlatformConfig() {
 // Views
 const authView = { classList: { add: ()=>{}, remove: ()=>{} }, style: {} }; // auth-view is on login.html
 const setupProfileView = document.getElementById('setup-profile-view');
+const publicContentView = document.getElementById('public-content-view');
 const dashView = document.getElementById('dashboard-view');
 const roomView = document.getElementById('room-view');
 const paymentView = document.getElementById('payment-view');
@@ -424,6 +427,7 @@ onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
     sessionUserId = user.uid;
+    if (publicContentView) publicContentView.classList.add('hidden');
     // \u26A0\uFE0F DO NOT hide authView here \u2014 wait until we know which view to show
     // authView will be hidden inside the branches below to prevent black screen
 
@@ -514,8 +518,12 @@ onAuthStateChanged(auth, async (user) => {
     if (ws) { ws.close(); ws = null; currentRoomId = null; }
     roomView.classList.add('hidden'); dashView.classList.add('hidden'); setupProfileView.classList.add('hidden');
     paymentView.classList.add('hidden'); adminView.classList.add('hidden');
-    // Reveal auth view \u2014 override the default display:none set in HTML
-    window.location.replace('/login.html' + window.location.search);
+    if (publicContentView) {
+      publicContentView.classList.remove('hidden');
+      publicContentView.querySelectorAll('a[href="/login.html"]').forEach((link) => {
+        link.href = '/login.html' + window.location.search;
+      });
+    }
     if (unsubscribeDoc) { unsubscribeDoc(); unsubscribeDoc = null; }
     if (currentUser) localStorage.removeItem('vsetu_userdoc_' + currentUser.uid);
   }
@@ -607,9 +615,8 @@ function injectAdSenseIfApplicable() {
   const isPaid = currentUserDoc && paidPlans.includes(currentUserDoc.activeSubscription) && currentUserDoc.subscriptionExpiry > Date.now();
   if (isPaid || currentUser.email === 'anubhabmohapatra.01@gmail.com') return;
 
-  // Google AdSense is loaded via index.html <script async src="...">
-  // Auto-ads will automatically inject themselves if configured in the AdSense dashboard.
-  
+  // Google ad code is intentionally not loaded inside the signed-in SPA. Google-served ads
+  // must not appear on login, setup, payment, alert, navigation, or private playback screens.
   _adsenseInjected = true;
 }
 
@@ -1636,6 +1643,7 @@ function handleNewUrl(formattedUrl, broadcast = false) {
 
   const isYouTube = formattedUrl && (formattedUrl.includes('youtu.be') || formattedUrl.includes('youtube.com'));
   if (isYouTube) {
+    loadYouTubeApi();
     isYouTubeMode = true;
     mainVideo.classList.add('hidden');
     mainVideo.pause();
@@ -3266,24 +3274,9 @@ function showAdModal(adNum, totalAds, durationSecs = 30) {
       fallback.style.cssText = `display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; min-height:250px; text-align:center; gap:0.75rem; padding:1.5rem; color:#71717a; font-size:0.8rem;`; 
       fallback.innerHTML = `<div class="animate-pulse" style="font-size:3rem; margin-bottom:1rem;">⏳</div><div style="font-weight:800;color:#a855f7;font-size:1.2rem;margin-bottom:0.5rem;">LOADING SPONSOR MESSAGE</div><div style="font-size:0.85rem;color:#d4d4d8;line-height:1.5;max-width:250px;">Please wait while the ad loads...<br><span style="color:#71717a;font-size:0.75rem;">Access granted automatically after countdown.</span></div>
       
-      <!-- AdSense Ad Unit Placeholder -->
-      <ins class="adsbygoogle"
-           style="display:block; width:100%; margin-top:10px;"
-           data-ad-client="ca-pub-6945763754748904"
-           data-ad-slot="5720828633"
-           data-ad-format="auto"
-           data-full-width-responsive="true"></ins>
       `;
       bannerDiv.appendChild(fallback);
       
-      // Initialize AdSense dynamically
-      try {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-      } catch (e) {
-        console.warn("AdSense failed to push:", e);
-      }
-
-      // AdSense is handled via the <ins> tag above
     }
 
     modal.style.display = 'flex';
@@ -3635,23 +3628,8 @@ function showInMovieAd() {
     fallback.style.cssText = `display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; min-height:250px; text-align:center; gap:0.75rem; padding:1.5rem; color:#71717a; font-size:0.8rem;`; 
     fallback.innerHTML = `<div class="animate-pulse" style="font-size:3rem; margin-bottom:1rem;">⏳</div><div style="font-weight:800;color:#a855f7;font-size:1.2rem;margin-bottom:0.5rem;">LOADING SPONSOR MESSAGE</div><div style="font-size:0.85rem;color:#d4d4d8;line-height:1.5;max-width:250px;">Please wait while the ad loads...<br><span style="color:#71717a;font-size:0.75rem;">Movie resumes automatically after 15s.</span></div>
     
-    <!-- AdSense Ad Unit Placeholder -->
-    <ins class="adsbygoogle"
-         style="display:block; width:100%; margin-top:10px;"
-         data-ad-client="ca-pub-6945763754748904"
-         data-ad-slot="5720828633"
-         data-ad-format="auto"
-         data-full-width-responsive="true"></ins>
     `;
     inmovieSlot.appendChild(fallback);
-
-    // Initialize AdSense dynamically
-    try {
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
-    } catch (e) {
-      console.warn("AdSense failed to push:", e);
-    }
-
 
   }
 
