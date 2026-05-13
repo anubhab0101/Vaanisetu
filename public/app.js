@@ -1535,6 +1535,7 @@ function showRoom(roomId, url = null, file = null) {
   if (url) handleNewUrl(url, true);
   if (file) { currentVideoFile = file; handleNewUrl(URL.createObjectURL(file), false); }
   initWebSocket();
+  syncPhoneLandscapeRoomMode();
 
   // Show emoji tray and WhatsApp share in room header
   const emojiCont = document.getElementById('emoji-tray-container');
@@ -4852,6 +4853,36 @@ window.checkAndShowGlobalAdWarning = function() {
 
 function checkAndShowGlobalAdWarning() { window.checkAndShowGlobalAdWarning(); }
 
+
+// Keep mobile rotation inside the room UI instead of letting the player become fullscreen.
+function syncPhoneLandscapeRoomMode() {
+  const room = document.getElementById('room-view');
+  const video = document.getElementById('main-video');
+  const isRoomVisible = !!room && !room.classList.contains('hidden');
+  const vv = window.visualViewport;
+  const width = vv ? vv.width : window.innerWidth;
+  const height = vv ? vv.height : window.innerHeight;
+  const isPhoneLandscape = isRoomVisible && width > height && height <= 520 && width <= 950;
+
+  document.documentElement.classList.toggle('vsetu-phone-landscape', isPhoneLandscape);
+  document.body.classList.toggle('vsetu-phone-landscape', isPhoneLandscape);
+
+  if (!isPhoneLandscape || !video) return;
+  video.setAttribute('playsinline', '');
+  video.setAttribute('webkit-playsinline', '');
+  video.playsInline = true;
+
+  try { if (document.fullscreenElement) document.exitFullscreen(); } catch (_) {}
+  try { if (document.webkitFullscreenElement) document.webkitExitFullscreen(); } catch (_) {}
+  try { if (video.webkitDisplayingFullscreen && video.webkitExitFullscreen) video.webkitExitFullscreen(); } catch (_) {}
+}
+
+window.addEventListener('orientationchange', () => setTimeout(syncPhoneLandscapeRoomMode, 120));
+window.addEventListener('resize', syncPhoneLandscapeRoomMode);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', syncPhoneLandscapeRoomMode);
+document.addEventListener('fullscreenchange', syncPhoneLandscapeRoomMode);
+document.addEventListener('webkitfullscreenchange', syncPhoneLandscapeRoomMode);
+document.addEventListener('DOMContentLoaded', syncPhoneLandscapeRoomMode);
 // ================================================================
 // ================================================================
 // AGORA VIDEO CALL — Floating Draggable Panel (PC + Mobile)
@@ -5376,6 +5407,7 @@ function checkAndShowGlobalAdWarning() { window.checkAndShowGlobalAdWarning(); }
   document.addEventListener('vaanisethu:room-left', async () => {
     if (_callActive) await endCall();
     hidePanel();
+    syncPhoneLandscapeRoomMode();
   });
 
   // -- INIT ------------------------------------------------------
