@@ -227,7 +227,7 @@
   <link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin>
   <link rel="dns-prefetch" href="https://checkout.razorpay.com">
 
-  <link rel="stylesheet" href="/style.css?v=32">
+  <link rel="stylesheet" href="/style.css?v=33">
 
   <!-- Skip loading screen on back-navigation (runs before render) -->
   <script>if (sessionStorage.getItem('_vns_loaded')) { document.documentElement.classList.add('no-splash'); }</script>
@@ -2250,7 +2250,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js"></script>
   <!-- Google ad code is intentionally not loaded on signed-in app screens. -->
-  <script type="module" src="/app.js?v=69"></script>
+  <script type="module" src="/app.js?v=70"></script>
 
   <script>
     window.addEventListener('error', function (e) {
@@ -2263,44 +2263,104 @@
   </script>
 
 
-  
-    <!-- -------------------------------------------------------
-         VIDEO CALL MODAL — Agora WebRTC
-         ------------------------------------------------------- -->
-    <div id="vcall-modal" style="display:none;position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.92);backdrop-filter:blur(12px);" aria-label="Video Call">
-      <!-- Header Bar -->
-      <div id="vcall-header" style="position:absolute;top:0;left:0;right:0;height:56px;background:linear-gradient(90deg,rgba(10,10,15,0.95),rgba(18,18,22,0.95));border-bottom:1px solid rgba(74,222,128,0.2);display:flex;align-items:center;justify-content:space-between;padding:0 1rem;z-index:2;">
-        <div style="display:flex;align-items:center;gap:0.6rem;">
-          <span style="width:8px;height:8px;border-radius:50%;background:#4ade80;box-shadow:0 0 8px #4ade80;display:inline-block;" id="vcall-live-dot"></span>
-          <span style="font-weight:800;color:white;font-size:0.95rem;">Video Call</span>
-          <span id="vcall-room-label" style="font-size:0.75rem;color:#71717a;font-family:monospace;"></span>
+
+    <!-- ---------------------------------------------------------------
+         VIDEO CALL — Unified Draggable Floating Panel (PC + Mobile)
+         --------------------------------------------------------------- -->
+
+    <!-- Landscape: Suggestions Toggle Arrow Button -->
+    <button id="vcall-ls-suggestions-btn" aria-label="Show Suggestions" title="Suggestions"
+      style="display:none;position:fixed;right:10px;top:50%;transform:translateY(-50%);
+             z-index:8001;background:rgba(18,18,22,0.92);border:1px solid #3f3f46;
+             border-radius:10px;padding:10px 7px;color:#f97316;cursor:pointer;
+             box-shadow:0 4px 16px rgba(0,0,0,0.5);transition:all 0.2s;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </button>
+
+    <!-- Floating Video Call Panel -->
+    <div id="vcall-float"
+      style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(300px,calc(100vw - 20px));max-width:calc(100vw - 16px);background:rgba(9,9,13,0.93);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(74,222,128,0.28);border-radius:16px;z-index:9500;box-shadow:0 8px 40px rgba(0,0,0,0.7);overflow:hidden;min-width:180px;user-select:none;touch-action:none;">
+
+      <!-- Drag Handle Header -->
+      <div id="vcall-drag-handle"
+        style="display:flex;align-items:center;gap:0.4rem;padding:7px 10px;
+               background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.06);
+               cursor:grab;flex-shrink:0;">
+        <span id="vcall-live-dot"
+          style="width:6px;height:6px;border-radius:50%;background:#4ade80;flex-shrink:0;"></span>
+        <span style="font-weight:800;color:white;font-size:0.73rem;letter-spacing:0.02em;flex-shrink:0;">Video Call</span>
+        <span id="vcall-room-label"
+          style="font-size:0.67rem;color:#52525b;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;"></span>
+        <!-- Size controls -->
+        <div style="display:flex;align-items:center;gap:3px;flex-shrink:0;">
+          <button id="vcall-size-sm" class="vcall-size-btn" title="Small" aria-label="Small size"
+            style="width:18px;height:18px;border-radius:4px;background:rgba(255,255,255,0.08);border:none;color:#71717a;cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;">S</button>
+          <button id="vcall-size-md" class="vcall-size-btn vcall-size-active" title="Medium" aria-label="Medium size"
+            style="width:18px;height:18px;border-radius:4px;background:rgba(74,222,128,0.2);border:none;color:#4ade80;cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;">M</button>
+          <button id="vcall-size-lg" class="vcall-size-btn" title="Large" aria-label="Large size"
+            style="width:18px;height:18px;border-radius:4px;background:rgba(255,255,255,0.08);border:none;color:#71717a;cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;">L</button>
         </div>
-        <div style="display:flex;align-items:center;gap:0.5rem;">
-          <button id="vcall-btn-mic" title="Mute/Unmute" aria-label="Toggle microphone" style="background:rgba(74,222,128,0.15);border:1px solid rgba(74,222,128,0.3);border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;color:#4ade80;">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-          </button>
-          <button id="vcall-btn-cam" title="Camera On/Off" aria-label="Toggle camera" style="background:rgba(74,222,128,0.15);border:1px solid rgba(74,222,128,0.3);border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;color:#4ade80;">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-          </button>
-          <button id="vcall-btn-end" title="End Call" aria-label="End video call" style="background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;color:#f87171;">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
-          </button>
-        </div>
+        <!-- End call -->
+        <button id="vcall-btn-end" aria-label="End call" title="End Call"
+          style="width:22px;height:22px;border-radius:50%;background:rgba(239,68,68,0.25);border:1px solid rgba(239,68,68,0.45);color:#f87171;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/>
+          </svg>
+        </button>
       </div>
+
       <!-- Video Grid -->
-      <div id="vcall-grid" style="position:absolute;top:56px;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:4px;padding:4px;align-items:center;background:#0a0a0f;overflow-y:auto;">
-        <!-- Remote video tiles appended here by JS -->
-        <div id="vcall-local-tile" style="position:relative;background:#111118;border-radius:12px;overflow:hidden;min-height:200px;display:flex;align-items:center;justify-content:center;border:2px solid rgba(74,222,128,0.3);">
-          <div id="vcall-local-video" style="width:100%;height:100%;min-height:200px;"></div>
-          <div style="position:absolute;bottom:8px;left:10px;background:rgba(0,0,0,0.7);border-radius:6px;padding:2px 8px;font-size:0.7rem;color:#4ade80;font-weight:700;">You</div>
+      <div id="vcall-float-grid"
+        style="display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;background:#0a0a0f;min-height:140px;">
+        <!-- Local tile -->
+        <div id="vcall-local-tile"
+          style="position:relative;background:#111118;border-radius:9px;overflow:hidden;
+                 min-height:120px;display:flex;align-items:center;justify-content:center;
+                 border:1.5px solid rgba(74,222,128,0.35);">
+          <div id="vcall-local-video" style="width:100%;height:100%;min-height:120px;"></div>
+          <span style="position:absolute;bottom:5px;left:7px;background:rgba(0,0,0,0.7);
+                       border-radius:5px;padding:1px 6px;font-size:0.62rem;color:#4ade80;font-weight:700;">You</span>
         </div>
+        <!-- Remote tiles appended here by JS -->
       </div>
-      <!-- Status overlay -->
-      <div id="vcall-status" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;display:none;">
-        <div style="font-size:2.5rem;margin-bottom:0.5rem;">??</div>
-        <p id="vcall-status-text" style="color:#4ade80;font-weight:700;font-size:1rem;"></p>
+
+      <!-- Status line -->
+      <div id="vcall-float-status"
+        style="display:none;text-align:center;padding:4px 8px;font-size:0.68rem;color:#4ade80;background:#0a0a0f;"></div>
+
+      <!-- Controls — hidden by default, shown on hover (PC) / tap (mobile) -->
+      <div id="vcall-float-controls"
+        style="display:flex;align-items:center;justify-content:center;gap:8px;
+               padding:6px 10px;background:rgba(255,255,255,0.03);
+               border-top:1px solid rgba(255,255,255,0.05);">
+        <button id="vcall-btn-mic" aria-label="Toggle mic" title="Mic"
+          style="width:34px;height:34px;border-radius:50%;background:rgba(74,222,128,0.15);
+                 border:1.5px solid rgba(74,222,128,0.35);color:#4ade80;cursor:pointer;
+                 display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+          </svg>
+        </button>
+        <button id="vcall-btn-cam" aria-label="Toggle camera" title="Camera"
+          style="width:34px;height:34px;border-radius:50%;background:rgba(74,222,128,0.15);
+                 border:1.5px solid rgba(74,222,128,0.35);color:#4ade80;cursor:pointer;
+                 display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Resize corner handle -->
+      <div id="vcall-resize-handle"
+        style="position:absolute;bottom:0;left:0;width:18px;height:18px;cursor:nw-resize;
+               display:flex;align-items:center;justify-content:center;opacity:0.4;color:#4ade80;">
+        <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 10 L10 0 M0 6 L6 0 M0 2 L2 0" stroke="currentColor" stroke-width="1.2"/></svg>
       </div>
     </div>
 </body>
-
 </html>
