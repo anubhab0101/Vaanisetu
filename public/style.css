@@ -2581,18 +2581,7 @@ video {
   }
 }
 
-/* Landscape on mobile: let video expand but DON'T go fullscreen */
-@media (max-width: 900px) and (orientation: landscape) {
-  #main-video {
-    max-height: 100svh;
-    width: 100%;
-    object-fit: contain;
-  }
-  /* Keep room controls visible, just compressed */
-  #room-view {
-    padding-top: 0;
-  }
-}
+/* Landscape handled by .vsetu-phone-landscape so the player stays inside the room UI. */
 /* =========================================
    V2 FEATURES — EMOJI REACTIONS, RATINGS,
    LEADERBOARD, HOST BADGE, HISTORY
@@ -4010,4 +3999,74 @@ video {
     right: auto !important;
     transform: none !important;
   }
+}
+/* Phone landscape: rotate the room layout, not the video into fullscreen */
+html.vsetu-phone-landscape,
+body.vsetu-phone-landscape {
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+html.vsetu-phone-landscape #room-view {
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  overflow: hidden !important;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+html.vsetu-phone-landscape #room-view .top-bar {
+  position: relative !important;
+  flex: 0 0 auto;
+  min-height: 48px;
+  padding: max(0.35rem, env(safe-area-inset-top)) 0.55rem 0.35rem !important;
+  background: rgba(0,0,0,0.94) !important;
+}
+
+html.vsetu-phone-landscape #room-view-inner {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: row !important;
+  min-height: 0 !important;
+  height: calc(100dvh - 48px - env(safe-area-inset-top)) !important;
+  overflow: hidden !important;
+}
+
+html.vsetu-phone-landscape #video-container {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: hidden !important;
+}
+
+html.vsetu-phone-landscape #custom-player-wrapper,
+html.vsetu-phone-landscape #youtube-player-container {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  border-radius: 0 !important;
+}
+
+html.vsetu-phone-landscape #youtube-player-container {
+  inset: 0 !important;
+}
+
+html.vsetu-phone-landscape #main-video {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+}
+
+html.vsetu-phone-landscape #room-suggestions-container {
+  display: none !important;
+}
+
+html.vsetu-phone-landscape #chat-popup {
+  max-height: calc(100dvh - 48px) !important;
 }
