@@ -1617,6 +1617,8 @@ function leaveRoom() {
   currentGuestAccessRoom = null;
   checkAccessAndRoute(); // This will show Dashboard if valid, or Payment wall if unauthorized
 
+  // Notify video call module to cleanup
+  document.dispatchEvent(new CustomEvent('vaanisethu:room-left'));
   initWebSocket(true); // fall back to presence mode
 }
 
@@ -4849,3 +4851,275 @@ window.checkAndShowGlobalAdWarning = function() {
 };
 
 function checkAndShowGlobalAdWarning() { window.checkAndShowGlobalAdWarning(); }
+
+// ================================================================
+// AGORA VIDEO CALL — Complete WebRTC Integration
+// ================================================================
+(function () {
+  'use strict';
+
+  // -- State -----------------------------------------------------
+  let _agoraClient = null;
+  let _localVideoTrack = null;
+  let _localAudioTrack = null;
+  let _isMicMuted = false;
+  let _isCamOff = false;
+  let _callActive = false;
+  let _callChannelName = null;
+
+  // -- DOM refs --------------------------------------------------
+  const _modal    = () => document.getElementById('vcall-modal');
+  const _grid     = () => document.getElementById('vcall-grid');
+  const _btnMic   = () => document.getElementById('vcall-btn-mic');
+  const _btnCam   = () => document.getElementById('vcall-btn-cam');
+  const _btnEnd   = () => document.getElementById('vcall-btn-end');
+  const _btnStart = () => document.getElementById('btn-video-call');
+  const _status   = () => document.getElementById('vcall-status');
+  const _statusTx = () => document.getElementById('vcall-status-text');
+  const _roomLbl  = () => document.getElementById('vcall-room-label');
+
+  // -- Show status overlay ---------------------------------------
+  function showStatus(msg) {
+    const s = _status(); const t = _statusTx();
+    if (!s || !t) return;
+    t.textContent = msg;
+    s.style.display = msg ? 'block' : 'none';
+  }
+
+  // -- Load Agora SDK dynamically --------------------------------
+  async function loadAgoraSDK() {
+    if (window.AgoraRTC) return window.AgoraRTC;
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://download.agora.io/sdk/release/AgoraRTC_N-4.22.0.js';
+      s.onload = () => resolve(window.AgoraRTC);
+      s.onerror = () => reject(new Error('Failed to load Agora SDK'));
+      document.head.appendChild(s);
+    });
+  }
+
+  // -- Fetch Agora token from our server -------------------------
+  async function fetchToken(channelName) {
+    const uid = Math.floor(Math.random() * 100000) + 1;
+    const res = await fetch(`/api/agora-token?channelName=${encodeURIComponent(channelName)}&uid=${uid}`);
+    if (!res.ok) throw new Error('Token fetch failed');
+    return res.json(); // { token, appId, channelName, uid }
+  }
+
+  // -- Create remote user tile -----------------------------------
+  function createRemoteTile(uid) {
+    const tile = document.createElement('div');
+    tile.id = `vcall-tile-${uid}`;
+    tile.style.cssText = `position:relative;background:#111118;border-radius:12px;overflow:hidden;
+      min-height:200px;display:flex;align-items:center;justify-content:center;
+      border:1px solid rgba(255,255,255,0.08);`;
+    tile.innerHTML = `
+      <div id="vcall-remote-video-${uid}" style="width:100%;height:100%;min-height:200px;"></div>
+      <div style="position:absolute;bottom:8px;left:10px;background:rgba(0,0,0,0.7);
+        border-radius:6px;padding:2px 8px;font-size:0.7rem;color:#e4e4e7;font-weight:700;">
+        User ${uid}
+      </div>`;
+    return tile;
+  }
+
+  // -- Start Video Call ------------------------------------------
+  async function startCall() {
+    if (_callActive) { openModal(); return; }
+
+    const channelName = window.currentRoomId || currentRoomId;
+    if (!channelName) {
+      alert('Join a room first before starting a video call!');
+      return;
+    }
+
+    openModal();
+    showStatus('Connecting...');
+
+    try {
+      const AgoraRTC = await loadAgoraSDK();
+      AgoraRTC.setLogLevel(3); // errors only
+
+      // Fetch token
+      const { token, appId, uid } = await fetchToken(channelName);
+      _callChannelName = channelName;
+
+      // Create client
+      _agoraClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+
+      // Handle remote users
+      _agoraClient.on('user-published', async (user, mediaType) => {
+        await _agoraClient.subscribe(user, mediaType);
+        if (mediaType === 'video') {
+          const g = _grid();
+          if (g && !document.getElementById(`vcall-tile-${user.uid}`)) {
+            const tile = createRemoteTile(user.uid);
+            g.appendChild(tile);
+          }
+          user.videoTrack.play(`vcall-remote-video-${user.uid}`);
+          showStatus('');
+        }
+        if (mediaType === 'audio') { user.audioTrack.play(); }
+      });
+
+      _agoraClient.on('user-unpublished', (user, mediaType) => {
+        if (mediaType === 'video') {
+          const tile = document.getElementById(`vcall-tile-${user.uid}`);
+          if (tile) tile.remove();
+        }
+      });
+
+      _agoraClient.on('user-left', (user) => {
+        const tile = document.getElementById(`vcall-tile-${user.uid}`);
+        if (tile) tile.remove();
+        const remoteCount = (_grid()?.querySelectorAll('[id^="vcall-tile-"]').length || 0);
+        if (remoteCount === 0) showStatus('Waiting for others to join...');
+      });
+
+      // Join channel
+      await _agoraClient.join(appId, channelName, token, uid);
+
+      // Create local tracks
+      [_localAudioTrack, _localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks(
+        { echoCancellation: true, noiseSuppression: true },
+        { encoderConfig: '480p_2' }
+      );
+
+      // Play local video
+      const localContainer = document.getElementById('vcall-local-video');
+      if (localContainer) _localVideoTrack.play(localContainer);
+
+      // Publish tracks
+      await _agoraClient.publish([_localAudioTrack, _localVideoTrack]);
+
+      _callActive = true;
+      showStatus('');
+
+      // Update room label
+      if (_roomLbl()) _roomLbl().textContent = '#' + channelName;
+
+      // Glow the button
+      const btn = _btnStart();
+      if (btn) {
+        btn.style.background = 'rgba(74,222,128,0.35)';
+        btn.style.boxShadow = '0 0 12px rgba(74,222,128,0.5)';
+      }
+
+      // If no remote users yet
+      const remoteCount = (_grid()?.querySelectorAll('[id^="vcall-tile-"]').length || 0);
+      if (remoteCount === 0) showStatus('Waiting for others to join...');
+
+    } catch (err) {
+      console.error('[VideoCall]', err);
+      showStatus('Error: ' + (err.message || 'Could not start call'));
+      // Show user-friendly error
+      setTimeout(() => {
+        if (!_callActive) closeModal();
+      }, 3000);
+    }
+  }
+
+  // -- Open / Close Modal ----------------------------------------
+  function openModal() {
+    const m = _modal();
+    if (m) { m.style.display = 'block'; }
+  }
+
+  function closeModal() {
+    const m = _modal();
+    if (m) m.style.display = 'none';
+  }
+
+  // -- End Call --------------------------------------------------
+  async function endCall() {
+    _callActive = false;
+    _callChannelName = null;
+
+    if (_localAudioTrack) { _localAudioTrack.stop(); _localAudioTrack.close(); _localAudioTrack = null; }
+    if (_localVideoTrack) { _localVideoTrack.stop(); _localVideoTrack.close(); _localVideoTrack = null; }
+    if (_agoraClient) { try { await _agoraClient.leave(); } catch (_) {} _agoraClient = null; }
+
+    // Clear remote tiles
+    const g = _grid();
+    if (g) {
+      g.querySelectorAll('[id^="vcall-tile-"]').forEach(el => el.remove());
+    }
+
+    // Reset local video div
+    const lv = document.getElementById('vcall-local-video');
+    if (lv) lv.innerHTML = '';
+
+    // Reset button glow
+    const btn = _btnStart();
+    if (btn) { btn.style.background = ''; btn.style.boxShadow = ''; }
+
+    // Reset controls
+    _isMicMuted = false; _isCamOff = false;
+    updateMicBtn(); updateCamBtn();
+
+    closeModal();
+  }
+
+  // -- Toggle Mic ------------------------------------------------
+  function updateMicBtn() {
+    const b = _btnMic(); if (!b) return;
+    if (_isMicMuted) {
+      b.style.background = 'rgba(239,68,68,0.2)';
+      b.style.borderColor = 'rgba(239,68,68,0.4)';
+      b.style.color = '#f87171';
+      b.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`;
+    } else {
+      b.style.background = 'rgba(74,222,128,0.15)';
+      b.style.borderColor = 'rgba(74,222,128,0.3)';
+      b.style.color = '#4ade80';
+      b.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`;
+    }
+  }
+
+  // -- Toggle Camera ---------------------------------------------
+  function updateCamBtn() {
+    const b = _btnCam(); if (!b) return;
+    if (_isCamOff) {
+      b.style.background = 'rgba(239,68,68,0.2)';
+      b.style.borderColor = 'rgba(239,68,68,0.4)';
+      b.style.color = '#f87171';
+    } else {
+      b.style.background = 'rgba(74,222,128,0.15)';
+      b.style.borderColor = 'rgba(74,222,128,0.3)';
+      b.style.color = '#4ade80';
+    }
+  }
+
+  // -- Event Listeners -------------------------------------------
+  document.addEventListener('click', async (e) => {
+    // Start call button
+    if (e.target.closest('#btn-video-call')) { await startCall(); return; }
+
+    // Toggle mic
+    if (e.target.closest('#vcall-btn-mic')) {
+      if (!_callActive || !_localAudioTrack) return;
+      _isMicMuted = !_isMicMuted;
+      await _localAudioTrack.setEnabled(!_isMicMuted);
+      updateMicBtn();
+      return;
+    }
+
+    // Toggle camera
+    if (e.target.closest('#vcall-btn-cam')) {
+      if (!_callActive || !_localVideoTrack) return;
+      _isCamOff = !_isCamOff;
+      await _localVideoTrack.setEnabled(!_isCamOff);
+      updateCamBtn();
+      return;
+    }
+
+    // End call
+    if (e.target.closest('#vcall-btn-end')) { await endCall(); return; }
+  });
+
+  // Clean up when leaving a room
+  const _origLeaveRoom = window.leaveRoom;
+  document.addEventListener('vaanisethu:room-left', async () => {
+    if (_callActive) await endCall();
+  });
+
+})();

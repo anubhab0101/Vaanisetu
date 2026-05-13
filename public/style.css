@@ -3756,3 +3756,82 @@ video {
   top: 0 !important;
   left: 0 !important;
 }
+
+/* ================================================================
+   VIDEO CALL — Agora UI Styles
+   ================================================================ */
+
+/* Glowing video call button in top bar */
+.vcall-btn {
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+.vcall-btn:hover {
+  background: rgba(74, 222, 128, 0.3) !important;
+  box-shadow: 0 0 14px rgba(74, 222, 128, 0.45);
+  transform: scale(1.08);
+}
+
+/* Video call modal */
+#vcall-modal {
+  animation: vcall-fadein 0.25s ease;
+}
+@keyframes vcall-fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Remote video tiles entrance animation */
+#vcall-grid > div {
+  animation: vcall-tile-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes vcall-tile-in {
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Agora video element fill */
+#vcall-grid video,
+#vcall-local-tile video,
+[id^="vcall-remote-video-"] video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* Pulse on the live dot */
+#vcall-live-dot {
+  animation: vcall-pulse 1.8s ease-in-out infinite;
+}
+@keyframes vcall-pulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(74, 222, 128, 0.6); opacity: 1; }
+  50%       { box-shadow: 0 0 16px rgba(74, 222, 128, 1); opacity: 0.75; }
+}
+
+/* Control buttons hover */
+#vcall-header button:hover {
+  filter: brightness(1.25);
+  transform: scale(1.1);
+}
+#vcall-header button {
+  transition: filter 0.15s, transform 0.15s;
+}
+
+/* Status overlay text */
+#vcall-status-text {
+  animation: vcall-status-blink 1.5s ease-in-out infinite alternate;
+}
+@keyframes vcall-status-blink {
+  from { opacity: 0.6; }
+  to   { opacity: 1; }
+}
+
+/* Grid responsive */
+@media (max-width: 600px) {
+  #vcall-grid {
+    grid-template-columns: 1fr !important;
+  }
+  #vcall-header {
+    padding: 0 0.6rem;
+  }
+}

@@ -13,6 +13,8 @@ import crypto from "crypto";
 import compression from "compression";
 import webPush from "web-push";
 import nodemailer from 'nodemailer';
+import agoraPkg from 'agora-token';
+const { RtcTokenBuilder, RtcRole } = agoraPkg;
 
 // ── Supabase (primary database) ─────────────────────────────────
 const supabase = createClient(
@@ -468,7 +470,7 @@ async function startServer() {
     // Cross-Origin isolation
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
     // Permissions policy
-    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(self "https://checkout.razorpay.com")');
+    res.setHeader('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=(), payment=(self "https://checkout.razorpay.com")');
     // HSTS (only on HTTPS)
     if (req.headers['x-forwarded-proto'] === 'https' || req.secure) {
       res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
@@ -493,6 +495,31 @@ async function startServer() {
   });
 
   app.get('/ping', (req, res) => res.status(200).send('pong'));
+
+  // ── Agora RTC Token Generator ────────────────────────────────────
+  // Generates a short-lived (1hr) token for secure Agora video calls.
+  // channelName = room code, uid = numeric user id (0 = any)
+  app.get('/api/agora-token', (req, res) => {
+    try {
+      const { channelName, uid } = req.query;
+      if (!channelName) return res.status(400).json({ error: 'channelName required' });
+      const appId = process.env.AGORA_APP_ID;
+      const appCertificate = process.env.AGORA_APP_CERTIFICATE;
+      if (!appId || !appCertificate) return res.status(500).json({ error: 'Agora credentials not configured' });
+      const numericUid = parseInt(uid) || 0;
+      const expirationTimeInSeconds = 3600; // 1 hour
+      const currentTimestamp = Math.floor(Date.now() / 1000);
+      const privilegeExpiredTs = currentTimestamp + expirationTimeInSeconds;
+      const token = RtcTokenBuilder.buildTokenWithUid(
+        appId, appCertificate, channelName, numericUid,
+        RtcRole.PUBLISHER, privilegeExpiredTs, privilegeExpiredTs
+      );
+      res.json({ token, appId, channelName, uid: numericUid });
+    } catch (err) {
+      console.error('[Agora] Token generation error:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
 
   // Razorpay Endpoints
   app.post('/api/create-order', async (req, res) => {
