@@ -4853,273 +4853,557 @@ window.checkAndShowGlobalAdWarning = function() {
 function checkAndShowGlobalAdWarning() { window.checkAndShowGlobalAdWarning(); }
 
 // ================================================================
-// AGORA VIDEO CALL — Complete WebRTC Integration
+// ================================================================
+// AGORA VIDEO CALL — Floating Draggable Panel (PC + Mobile)
 // ================================================================
 (function () {
   'use strict';
 
   // -- State -----------------------------------------------------
-  let _agoraClient = null;
-  let _localVideoTrack = null;
-  let _localAudioTrack = null;
-  let _isMicMuted = false;
-  let _isCamOff = false;
+  let _client = null;
+  let _localAudio = null;
+  let _localVideo = null;
+  let _micMuted = false;
+  let _camOff = false;
   let _callActive = false;
-  let _callChannelName = null;
+  let _callStarting = false;
+  let _callEnding = false;
+  let _callSessionId = 0;
+  let _publishInFlight = false;
 
-  // -- DOM refs --------------------------------------------------
-  const _modal    = () => document.getElementById('vcall-modal');
-  const _grid     = () => document.getElementById('vcall-grid');
-  const _btnMic   = () => document.getElementById('vcall-btn-mic');
-  const _btnCam   = () => document.getElementById('vcall-btn-cam');
-  const _btnEnd   = () => document.getElementById('vcall-btn-end');
-  const _btnStart = () => document.getElementById('btn-video-call');
-  const _status   = () => document.getElementById('vcall-status');
-  const _statusTx = () => document.getElementById('vcall-status-text');
-  const _roomLbl  = () => document.getElementById('vcall-room-label');
+  // -- DOM helpers -----------------------------------------------
+  const $ = id => document.getElementById(id);
+  const panel    = () => $('vcall-float');
+  const grid     = () => $('vcall-float-grid');
+  const lsBtn    = () => $('vcall-ls-suggestions-btn');
+  const sugPanel = () => $('room-suggestions-container');
 
-  // -- Show status overlay ---------------------------------------
-  function showStatus(msg) {
-    const s = _status(); const t = _statusTx();
-    if (!s || !t) return;
-    t.textContent = msg;
-    s.style.display = msg ? 'block' : 'none';
-  }
-
-  // -- Load Agora SDK dynamically --------------------------------
-  async function loadAgoraSDK() {
+  // -- Load Agora SDK --------------------------------------------
+  async function loadSDK() {
     if (window.AgoraRTC) return window.AgoraRTC;
-    return new Promise((resolve, reject) => {
+    return new Promise((res, rej) => {
       const s = document.createElement('script');
       s.src = 'https://download.agora.io/sdk/release/AgoraRTC_N-4.22.0.js';
-      s.onload = () => resolve(window.AgoraRTC);
-      s.onerror = () => reject(new Error('Failed to load Agora SDK'));
+      s.onload  = () => res(window.AgoraRTC);
+      s.onerror = () => rej(new Error('Agora SDK load failed'));
       document.head.appendChild(s);
     });
   }
 
-  // -- Fetch Agora token from our server -------------------------
-  async function fetchToken(channelName) {
-    const uid = Math.floor(Math.random() * 100000) + 1;
-    const res = await fetch(`/api/agora-token?channelName=${encodeURIComponent(channelName)}&uid=${uid}`);
-    if (!res.ok) throw new Error('Token fetch failed');
-    return res.json(); // { token, appId, channelName, uid }
+  // -- Fetch token -----------------------------------------------
+  async function getToken(ch) {
+    const uid = Math.floor(Math.random() * 99999) + 1;
+    const r = await fetch(`/api/agora-token?channelName=${encodeURIComponent(ch)}&uid=${uid}`);
+    if (!r.ok) throw new Error('Token error');
+    return r.json();
   }
 
-  // -- Create remote user tile -----------------------------------
-  function createRemoteTile(uid) {
-    const tile = document.createElement('div');
-    tile.id = `vcall-tile-${uid}`;
-    tile.style.cssText = `position:relative;background:#111118;border-radius:12px;overflow:hidden;
-      min-height:200px;display:flex;align-items:center;justify-content:center;
-      border:1px solid rgba(255,255,255,0.08);`;
-    tile.innerHTML = `
-      <div id="vcall-remote-video-${uid}" style="width:100%;height:100%;min-height:200px;"></div>
-      <div style="position:absolute;bottom:8px;left:10px;background:rgba(0,0,0,0.7);
-        border-radius:6px;padding:2px 8px;font-size:0.7rem;color:#e4e4e7;font-weight:700;">
-        User ${uid}
-      </div>`;
-    return tile;
+  // -- Status text -----------------------------------------------
+  function setStatus(msg) {
+    const el = $('vcall-float-status');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.display = msg ? 'block' : 'none';
   }
 
-  // -- Start Video Call ------------------------------------------
+  // -- Remote tile -----------------------------------------------
+  function addRemoteTile(uid) {
+    if ($(`vcall-remote-tile-${uid}`)) return;
+    const g = grid(); if (!g) return;
+    const t = document.createElement('div');
+    t.id = `vcall-remote-tile-${uid}`;
+    t.style.cssText = `position:relative;background:#111118;border-radius:9px;overflow:hidden;
+      min-height:120px;display:flex;align-items:center;justify-content:center;
+      border:1.5px solid rgba(255,255,255,0.08);`;
+    t.innerHTML = `<div id="vcall-rv-${uid}" style="width:100%;height:100%;min-height:120px;"></div>
+      <span style="position:absolute;bottom:5px;left:7px;background:rgba(0,0,0,0.7);
+        border-radius:5px;padding:1px 6px;font-size:0.62rem;color:#e4e4e7;font-weight:700;">User ${uid}</span>`;
+    g.appendChild(t);
+    // Solo = full width
+    const tiles = g.querySelectorAll('[id^="vcall-remote-tile-"],[id="vcall-local-tile"]');
+    g.className = tiles.length === 1 ? 'vcall-solo' : '';
+  }
+
+  // -- Start call ------------------------------------------------
   async function startCall() {
-    if (_callActive) { openModal(); return; }
+    const ch = currentRoomId;
+    if (!ch) { alert('Join a room first!'); return; }
+    if (_callActive || _callStarting) { showPanel(false); return; }
+    if (hasLiveLocalTracks()) await cleanupCallResources();
 
-    const channelName = window.currentRoomId || currentRoomId;
-    if (!channelName) {
-      alert('Join a room first before starting a video call!');
-      return;
-    }
-
-    openModal();
-    showStatus('Connecting...');
+    const sessionId = ++_callSessionId;
+    _callStarting = true;
+    updateCallButton();
+    showPanel(false);
+    setStatus('Connecting...');
 
     try {
-      const AgoraRTC = await loadAgoraSDK();
-      AgoraRTC.setLogLevel(3); // errors only
+      const AgoraRTC = await loadSDK();
+      if (sessionId !== _callSessionId || !_callStarting) return;
+      AgoraRTC.setLogLevel(3);
 
-      // Fetch token
-      const { token, appId, uid } = await fetchToken(channelName);
-      _callChannelName = channelName;
+      const { token, appId, uid } = await getToken(ch);
+      if (sessionId !== _callSessionId || !_callStarting) return;
 
-      // Create client
-      _agoraClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+      _client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
 
-      // Handle remote users
-      _agoraClient.on('user-published', async (user, mediaType) => {
-        await _agoraClient.subscribe(user, mediaType);
-        if (mediaType === 'video') {
-          const g = _grid();
-          if (g && !document.getElementById(`vcall-tile-${user.uid}`)) {
-            const tile = createRemoteTile(user.uid);
-            g.appendChild(tile);
-          }
-          user.videoTrack.play(`vcall-remote-video-${user.uid}`);
-          showStatus('');
+      _client.on('user-published', async (user, type) => {
+        await _client.subscribe(user, type);
+        if (type === 'video') {
+          addRemoteTile(user.uid);
+          user.videoTrack.play(`vcall-rv-${user.uid}`);
+          setStatus('');
         }
-        if (mediaType === 'audio') { user.audioTrack.play(); }
+        if (type === 'audio') user.audioTrack.play();
       });
 
-      _agoraClient.on('user-unpublished', (user, mediaType) => {
-        if (mediaType === 'video') {
-          const tile = document.getElementById(`vcall-tile-${user.uid}`);
-          if (tile) tile.remove();
+      _client.on('user-unpublished', (user, type) => {
+        if (type === 'video') {
+          const t = $(`vcall-remote-tile-${user.uid}`);
+          if (t) { t.remove(); updateGridCols(); }
         }
       });
 
-      _agoraClient.on('user-left', (user) => {
-        const tile = document.getElementById(`vcall-tile-${user.uid}`);
-        if (tile) tile.remove();
-        const remoteCount = (_grid()?.querySelectorAll('[id^="vcall-tile-"]').length || 0);
-        if (remoteCount === 0) showStatus('Waiting for others to join...');
+      _client.on('user-left', user => {
+        const t = $(`vcall-remote-tile-${user.uid}`);
+        if (t) { t.remove(); updateGridCols(); }
+        const g = grid();
+        const count = g ? g.querySelectorAll('[id^="vcall-remote-tile-"]').length : 0;
+        if (count === 0) setStatus('Waiting for others to join...');
       });
 
-      // Join channel
-      await _agoraClient.join(appId, channelName, token, uid);
+      await _client.join(appId, ch, token, uid);
+      if (sessionId !== _callSessionId || !_callStarting) {
+        try { await _client.leave(); } catch (_) {}
+        _client = null;
+        return;
+      }
 
-      // Create local tracks
-      [_localAudioTrack, _localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks(
+      [_localAudio, _localVideo] = await AgoraRTC.createMicrophoneAndCameraTracks(
         { echoCancellation: true, noiseSuppression: true },
         { encoderConfig: '480p_2' }
       );
-
-      // Play local video
-      const localContainer = document.getElementById('vcall-local-video');
-      if (localContainer) _localVideoTrack.play(localContainer);
-
-      // Publish tracks
-      await _agoraClient.publish([_localAudioTrack, _localVideoTrack]);
-
-      _callActive = true;
-      showStatus('');
-
-      // Update room label
-      if (_roomLbl()) _roomLbl().textContent = '#' + channelName;
-
-      // Glow the button
-      const btn = _btnStart();
-      if (btn) {
-        btn.style.background = 'rgba(74,222,128,0.35)';
-        btn.style.boxShadow = '0 0 12px rgba(74,222,128,0.5)';
+      if (sessionId !== _callSessionId || !_callStarting) {
+        _localAudio && _localAudio.close();
+        _localVideo && _localVideo.close();
+        _localAudio = null; _localVideo = null;
+        try { await _client.leave(); } catch (_) {}
+        _client = null;
+        return;
       }
 
-      // If no remote users yet
-      const remoteCount = (_grid()?.querySelectorAll('[id^="vcall-tile-"]').length || 0);
-      if (remoteCount === 0) showStatus('Waiting for others to join...');
+      if (sessionId !== _callSessionId || !_callStarting || !_client || _publishInFlight) {
+        await cleanupCallResources();
+        return;
+      }
+
+      _localVideo.play('vcall-local-video');
+      _publishInFlight = true;
+      await _client.publish([_localAudio, _localVideo]);
+      _publishInFlight = false;
+
+      if (sessionId !== _callSessionId || !_callStarting) {
+        await cleanupCallResources();
+        return;
+      }
+
+      _callStarting = false;
+      _callActive = true;
+      setStatus('');
+      updateGridCols();
+
+      const lbl = $('vcall-room-label'); if (lbl) lbl.textContent = '#' + ch;
+      updateCallButton();
+
+      const g = grid();
+      const rc = g ? g.querySelectorAll('[id^="vcall-remote-tile-"]').length : 0;
+      if (rc === 0) setStatus('Waiting for others to join...');
 
     } catch (err) {
-      console.error('[VideoCall]', err);
-      showStatus('Error: ' + (err.message || 'Could not start call'));
-      // Show user-friendly error
-      setTimeout(() => {
-        if (!_callActive) closeModal();
-      }, 3000);
+      console.error('[VCall]', err);
+      _callStarting = false;
+      _callActive = false;
+      _publishInFlight = false;
+      if ((err.message || '').includes('CAN_NOT_PUBLISH_MULTIPLE_VIDEO_TRACKS')) {
+        await cleanupCallResources();
+        setStatus('Call reset. Tap the call button once to start again.');
+      } else {
+        setStatus('Error: ' + (err.message || 'Could not connect'));
+      }
+      updateCallButton();
+      setTimeout(() => { if (!_callActive) hidePanel(); }, 3000);
     }
   }
-
-  // -- Open / Close Modal ----------------------------------------
-  function openModal() {
-    const m = _modal();
-    if (m) { m.style.display = 'block'; }
+  function updateGridCols() {
+    const g = grid(); if (!g) return;
+    const remotes = g.querySelectorAll('[id^="vcall-remote-tile-"]').length;
+    g.style.gridTemplateColumns = remotes === 0 ? '1fr' : '1fr 1fr';
+  }
+  function hasLiveLocalTracks() {
+    return !!(_localAudio || _localVideo || _client);
   }
 
-  function closeModal() {
-    const m = _modal();
-    if (m) m.style.display = 'none';
+  async function cleanupCallResources() {
+    if (_localAudio) { try { _localAudio.stop(); _localAudio.close(); } catch (_) {} _localAudio = null; }
+    if (_localVideo) { try { _localVideo.stop(); _localVideo.close(); } catch (_) {} _localVideo = null; }
+    if (_client)     { try { await _client.leave(); } catch(_){} _client = null; }
+    _publishInFlight = false;
+
+    const lv = $('vcall-local-video'); if (lv) lv.innerHTML = '';
+    const g = grid();
+    if (g) { g.querySelectorAll('[id^="vcall-remote-tile-"]').forEach(el => el.remove()); updateGridCols(); }
   }
 
-  // -- End Call --------------------------------------------------
+  // -- End call --------------------------------------------------
   async function endCall() {
+    if (_callEnding) return;
+    _callEnding = true;
+    _callSessionId++;
+    _callStarting = false;
     _callActive = false;
-    _callChannelName = null;
 
-    if (_localAudioTrack) { _localAudioTrack.stop(); _localAudioTrack.close(); _localAudioTrack = null; }
-    if (_localVideoTrack) { _localVideoTrack.stop(); _localVideoTrack.close(); _localVideoTrack = null; }
-    if (_agoraClient) { try { await _agoraClient.leave(); } catch (_) {} _agoraClient = null; }
+    await cleanupCallResources();
 
-    // Clear remote tiles
-    const g = _grid();
-    if (g) {
-      g.querySelectorAll('[id^="vcall-tile-"]').forEach(el => el.remove());
-    }
-
-    // Reset local video div
-    const lv = document.getElementById('vcall-local-video');
-    if (lv) lv.innerHTML = '';
-
-    // Reset button glow
-    const btn = _btnStart();
-    if (btn) { btn.style.background = ''; btn.style.boxShadow = ''; }
-
-    // Reset controls
-    _isMicMuted = false; _isCamOff = false;
+    _micMuted = false; _camOff = false;
     updateMicBtn(); updateCamBtn();
-
-    closeModal();
+    hidePanel();
+    _callEnding = false;
+    updateCallButton();
   }
 
-  // -- Toggle Mic ------------------------------------------------
+  // -- Panel show/hide -------------------------------------------
+  function centerPanel() {
+    const p = panel(); if (!p) return;
+    p.classList.remove('vcall-dragged');
+    p.style.removeProperty('--vcall-x');
+    p.style.removeProperty('--vcall-y');
+    p.style.left = "50%";
+    p.style.top = "50%";
+    p.style.transform = "translate(-50%,-50%)";
+    p.style.right = "auto";
+    p.style.bottom = "auto";
+  }
+
+  function showPanel(resetPosition = false) {
+    const p = panel(); if (!p) return;
+    p.style.display = "block";
+    if (resetPosition) centerPanel();
+    if (!p.classList.contains("vcall-size-small") &&
+        !p.classList.contains("vcall-size-medium") &&
+        !p.classList.contains("vcall-size-large")) {
+      p.classList.add("vcall-size-medium");
+    }
+  }
+  function hidePanel() {
+    const p = panel(); if (p) p.style.display = 'none';
+  }
+
+  function updateCallButton() {
+    const btn = $('btn-video-call');
+    if (!btn) return;
+    const on = _callActive || _callStarting;
+    btn.classList.toggle('vcall-active', on);
+    btn.setAttribute('aria-label', on ? 'End video call' : 'Start video call with room members');
+    btn.title = on ? 'End Video Call' : 'Start Video Call';
+  }
+  // -- Mic / Cam buttons -----------------------------------------
   function updateMicBtn() {
-    const b = _btnMic(); if (!b) return;
-    if (_isMicMuted) {
-      b.style.background = 'rgba(239,68,68,0.2)';
-      b.style.borderColor = 'rgba(239,68,68,0.4)';
-      b.style.color = '#f87171';
-      b.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`;
-    } else {
-      b.style.background = 'rgba(74,222,128,0.15)';
-      b.style.borderColor = 'rgba(74,222,128,0.3)';
-      b.style.color = '#4ade80';
-      b.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`;
-    }
+    const b = $('vcall-btn-mic'); if (!b) return;
+    b.classList.toggle('vcall-off', _micMuted);
+    b.innerHTML = _micMuted
+      ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`
+      : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`;
   }
-
-  // -- Toggle Camera ---------------------------------------------
   function updateCamBtn() {
-    const b = _btnCam(); if (!b) return;
-    if (_isCamOff) {
-      b.style.background = 'rgba(239,68,68,0.2)';
-      b.style.borderColor = 'rgba(239,68,68,0.4)';
-      b.style.color = '#f87171';
+    const b = $('vcall-btn-cam'); if (!b) return;
+    b.classList.toggle('vcall-off', _camOff);
+  }
+
+  // -- DRAG (PC pointer + mobile touch/stylus) -------------------
+  function initDrag() {
+    const p = panel();
+    const handle = $('vcall-drag-handle');
+    if (!p || !handle) return;
+    if (handle.dataset.vcallDragBound === '1') return;
+    handle.dataset.vcallDragBound = '1';
+
+    const DRAG_THRESHOLD = window.matchMedia('(pointer: coarse)').matches ? 8 : 4;
+    let pointerId = null;
+    let pending = false;
+    let dragging = false;
+    let startX = 0, startY = 0, origL = 0, origT = 0;
+    let lastTapTime = 0, lastTapX = 0, lastTapY = 0;
+
+    function startActualDrag() {
+      dragging = true;
+      const r = p.getBoundingClientRect();
+      origL = r.left;
+      origT = r.top;
+      p.style.transform = "none";
+      p.style.left = origL + "px";
+      p.style.top  = origT + "px";
+      p.style.right  = "auto";
+      p.style.bottom = "auto";
+      p.classList.add('vcall-dragged');
+      handle.style.cursor = "grabbing";
+    }
+
+    function getViewportBounds() {
+      const vv = window.visualViewport;
+      const left = vv ? vv.offsetLeft : 0;
+      const top = vv ? vv.offsetTop : 0;
+      const width = vv ? vv.width : window.innerWidth;
+      const height = vv ? vv.height : window.innerHeight;
+      const margin = window.matchMedia('(pointer: coarse)').matches ? 10 : 8;
+      return {
+        minX: left + margin,
+        minY: top + margin,
+        maxX: left + width - p.offsetWidth - margin,
+        maxY: top + height - p.offsetHeight - margin
+      };
+    }
+
+    function clampPanelPosition(left, top) {
+      const b = getViewportBounds();
+      const nl = Math.min(Math.max(left, b.minX), Math.max(b.minX, b.maxX));
+      const nt = Math.min(Math.max(top, b.minY), Math.max(b.minY, b.maxY));
+      p.style.left = nl + 'px';
+      p.style.top = nt + 'px';
+      p.style.setProperty('--vcall-x', nl + 'px');
+      p.style.setProperty('--vcall-y', nt + 'px');
+    }
+
+    function movePanel(cx, cy) {
+      const dx = cx - startX, dy = cy - startY;
+      clampPanelPosition(origL + dx, origT + dy);
+    }
+
+    handle.addEventListener('pointerdown', e => {
+      if (e.target.closest('button')) return;
+      pointerId = e.pointerId;
+      pending = true;
+      dragging = false;
+      startX = e.clientX;
+      startY = e.clientY;
+      handle.setPointerCapture && handle.setPointerCapture(pointerId);
+    });
+
+    handle.addEventListener('pointermove', e => {
+      if (e.pointerId !== pointerId || !pending) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (!dragging && Math.hypot(dx, dy) >= DRAG_THRESHOLD) {
+        e.preventDefault();
+        startActualDrag();
+      }
+      if (dragging) {
+        e.preventDefault();
+        movePanel(e.clientX, e.clientY);
+      }
+    });
+
+    function finishPointer(e) {
+      if (e.pointerId !== pointerId) return;
+      const wasDragging = dragging;
+      pending = false;
+      dragging = false;
+      pointerId = null;
+      handle.style.cursor = 'grab';
+      try { handle.releasePointerCapture && handle.releasePointerCapture(e.pointerId); } catch (_) {}
+
+      if (!wasDragging) {
+        lastTapTime = Date.now();
+        lastTapX = e.clientX;
+        lastTapY = e.clientY;
+      }
+    }
+
+    handle.addEventListener('pointerup', finishPointer);
+    handle.addEventListener('pointercancel', finishPointer);
+    handle.addEventListener('dblclick', e => {
+      if (e.target.closest('button')) return;
+      e.preventDefault();
+    });
+  }
+  // -- RESIZE (corner handle) ------------------------------------
+  function initResize() {
+    const p = panel();
+    const handle = $('vcall-resize-handle');
+    if (!p || !handle) return;
+
+    if (handle.dataset.vcallResizeBound === '1') return;
+    handle.dataset.vcallResizeBound = '1';
+
+    let resizing = false, startX, startY, startW, startH;
+
+    function onStart(cx, cy) {
+      resizing = true;
+      startX = cx; startY = cy;
+      startW = p.offsetWidth; startH = p.offsetHeight;
+    }
+    function onMove(cx, cy) {
+      if (!resizing) return;
+      // nw-resize: dragging left corner = increase width going left
+      const dw = startX - cx;
+      const newW = Math.max(180, Math.min(500, startW + dw));
+      p.style.width = newW + 'px';
+      // Update size class
+      p.classList.remove('vcall-size-small','vcall-size-medium','vcall-size-large');
+      if (newW < 230) p.classList.add('vcall-size-small');
+      else if (newW < 360) p.classList.add('vcall-size-medium');
+      else p.classList.add('vcall-size-large');
+      updateSizeBtns();
+    }
+    function onEnd() { resizing = false; }
+
+    handle.addEventListener('mousedown',  e => { e.preventDefault(); onStart(e.clientX, e.clientY); });
+    document.addEventListener('mousemove', e => { if (resizing) onMove(e.clientX, e.clientY); });
+    document.addEventListener('mouseup',   onEnd);
+
+    handle.addEventListener('touchstart', e => { const t=e.touches[0]; onStart(t.clientX, t.clientY); }, { passive: true });
+    document.addEventListener('touchmove', e => { if (resizing) { const t=e.touches[0]; onMove(t.clientX,t.clientY); } }, { passive: true });
+    document.addEventListener('touchend', onEnd);
+  }
+
+  function updateSizeBtns() {
+    const p = panel(); if (!p) return;
+    ['small','medium','large'].forEach(s => {
+      const b = $(`vcall-size-${s.slice(0,2) === 'sm' ? 'sm' : s.slice(0,2) === 'me' ? 'md' : 'lg'}`);
+    });
+    $('vcall-size-sm') && $('vcall-size-sm').classList.toggle('vcall-size-active', p.classList.contains('vcall-size-small'));
+    $('vcall-size-md') && $('vcall-size-md').classList.toggle('vcall-size-active', p.classList.contains('vcall-size-medium'));
+    $('vcall-size-lg') && $('vcall-size-lg').classList.toggle('vcall-size-active', p.classList.contains('vcall-size-large'));
+  }
+
+  // -- SIZE BUTTONS ----------------------------------------------
+  function initSizeBtns() {
+    [['vcall-size-sm','vcall-size-small','195px'],
+     ['vcall-size-md','vcall-size-medium','300px'],
+     ['vcall-size-lg','vcall-size-large','420px']].forEach(([btnId, cls, w]) => {
+      const b = $(btnId); if (!b) return;
+      if (b.dataset.vcallSizeBound === '1') return;
+      b.dataset.vcallSizeBound = '1';
+      b.addEventListener('click', () => {
+        const p = panel(); if (!p) return;
+        p.classList.remove('vcall-size-small','vcall-size-medium','vcall-size-large');
+        p.classList.add(cls);
+        p.style.width = w;
+        updateSizeBtns();
+      });
+    });
+  }
+
+  // -- ORIENTATION / LANDSCAPE FIX ------------------------------
+  function handleOrientation() {
+    const isLandscapePhone = window.innerHeight < 500 && window.innerWidth > window.innerHeight;
+    const sugg = sugPanel();
+    const lsb  = lsBtn();
+    if (isLandscapePhone) {
+      if (sugg) sugg.style.setProperty('display','none','important');
+      if (lsb)  lsb.style.display = 'flex';
     } else {
-      b.style.background = 'rgba(74,222,128,0.15)';
-      b.style.borderColor = 'rgba(74,222,128,0.3)';
-      b.style.color = '#4ade80';
+      // Restore suggestions — only remove forced-hide, let existing class logic apply
+      if (sugg) sugg.style.removeProperty('display');
+      if (lsb)  lsb.style.display = 'none';
     }
   }
 
-  // -- Event Listeners -------------------------------------------
-  document.addEventListener('click', async (e) => {
-    // Start call button
-    if (e.target.closest('#btn-video-call')) { await startCall(); return; }
 
-    // Toggle mic
+  function clampVisiblePanelAfterViewportChange() {
+    const p = panel();
+    if (!p || p.style.display === 'none' || !p.classList.contains('vcall-dragged')) return;
+    const vv = window.visualViewport;
+    const margin = window.matchMedia('(pointer: coarse)').matches ? 10 : 8;
+    const minX = (vv ? vv.offsetLeft : 0) + margin;
+    const minY = (vv ? vv.offsetTop : 0) + margin;
+    const maxX = (vv ? vv.offsetLeft + vv.width : window.innerWidth) - p.offsetWidth - margin;
+    const maxY = (vv ? vv.offsetTop + vv.height : window.innerHeight) - p.offsetHeight - margin;
+    const r = p.getBoundingClientRect();
+    const left = Math.min(Math.max(r.left, minX), Math.max(minX, maxX));
+    const top = Math.min(Math.max(r.top, minY), Math.max(minY, maxY));
+    p.style.left = left + 'px';
+    p.style.top = top + 'px';
+    p.style.setProperty('--vcall-x', left + 'px');
+    p.style.setProperty('--vcall-y', top + 'px');
+  }
+  window.addEventListener('orientationchange', () => { setTimeout(handleOrientation, 300); setTimeout(clampVisiblePanelAfterViewportChange, 320); });
+  window.addEventListener('resize', () => { handleOrientation(); clampVisiblePanelAfterViewportChange(); });
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', clampVisiblePanelAfterViewportChange);
+
+  // Suggestions toggle in landscape
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#vcall-ls-suggestions-btn')) return;
+    const s = sugPanel(); if (!s) return;
+    const hidden = s.style.display === 'none' || s.classList.contains('hidden');
+    if (hidden) {
+      s.style.display = 'block';
+      // Flip arrow
+      const btn = lsBtn();
+      if (btn) btn.querySelector('polyline').setAttribute('points','9 18 15 12 9 6');
+    } else {
+      s.style.setProperty('display','none','important');
+      const btn = lsBtn();
+      if (btn) btn.querySelector('polyline').setAttribute('points','15 18 9 12 15 6');
+    }
+  });
+
+  // -- BUTTON EVENTS ---------------------------------------------
+  document.addEventListener('click', async e => {
+    // Start call
+    // btn-video-call handled directly in init
+
+    // Mic toggle
     if (e.target.closest('#vcall-btn-mic')) {
-      if (!_callActive || !_localAudioTrack) return;
-      _isMicMuted = !_isMicMuted;
-      await _localAudioTrack.setEnabled(!_isMicMuted);
-      updateMicBtn();
-      return;
+      if (!_callActive || !_localAudio) return;
+      _micMuted = !_micMuted;
+      await _localAudio.setEnabled(!_micMuted);
+      updateMicBtn(); return;
     }
 
-    // Toggle camera
+    // Cam toggle
     if (e.target.closest('#vcall-btn-cam')) {
-      if (!_callActive || !_localVideoTrack) return;
-      _isCamOff = !_isCamOff;
-      await _localVideoTrack.setEnabled(!_isCamOff);
-      updateCamBtn();
-      return;
+      if (!_callActive || !_localVideo) return;
+      _camOff = !_camOff;
+      await _localVideo.setEnabled(!_camOff);
+      updateCamBtn(); return;
     }
 
     // End call
     if (e.target.closest('#vcall-btn-end')) { await endCall(); return; }
   });
 
-  // Clean up when leaving a room
-  const _origLeaveRoom = window.leaveRoom;
+  // -- CLEANUP on room leave -------------------------------------
   document.addEventListener('vaanisethu:room-left', async () => {
     if (_callActive) await endCall();
+    hidePanel();
   });
+
+  // -- INIT ------------------------------------------------------
+  document.addEventListener('DOMContentLoaded', () => {
+    initDrag();
+    initResize();
+    initSizeBtns();
+    handleOrientation();
+  });
+  // Also init if DOM already loaded
+  if (document.readyState !== 'loading') {
+    initDrag();
+    initResize();
+    initSizeBtns();
+    handleOrientation();
+  }
+
+  // Direct listener on video call button (more reliable than delegation)
+  function bindVcallBtn() {
+    const b = document.getElementById("btn-video-call");
+    if (!b) return;
+    if (b.dataset.vcallBound === '1') return;
+    b.dataset.vcallBound = '1';
+    b.addEventListener("click", async function() {
+      if (_callActive || _callStarting || _publishInFlight) { await endCall(); } else { await startCall(); }
+    });
+  }
+  bindVcallBtn();
+  document.addEventListener("DOMContentLoaded", bindVcallBtn);
 
 })();
